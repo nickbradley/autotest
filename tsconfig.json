@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "ES2017"
+    "target": "ES2017",
+    "types": [
+      "node",
+      "mocha"
+    ]
   },
   "filesGlob": [
     "./typings/index.d.ts",

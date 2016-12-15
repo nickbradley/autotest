@@ -1,3 +1,8 @@
+# Files
+*.js
+*.env
+
 # Directories
 node_modules
 coverage
+typings
