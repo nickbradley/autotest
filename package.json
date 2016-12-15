@@ -1,0 +1,30 @@
+{
+  "name": "AutoTest",
+  "description": "CPSC 310 GitHub integration service.",
+  "homepage": "https://github.com/nickbradley/autotest",
+  "author": "Nick Bradley",
+  "contributors": "N/A",
+  "license": "GPL-3.0",
+  "repository": "N/A",
+  "bugs": "",
+  "keywords": [],
+  "version": "1.0.0",
+  "scripts": {
+    "config": "npm install; typings install",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^2.0.0",
+    "tslint": "^4.0.0",
+    "typings": "^2.0.0",
+    "mocha": "^3.2.0",
+    "istanbul": "^0.4.5"
+  },
+  "dependencies": {
+    "restify": "^4.3.0",
+    "bull": "^2.0.0",
+    "redis": "^2.6.0",
+    "nano": "^6.2.0"
+  }
+
+}

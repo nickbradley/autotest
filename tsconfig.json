@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2017"
+  },
+  "filesGlob": [
+    "./typings/index.d.ts",
+    "**/src/**/*.ts",
+    "**/test/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
