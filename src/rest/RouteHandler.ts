@@ -80,6 +80,10 @@ export default class RouteHandler {
     // enumerate GitHub event
     switch (req.header('X-GitHub-Event')) {
       case 'commit_comment':
+        // log Request
+        // pull result from DB
+        // foramt
+        // post
         Log.trace('Got commit comment.');
         break;
       case 'push':
