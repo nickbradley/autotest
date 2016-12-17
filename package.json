@@ -18,10 +18,14 @@
     "@types/node": "^6.0.52",
     "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
+    "chai": "^3.5.0",
     "icedfrisby": "^0.3.0",
     "tslint": "^4.0.0",
     "typescript": "^2.0.0",
-    "typings": "^2.0.0"
+    "typings": "^2.0.0",
+    "typed-nano": "^1.0.3",
+    "typedjson-npm": "^0.1.6",
+    "reflect-metadata": "^0.1.8"
   },
   "dependencies": {
     "restify": "^4.3.0",

@@ -10,6 +10,7 @@ import RouteHandler from "../rest/RouteHandler";
 export default class Server {
   private rest: restify.Server;
   private port: string;
+
   constructor(port: string) {
     this.port = port;
     Log.info("Server::<init>( " + port + " )");

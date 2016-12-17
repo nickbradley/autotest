@@ -1,6 +1,9 @@
 import restify = require("restify");
 // import {JsonObject, JsonMember, TypedJSON} from "typedjson";
 
+import PushController from '../controller/github/PushController';
+import CommitCommentController from '../controller/github/CommitCommentController';
+
 import Log from "../Util";
 import Server from "./Server";
 // import {settings, submissionQueue} from "../App";
@@ -76,18 +79,34 @@ export default class RouteHandler {
 
   // GitHub webhook endpoint
   public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
-
+    let body = req.body;
+    let controller;
     // enumerate GitHub event
     switch (req.header('X-GitHub-Event')) {
       case 'commit_comment':
-        // log Request
-        // pull result from DB
-        // foramt
-        // post
-        Log.trace('Got commit comment.');
+        Log.trace('Got commit_comment event.');
+        controller = new CommitCommentController();
+        Log.trace('Processing');
+        controller.process(body).then(result => {
+          Log.trace('Porcessed tffjdsf');
+          // return json response
+        }).catch(err => {
+          Log.error(err);
+        });
         break;
       case 'push':
-        Log.trace('Got push event.');
+        try {
+          Log.trace('Got push event.');
+          controller = new PushController();
+          controller.process(body).then(result => {
+            // indicate in queue
+          }).catch(err => {
+            // couldn't be added to queue
+          });
+        } catch(err) {
+
+        }
+        break;
       default:
         Log.warn('Unhandled GitHub event.');
     }

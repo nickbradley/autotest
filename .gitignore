@@ -1,8 +1,10 @@
 # Files
 *.js
 *.env
+*.log
 
 # Directories
 node_modules
 coverage
 typings
+scratch

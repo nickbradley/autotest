@@ -40,7 +40,7 @@ describe("REST Interface", function () {
     });
 
 
-    let commitComment =
+    //let commitComment =
     frisby.create("GitHub Commit Comment.")
         //.addHeaders(headers)
         .addHeader('X-GitHub-Delivery', 'f2d71580-942d-11e6-9949-c1bcfb2d567e')
