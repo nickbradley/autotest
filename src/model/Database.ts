@@ -9,7 +9,19 @@ export interface CouchServer {
 export interface CouchDatabase {
   insert(doc: Object, params: string | Object, callback: (error, result) => void): void;
   view(designDocumentId: string, viewName: string, params: Object, callback: (error, results) => void): void;
+  view(designDocumentId: string, viewName: string, callback: (error, results) => void): void;
+  multipart: NanoMultipart;
+  attachment: NanoAttachment;
 }
+export interface NanoMultipart {
+  insert(document: Object, attachments: Object[], params: Object, callback: (error, results) => void): void;
+  get(documentId: string, params: Object, callback: (error, results) => void): void;
+}
+export interface NanoAttachment {
+  insert(documentId: string, attachmentName: string, attachmentData: any, contentType: string, params: Object, callback: (error, results) => void): void;
+  get(documentId: string, attachmentName: string, params: Object, callback: (error, results) => void): void;
+}
+
 
 // docs.couchdb.org/en/2.0.0/api/server/authn.html?highlight=post
 export interface AuthenticationResponse {
@@ -31,7 +43,7 @@ export interface ViewResponse {
   offset: number;
   total_rows: number;
   update_seq?: number;
-  rows: JSON[];
+  rows: any;
 }
 
 // docs.couchdb.org/en/2.0.0/api/ddoc/views.html?highlight=get
@@ -60,7 +72,9 @@ export interface QueryParamters {
 }
 
 
-
+/**
+ * Manage connections to CouchDB server using nano.
+ */
 export class Connection {
   public dbServer: CouchServer;
   private auth: string;
@@ -73,6 +87,9 @@ export class Connection {
     this.password = password;
   }
 
+  /**
+   * Return a list of databases excluding system databases (those prefixed with an underscore).
+   */
   async list(): Promise<string[]> {
     let that = this;
     await this.authenticate();
@@ -87,6 +104,11 @@ export class Connection {
     });
   }
 
+  /**
+   * Reauthenticate connection to CouchDB. This should be called before attempting
+   * to interact with any databases. By default, the connection uses cookies which
+   * expire every 10 minutes, hence the need to call this method frequently.
+   */
   async authenticate(): Promise<AuthenticationResponse> {
     let that = this;
     return new Promise<AuthenticationResponse>((fulfill, reject) => {
@@ -104,39 +126,62 @@ export class Connection {
     });
   }
 
+  /**
+   * Attach to a specific database.
+   *
+   * @param dbname
+   */
   use(dbname: string): CouchDatabase {
     return this.dbServer.use(dbname);
   }
 }
 
-
+/**
+ * Interact with documents in a specific CouchDB database.
+ */
 export class Database {
   private db: CouchDatabase;
   private conn: Connection;
 
   constructor(conn: Connection, name: string) {
-    this.db = conn.dbServer.use(name);
-    this.conn = conn;
+    try {
+      this.db = conn.dbServer.use(name);
+      this.conn = conn;
+    } catch(err) {
+      throw 'Unable to connect to database ' + name + '.\
+       Make sure the database exists and is accessible using the credentials\
+       provided in the server connection.';
+    }
+
   }
 
   async insertRecord(r: Record): Promise<InsertResponse> {
+    console.log('there');
+    try {
     await this.conn.authenticate();
-    return await r.insert(this.db);
+    console.log('here');
+    return await r.insert(this.db); } catch (err) {
+      console.log('Error', err);
+    }
   }
 
-  async view(design: string, name: string, params: QueryParamters): Promise<ViewResponse> {
+  async view(design: string, name: string, params?: QueryParamters): Promise<ViewResponse> {
     let that = this;
     await this.conn.authenticate();
     return new Promise<ViewResponse>((fulfill, reject) => {
+      if (params) {
       that.db.view(design, name, params, (err, result) => {
-        if (err) {
-          reject(err)
-        }
-
-        fulfill(result);
+        err ? reject(err) : fulfill(result);
       });
+    } else {
+      that.db.view(design, name, (err, result) => {
+        err ? reject(err) : fulfill(result);
+      })
+    }
     });
   }
+
+
 }
 
 

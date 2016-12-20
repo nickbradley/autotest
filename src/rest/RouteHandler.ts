@@ -90,8 +90,10 @@ export default class RouteHandler {
         controller.process(body).then(result => {
           Log.trace('Porcessed tffjdsf');
           // return json response
+          res.json(200, {'body': 'Make tea'});
         }).catch(err => {
           Log.error(err);
+          res.json(404);
         });
         break;
       case 'push':
@@ -110,7 +112,7 @@ export default class RouteHandler {
       default:
         Log.warn('Unhandled GitHub event.');
     }
-    res.json(200, {'body': 'Make tea'});
+
     return next();
   }
 

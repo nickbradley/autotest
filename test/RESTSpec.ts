@@ -46,9 +46,9 @@ describe("REST Interface", function () {
         .addHeader('X-GitHub-Delivery', 'f2d71580-942d-11e6-9949-c1bcfb2d567e')
         .addHeader('X-GitHub-Event', 'commit_comment')
         .post(URL + "/github", test, {json: true})
-        .inspectRequest('Request: ')
-        .inspectStatus('Response status: ')
-        .inspectBody('Response body: ')
+        //.inspectRequest('Request: ')
+        //.inspectStatus('Response status: ')
+        //.inspectBody('Response body: ')
         .expectStatus(200)
         .toss();
 });
