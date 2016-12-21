@@ -3,6 +3,9 @@ let url = require('url');
 
 import {IConfig, AppConfig} from '../../Config';
 
+/**
+ * Posts a comment on GitHub.
+ */
 export default class PostbackController {
   private config: IConfig;
   private reqOptions: any;

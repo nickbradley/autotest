@@ -1,0 +1,18 @@
+FROM node:6.3.0
+MAINTAINER Nick Bradley <nbrad11@cs.ubc.ca>
+
+ARG repo_url
+ARG commit
+
+COPY pull-repo.sh /pull-repo.sh
+COPY tester.sh /tester.sh
+RUN chmod +x /pull-repo.sh
+RUN chmod +x /tester.sh
+
+RUN /pull-repo.sh $repo_url /deliverable $commit
+
+
+
+ENV MOCHAWESOME_REPORTDIR=/cpsc310project/mocha_output
+
+CMD { timeout 5m /tester.sh $CLIENT_DIR /deliverable; } 2>&1

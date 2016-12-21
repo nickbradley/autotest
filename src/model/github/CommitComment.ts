@@ -1,33 +1,14 @@
-// import 'reflect-metadata';
-import Log from '../../Util';
-// import {JsonObject, JsonMember, TypedJSON} from 'typedjson-npm';
-import {CouchDatabase, Record, InsertResponse} from '../Database';
-// import {Repository, Organization, Sender, Comment} from './Github';
 
-// export default class CommitComment implements Record {
-//   record: CommitCommentRecord;
-//
-//   constructor(data: JSON) {
-//     this.record = TypedJSON.parse(JSON.stringify(data), CommitCommentRecord);
-//   }
-//
-//   public async insert(db: CouchDatabase): Promise<InsertResponse> {
-//     let that = this;
-//     return new Promise<InsertResponse>((fulfill, reject) => {
-//       db.insert(that.record, "", (err, result) => {
-//         if (err) {
-//           reject(err);
-//         }
-//
-//         fulfill(result);
-//       });
-//     });
-//   }
-// }
+import Log from '../../Util';
+
+import {CouchDatabase, Record, InsertResponse} from '../Database';
+import GithubUtil from './GithubUtil';
+
+
 
 
 export default class CommitCommentRecord implements Record {
-  private data: JSON;
+  private payload: JSON;
   private team: string;
   private user: string;
   private hook: string;
@@ -38,21 +19,18 @@ export default class CommitCommentRecord implements Record {
   private _deliverable: string;
   private _isRequest: boolean;
 
-  constructor(data: any, requestMention: string, defaultDeliverable: string) {
+  constructor(payload: any, requestMention: string, defaultDeliverable: string) {
     try {
-      // NOTE assume repository name is of the form: CS310-2016Fall/cpsc310project_team10
-      let idx = data.repository.name.lastIndexOf('_')+1;
-
-      this.data = data;
-      this.commit = data.comment.commit_id;
-      this.team = data.repository.name.slice(idx);
-      this.user = data.comment.user.login;
-      this.hook = data.repository.commits_url.replace('{/sha}', '/' + this.commit) + '/comments';
-      this.message = data.comment.body;
+      this.payload = payload;
+      this.commit = payload.comment.commit_id;
+      this.team = GithubUtil.getTeam(payload.repository.name);
+      this.user = payload.comment.user.login;
+      this.hook = payload.repository.commits_url.replace('{/sha}', '/' + this.commit) + '/comments';
+      this.message = payload.comment.body;
 
       this.timestamp = +new Date();
 
-      this._isRequest = data.comment.body.toLowerCase().includes(requestMention);
+      this._isRequest = payload.comment.body.toLowerCase().includes(requestMention);
       if (this._isRequest) {
         // TODO Set the default deliverable
         this._deliverable = this.extractDeliverable() || defaultDeliverable;
@@ -72,9 +50,9 @@ export default class CommitCommentRecord implements Record {
   public async insert(db: CouchDatabase): Promise<InsertResponse> {
     Log.trace('CommitCommentRecord::insert()');
     let that = this;
-    let comment = JSON.stringify(this.data);
+    let comment = JSON.stringify(this.payload);
     let doc = {team: this.team, user: this.user, commit: this.commit, body: this.message, type: 'commit_comment', timestamp: this.timestamp}
-    let attachments = [{name: 'comment.json', data: comment, content_type: 'application/json'}];
+    let attachments = [{name: 'comment.json', payload: comment, content_type: 'application/json'}];
     let docName = this.timestamp + '_' + this.team + ':' + this.user + '_' + this._deliverable;
 
     return new Promise<InsertResponse>((fulfill, reject) => {
@@ -98,83 +76,3 @@ export default class CommitCommentRecord implements Record {
     return deliverable;
   }
 }
-
-
-
-// @JsonObject
-// class CommitCommentRecord {
-//   @JsonMember({ type: String })
-//   action: string;
-//
-//   @JsonMember({ type: Comment })
-//   comment: Comment;
-//
-//   @JsonMember({ type: Repository })
-//   repository: Repository;
-//
-//   @JsonMember({ type: Organization })
-//   organization: Organization;
-//
-//   @JsonMember({ type: Sender })
-//   sender: Sender;
-// }
-
-
-
-
-
-
-// @JsonObject
-// export interface ICommitCommentRecord {
-//     @JsonMember({ type: String })
-//     action: string;
-//
-//     @JsonMember({ type: Comment })
-//     comment: Comment;
-//
-//     @JsonMember({ type: Repository })
-//     repository: Repository;
-//
-//     @JsonMember({ type: Organization })
-//     organization: Organization;
-//
-//     @JsonMember({ type: Sender })
-//     sender: Sender;
-//
-// }
-//
-// @JsonObject
-// export class CommitCommentRecord implements Record {
-//   @JsonMember({ type: String })
-//   action: string;
-//
-//   @JsonMember({ type: Comment })
-//   comment: Comment;
-//
-//   @JsonMember({ type: Repository })
-//   repository: Repository;
-//
-//   @JsonMember({ type: Organization })
-//   organization: Organization;
-//
-//   @JsonMember({ type: Sender })
-//   sender: Sender;
-//
-//
-//   constructor(data: JSON) {
-//     this.data = TypedJSON.parse(data, CommitCommentRecord);
-//   }
-//
-//   public insert(db: CouchDatabase): Promise<InsertResponse> {
-//     let that = this;
-//     return new Promise<InsertResponse>((fulfill, reject) => {
-//       db.insert(that.data, "", (err, result) => {
-//         if (err) {
-//           reject(err);
-//         }
-//
-//         fulfill(result);
-//       });
-//     });
-//   }
-// }

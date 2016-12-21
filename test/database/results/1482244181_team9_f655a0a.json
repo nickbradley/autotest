@@ -1,0 +1,53 @@
+{
+  "team": "",
+  "commit": "",
+  "testRepo": {
+    "deliverable": "d1",
+    "name": "d1test-pub",
+    "visibility": 1,
+    "commit": ""
+  },
+  "tests": {},  //mocha output
+  "coverage": {},  // istanbul output
+  "stats": {
+    "passCount": 1,
+    "failCount": 1,
+    "skipCount": 1,
+    "passNames": [],
+    "failNames": [],
+    "skipNames": [],
+    "statements": "",
+    "branches": ""
+  },
+  "buildFailed": false,
+  "buildMsg":"",
+  "commiter": "",
+  "timestamp": 1482244181,
+  "_attachements": ["stdout.txt", "stderr.txt"]
+}
+
+
+
+// deliverable
+{
+  "d1": {
+    "repos": [
+      {
+        "url": "",
+        "name": "",
+        "commit": "",
+        "visibility": 0,
+        "container": "d1-private-test"
+      },
+      {
+        "url": "",
+        "name": "",
+        "commit": "",
+        "visibility": 1,
+        "container": "d1-public-test"
+      }
+    ],
+    "description": "",
+    "dueDate": ""
+  }
+}

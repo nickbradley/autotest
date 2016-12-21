@@ -29,7 +29,7 @@ export default class CommitCommentContoller {
 
   private async store(record: CommitCommentRecord) {
     let db = new Database(this.config.getDBConnection(), 'github');
-    return await db.insertRecord(record);
+    return db.insertRecord(record);
   }
 
   private async currentDeliverable() {
