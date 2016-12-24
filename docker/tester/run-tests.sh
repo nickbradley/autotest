@@ -132,7 +132,7 @@ printf "<DELIVERABLE_BUILD exitcode=%d>\n%s\n</DELIVERABLE_BUILD>\n\n" "${status
 out=$(cd "${projectDir}" && ${coverCmd} 2>&1)
 status=$?
 
-printf "<PROJECT_COVERAGE exitcode=%d>\n\%s\n</PROJECT_COVERAGE_BUILD>\n\n" "${status}" "${out}"
+printf "<PROJECT_COVERAGE exitcode=%d>\n\%s\n</PROJECT_COVERAGE>\n\n" "${status}" "${out}"
 
 # Run the tests
 out=$(cd "${deliverableDir}" && ${testsCmd} 2>&1)
