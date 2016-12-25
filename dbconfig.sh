@@ -20,8 +20,8 @@ echo "DB_INSTANCE set to ${DB_INSTANCE}"
 printf "Creating database settings "
 curl -X PUT ${DB_INSTANCE}/settings
 
-printf "Creating database github "
-curl -X PUT ${DB_INSTANCE}/github
+printf "Creating database results "
+curl -X PUT ${DB_INSTANCE}/results
 
 # Create views
 printf "Creating views "
