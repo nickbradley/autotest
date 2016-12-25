@@ -24,6 +24,7 @@
 
 projectDir="/cpsc310project"
 deliverableDir="/deliverable"
+outputDir="/output"
 
 buildCmd="npm run build"
 coverCmd="npm run cover"
@@ -129,10 +130,10 @@ printf "<DELIVERABLE_BUILD exitcode=%d>\n%s\n</DELIVERABLE_BUILD>\n\n" "${status
 
 
 # Run the coverage tool
-out=$(cd "${projectDir}" && ${coverCmd} 2>&1)
+out=$(cd "${projectDir}" && ${coverCmd} 2>&1 | awk '/===/{y=1}y')
 status=$?
 
-printf "<PROJECT_COVERAGE exitcode=%d>\n\%s\n</PROJECT_COVERAGE>\n\n" "${status}" "${out}"
+printf "<PROJECT_COVERAGE exitcode=%d>\n%s\n</PROJECT_COVERAGE>\n\n" "${status}" "${out}"
 
 # Run the tests
 out=$(cd "${deliverableDir}" && ${testsCmd} 2>&1)
@@ -142,12 +143,31 @@ printf "<DELIVERABLE_TESTS exitcode=%d>\n%s\n</DELIVERABLE_TESTS>\n\n" "${status
 
 
 # Output JSON files
-out=$(cd "${projectDir}" && cat "coverage/coverage.json" 2>&1)
+# out=$(cd "${projectDir}" && cat "coverage/coverage.json" 2>&1)
+# status=$?
+#
+# printf "<COVERAGE_JSON exitcode=%d>\n%s\n</COVERAGE_JSON>\n\n" "${status}" "${out}"
+
+# out=$(cd "${projectDir}" && cat "mocha_output/mochawesome.json" 2>&1)
+# status=$?
+#
+# printf "<DELIVERABLE_JSON exitcode=%d>\n%s\n</DELIVERABLE_JSON>\n\n" "${status}" "${out}"
+out=$(
+  echo "Copying ${projectDir}/mocha_output/mochawesome.json to ${outputDir}/mocha.json."
+  cp "${projectDir}/mocha_output/mochawesome.json" "${outputDir}/mocha.json"
+  echo "Archiving ${projectDir}/coverage as ${outputDir}/coverage.zip."
+  zip -r "${outputDir}/coverage.zip" "${projectDir}/coverage"
+)
 status=$?
+printf "<FILE_OPERATIONS exitcode=%d>\n%s\n</FILE_OPERATIONS>\n\n" "${status}" "${out}"
 
-printf "<COVERAGE_JSON exitcode=%d>\n%s\n</COVERAGE_JSON>\n\n" "${status}" "${out}"
-
-out=$(cd "${projectDir}" && cat "mocha_output/mochawesome.json" 2>&1)
-status=$?
-
-printf "<DELIVERABLE_JSON exitcode=%d>\n%s\n</DELIVERABLE_JSON>\n\n" "${status}" "${out}"
+# Pipe the base64 string of the zipped coverage directory to fd 3
+# http://stackoverflow.com/questions/18933975/zip-file-and-print-to-stdout
+# http://stackoverflow.com/questions/24490399/node-js-child-processes-and-pipes-osx-vs-ubuntu
+# ls -l /dev/fd/
+# cat /dev/fd/3
+# >> file
+# exec 3<> file
+# echo "Hello world" >&3
+# #zip -r - "${deliverableDir}/package.json" | base64 -w0 >&3
+# exec 3>&-

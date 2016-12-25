@@ -30,9 +30,14 @@ githubApiKey=${1}
 team=${2}
 projectCommit=${3}
 testImage=${4}
+tempDir=${5}
 
 docker run --cap-add=NET_ADMIN \
            --env PROJECT_URL=https://${githubApiKey}@github.com/CS310-2016Fall/cpsc310project_${team}.git \
            --env PROJECT_COMMIT=$projectCommit \
+           --volume "${tempDir}":/output/ \
            --rm \
            ${testImage}
+
+           #--device=/dev/fd/4 \
+#--volume /dev/fd/4:/dev/fd/4 \

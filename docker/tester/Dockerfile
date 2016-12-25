@@ -3,6 +3,7 @@ MAINTAINER Nick Bradley <nbrad11@cs.ubc.ca>
 
 RUN apt-get update
 RUN apt-get -y install iptables
+RUN apt-get -y install zip
 
 ARG deliverableRepoUrl
 ARG deliverableCommit
