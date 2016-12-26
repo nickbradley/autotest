@@ -38,6 +38,3 @@ docker run --cap-add=NET_ADMIN \
            --volume "${tempDir}":/output/ \
            --rm \
            ${testImage}
-
-           #--device=/dev/fd/4 \
-#--volume /dev/fd/4:/dev/fd/4 \

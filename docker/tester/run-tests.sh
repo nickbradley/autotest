@@ -6,7 +6,7 @@
 #
 # Description:
 #  1) Clones the student's project from GitHub in the projectDir.
-#  2) Disables network (TODO)
+#  2) Disables network connections vis iptables
 #  3) Builds the project and the deliverable (exits if project build fails)
 #  4) Runs project coverage
 #  5) Runs deliverable tests against the project
@@ -32,6 +32,7 @@ testsCmd="npm run testprog"
 
 
 # Clone the specified student repo into the projectDir
+# Exit if unable to clone the student's repo
 out=$(./pull-repo.sh $@ "/cpsc310project" 2>&1)
 status=$?
 
@@ -43,6 +44,7 @@ then
 fi
 
 # Configure the firewall to block all connections except those explicitly allowed
+# Exit if problem configuring the firewall
 out=$({
 IPT="iptables"
 dnsServers=$(grep -oP "(?<=nameserver ).*" /etc/resolv.conf | tr "\n" " ")
@@ -141,17 +143,8 @@ status=$?
 
 printf "<DELIVERABLE_TESTS exitcode=%d>\n%s\n</DELIVERABLE_TESTS>\n\n" "${status}" "${out}"
 
-
-# Output JSON files
-# out=$(cd "${projectDir}" && cat "coverage/coverage.json" 2>&1)
-# status=$?
-#
-# printf "<COVERAGE_JSON exitcode=%d>\n%s\n</COVERAGE_JSON>\n\n" "${status}" "${out}"
-
-# out=$(cd "${projectDir}" && cat "mocha_output/mochawesome.json" 2>&1)
-# status=$?
-#
-# printf "<DELIVERABLE_JSON exitcode=%d>\n%s\n</DELIVERABLE_JSON>\n\n" "${status}" "${out}"
+# Zip the coverage directory and copy it and the mocha report to the output directory
+# http://stackoverflow.com/questions/18933975/zip-file-and-print-to-stdout
 out=$(
   echo "Copying ${projectDir}/mocha_output/mochawesome.json to ${outputDir}/mocha.json."
   cp "${projectDir}/mocha_output/mochawesome.json" "${outputDir}/mocha.json"
@@ -160,14 +153,3 @@ out=$(
 )
 status=$?
 printf "<FILE_OPERATIONS exitcode=%d>\n%s\n</FILE_OPERATIONS>\n\n" "${status}" "${out}"
-
-# Pipe the base64 string of the zipped coverage directory to fd 3
-# http://stackoverflow.com/questions/18933975/zip-file-and-print-to-stdout
-# http://stackoverflow.com/questions/24490399/node-js-child-processes-and-pipes-osx-vs-ubuntu
-# ls -l /dev/fd/
-# cat /dev/fd/3
-# >> file
-# exec 3<> file
-# echo "Hello world" >&3
-# #zip -r - "${deliverableDir}/package.json" | base64 -w0 >&3
-# exec 3>&-

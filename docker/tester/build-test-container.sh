@@ -31,6 +31,7 @@ set -o errexit  # exit on command failure
 set -o pipefail # exit if any command in pipeline fails
 set -o nounset  # exit if undeclared variable is used
 
+dockerDir=$(dirname $BASH_SOURCE)
 
 githubApiKey=${1}
 repoName=${2}
@@ -50,7 +51,7 @@ docker build --tag autotest/${repoName}:${commit} \
  --build-arg deliverableCommit=${commit} \
  --build-arg allowDNS=${allowDNS} \
  --build-arg externalServers="${externalServers}" \
- "."
+ "${dockerDir}"
 
 
  docker build --tag autotest/${repoName}:latest \
@@ -58,4 +59,4 @@ docker build --tag autotest/${repoName}:${commit} \
  --build-arg deliverableCommit=${commit} \
  --build-arg allowDNS=${allowDNS:0} \
  --build-arg externalServers="${externalServers}" \
- "."
+ "${dockerDir}"

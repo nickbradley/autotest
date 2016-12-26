@@ -25,4 +25,4 @@ ENV MOCHAWESOME_REPORTDIR=/cpsc310project/mocha_output
 ENV ALLOW_DNS=$allowDNS
 ENV WHITELISTED_SERVERS=$externalServers
 
-CMD timeout 5m /run-tests.sh $PROJECT_URL $PROJECT_COMMIT 2>&1
+CMD timeout 5m /run-tests.sh $PROJECT_URL $PROJECT_COMMIT 2>&1 | tee /output/stdio.txt
