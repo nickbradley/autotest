@@ -1,4 +1,4 @@
-export default class GithubUtil {
+export class GithubUtil {
 
   public static getTeam(repositoryName: string): string {
     // NOTE assume repository name is of the form: CS310-2016Fall/cpsc310project_team10
@@ -30,4 +30,24 @@ export class Commit {
   public toString(): string {
     return this.commitString;
   }
+}
+
+
+export type GithubUsername = string;
+
+export interface GithubAccount {
+  username: GithubUsername;
+}
+
+export class User {
+  private id?: string;
+  private account: GithubAccount;
+  private name?: string;
+
+  constructor(account: GithubAccount) {
+    this.account = account;
+  }
+
+
+
 }

@@ -12,7 +12,7 @@
   "scripts": {
     "config": "npm install; typings install",
     "build": "tsc",
-    "test": "mocha"
+    "test": "mocha --recursive"
   },
   "devDependencies": {
     "@types/node": "^6.0.52",

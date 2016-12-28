@@ -23,6 +23,9 @@ curl -X PUT ${DB_INSTANCE}/settings
 printf "Creating database results "
 curl -X PUT ${DB_INSTANCE}/results
 
+printf "Creating database requests "
+curl -X PUT ${DB_INSTANCE}/requests
+
 # Create views
 printf "Creating views "
 curl -X PUT ${DB_INSTANCE}/settings/_design/current \

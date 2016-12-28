@@ -3,13 +3,16 @@ import Log from '../Util';
 
 export interface CouchServer {
   use(databaseName: string): CouchDatabase;
-  list(callback: (error, result) => void): void;
   auth(username: string, password: string, callback: (error, result, headers) => void): void;
+  db: CouchDatabase
 }
 export interface CouchDatabase {
+  get(documentId: string, callback: (error, result) => void): void
+  list(callback: (error, result) => void): void;
   insert(doc: Object, params: string | Object, callback: (error, result) => void): void;
   view(designDocumentId: string, viewName: string, params: Object, callback: (error, results) => void): void;
   view(designDocumentId: string, viewName: string, callback: (error, results) => void): void;
+  head(documentId: string, callback: (error, result, headers) => void): void;
   multipart: NanoMultipart;
   attachment: NanoAttachment;
 }
@@ -94,7 +97,7 @@ export class Connection {
     let that = this;
     await this.authenticate();
     return new Promise<string[]>((fulfill, reject) => {
-      that.dbServer.list((err, dblist) => {
+      that.dbServer.db.list((err, dblist) => {
         if (err) {
           reject(err);
         }
@@ -131,8 +134,8 @@ export class Connection {
    *
    * @param dbname
    */
-  use(dbname: string): CouchDatabase {
-    return this.dbServer.use(dbname);
+  use(dbName: string): CouchDatabase {
+    return this.dbServer.use(dbName);
   }
 }
 
@@ -142,11 +145,13 @@ export class Connection {
 export class Database {
   private db: CouchDatabase;
   private conn: Connection;
+  private name: string;
 
   constructor(conn: Connection, name: string) {
     try {
       this.db = conn.dbServer.use(name);
       this.conn = conn;
+      this.name = name;
     } catch(err) {
       throw 'Unable to connect to database ' + name + '.\
        Make sure the database exists and is accessible using the credentials\
@@ -155,13 +160,71 @@ export class Database {
 
   }
 
-  async insertRecord(r: Record): Promise<InsertResponse> {
-    console.log('there');
+
+
+  // public async insertRecord(r: Record): Promise<InsertResponse> {
+  //   try {
+  //     await this.conn.authenticate();
+  //     return r.insert(this.db);
+  //   } catch (err) {
+  //     console.log('Error', err);
+  //   }
+  // }
+
+  public async createRecord(record: DatabaseRecord): Promise<CreateResponse> {
     try {
-    await this.conn.authenticate();
-    console.log('here');
-    return await r.insert(this.db); } catch (err) {
-      console.log('Error', err);
+      await this.exists();
+      await this.conn.authenticate();
+      return record.create(this.db);
+    } catch(err) {
+      throw 'Failed to create record in database. ' + err;
+    }
+  }
+  public async updateRecord(id: string, record: DatabaseRecord): Promise<UpdateResponse> {
+    try {
+      await this.conn.authenticate();
+      return record.update(this.db, id);
+    } catch (err) {
+      throw 'Failed to update database record "' + id + '". ' + err;
+    }
+  }
+
+  public async readRecord(id: string): Promise<any> {
+    try {
+      let that = this;
+      await this.conn.authenticate();
+      return new Promise<any>((fulfill, reject) => {
+        that.db.get(id, (err, body) => {
+          if (err) reject(err);
+          fulfill(body);
+        });
+      });
+    } catch(err) {
+      throw 'Failed to read document "' + id + '" from database "' + this.name + '". ' + err;
+    }
+  }
+  public async deleteRecord(id: string): Promise<boolean> {
+    let that = this;
+    try {
+      await this.conn.authenticate();
+      return new Promise<boolean>((fulfill, reject) => {
+
+      });
+    } catch(err) {
+      throw 'Failed to delete record "' + id + '" from database "' + this.name + '". ' + err;
+    }
+  }
+  public async headRecord(id: string): Promise<HeadResponse> {
+    let that = this;
+    try {
+      return new Promise<HeadResponse>((fulfill, reject) => {
+        that.db.head(id, (err, _, headers) => {
+          if (err) reject(err);
+          fulfill(headers);
+        })
+      });
+    } catch(err) {
+      throw 'Failed to get head of document "' + id + '". ' + err;
     }
   }
 
@@ -181,10 +244,46 @@ export class Database {
     });
   }
 
+  private async exists(): Promise<boolean> {
+    let dbList: string[] = await this.conn.list();
+    let that = this;
+    return new Promise<boolean>((fulfill, reject) => {
+      if (dbList.includes(that.name)) {
+        fulfill(true);
+      }
+      reject('Unable to connect to database ' + that.name + '.\
+       Make sure the database exists and is accessible using the credentials\
+       provided in the server connection.');
+    });
+  }
+}
 
+export interface HeadResponse {
+  'content-length': number;  // document size
+  'rev': string;
 }
 
 
-export abstract class Record {
-  abstract async insert(db: CouchDatabase): Promise<InsertResponse>;
+export interface CreateResponse {
+  ok: boolean;
+  id: string;
+  rev: string;
+}
+export interface UpdateResponse {
+
+}
+
+interface ReadResponse {
+
+}
+interface DeleteResponse {
+
+}
+export abstract class DatabaseRecord {
+  abstract async create(db: CouchDatabase): Promise<InsertResponse>;
+  abstract async update(db: CouchDatabase, rev: string): Promise<InsertResponse>;
+  // abstract async read(db: CouchDatabase, id: string): Promise<any>;
+  // abstract async delete(db: CouchDatabase, id: string): Promise<DeleteResponse>;
+
+  // abstract async insert(db: CouchDatabase): Promise<InsertResponse>;
 }

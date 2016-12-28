@@ -1,0 +1,341 @@
+<PROJECT_PULL exitcode=0>
+Cloning repo to /cpsc310project.
+Cloning into '/cpsc310project'...
+Note: checking out 'e728460'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by performing another checkout.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -b with the checkout command again. Example:
+
+  git checkout -b new_branch_name
+
+HEAD is now at e728460... course explorer for d4 with js files?
+</PROJECT_PULL>
+
+<NETWORK exitcode=0>
+Setting iptables to drop all connections.
+</NETWORK>
+
+<PROJECT_BUILD exitcode=0>
+npm info it worked if it ends with ok
+npm info using npm@3.10.3
+npm info using node@v6.3.0
+npm info lifecycle cpsc310project@0.0.1~prebuild: cpsc310project@0.0.1
+npm info lifecycle cpsc310project@0.0.1~build: cpsc310project@0.0.1
+
+> cpsc310project@0.0.1 build /cpsc310project
+> tsc
+
+npm info lifecycle cpsc310project@0.0.1~postbuild: cpsc310project@0.0.1
+npm info ok
+</PROJECT_BUILD>
+
+<DELIVERABLE_BUILD exitcode=1>
+npm info it worked if it ends with ok
+npm info using npm@3.10.3
+npm info using node@v6.3.0
+npm info lifecycle cpsc310d1-pub@0.0.1~prebuild: cpsc310d1-pub@0.0.1
+npm info lifecycle cpsc310d1-pub@0.0.1~build: cpsc310d1-pub@0.0.1
+
+> cpsc310d1-pub@0.0.1 build /deliverable
+> tsc
+
+../cpsc310project/src/controller/InsightFacade.ts(97,21): error TS7005: Variable 'x' implicitly has an 'any' type.
+../cpsc310project/src/controller/ProcessHtml.ts(249,41): error TS7006: Parameter 'res' implicitly has an 'any' type.
+../cpsc310project/src/controller/ProcessHtml.ts(250,42): error TS7006: Parameter 'chunk' implicitly has an 'any' type.
+../cpsc310project/src/controller/ProcessJson.ts(24,13): error TS7005: Variable 'processedDataset' implicitly has an 'any[]' type.
+../cpsc310project/src/controller/QueryController.ts(145,42): error TS7017: Index signature of object type implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(206,41): error TS7017: Index signature of object type implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(310,40): error TS7017: Index signature of object type implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(393,21): error TS7017: Index signature of object type implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(397,21): error TS7017: Index signature of object type implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(414,12): error TS7023: 'sortUpFunction' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+../cpsc310project/src/controller/QueryController.ts(434,12): error TS7023: 'sortDownFunction' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+../cpsc310project/src/controller/QueryController.ts(740,28): error TS7006: Parameter 'obj' implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(741,13): error TS7005: Variable 'arr' implicitly has an 'any[]' type.
+../cpsc310project/src/controller/QueryController.ts(750,12): error TS7023: 'getWhereKeys' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+../cpsc310project/src/controller/QueryController.ts(786,25): error TS7005: Variable 'x' implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(841,17): error TS7017: Index signature of object type implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(843,17): error TS7017: Index signature of object type implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(844,17): error TS7017: Index signature of object type implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(980,13): error TS7005: Variable 'dataID' implicitly has an 'any' type.
+../cpsc310project/src/controller/QueryController.ts(1011,25): error TS7017: Index signature of object type implicitly has an 'any' type.
+
+npm info lifecycle cpsc310d1-pub@0.0.1~build: Failed to exec build script
+npm ERR! Linux 4.8.13-300.fc25.x86_64
+npm ERR! argv "/usr/local/bin/node" "/usr/local/bin/npm" "run" "build"
+npm ERR! node v6.3.0
+npm ERR! npm  v3.10.3
+npm ERR! code ELIFECYCLE
+npm ERR! cpsc310d1-pub@0.0.1 build: `tsc`
+npm ERR! Exit status 2
+npm ERR!
+npm ERR! Failed at the cpsc310d1-pub@0.0.1 build script 'tsc'.
+npm ERR! Make sure you have the latest version of node.js and npm installed.
+npm ERR! If you do, this is most likely a problem with the cpsc310d1-pub package,
+npm ERR! not with npm itself.
+npm ERR! Tell the author that this fails on your system:
+npm ERR!     tsc
+npm ERR! You can get information on how to open an issue for this project with:
+npm ERR!     npm bugs cpsc310d1-pub
+npm ERR! Or if that isn't available, you can get their info via:
+npm ERR!     npm owner ls cpsc310d1-pub
+npm ERR! There is likely additional logging output above.
+
+npm ERR! Please include the following file with any support request:
+npm ERR!     /deliverable/npm-debug.log
+</DELIVERABLE_BUILD>
+
+<PROJECT_COVERAGE exitcode=0>
+=============================================================================
+Writing coverage object [/cpsc310project/coverage/coverage.json]
+Writing coverage reports at [/cpsc310project/coverage]
+=============================================================================
+
+=============================== Coverage summary ===============================
+Statements   : 42.95% ( 381/887 )
+Branches     : 33.42% ( 134/401 )
+Functions    : 41.56% ( 32/77 )
+Lines        : 42.95% ( 381/887 )
+================================================================================
+
+npm info lifecycle cpsc310project@0.0.1~cover: Failed to exec cover script
+npm ERR! Linux 4.8.13-300.fc25.x86_64
+npm ERR! argv "/usr/local/bin/node" "/usr/local/bin/npm" "run" "cover"
+npm ERR! node v6.3.0
+npm ERR! npm  v3.10.3
+npm ERR! code ELIFECYCLE
+npm ERR! cpsc310project@0.0.1 cover: `istanbul cover _mocha`
+npm ERR! Exit status 14
+npm ERR!
+npm ERR! Failed at the cpsc310project@0.0.1 cover script 'istanbul cover _mocha'.
+npm ERR! Make sure you have the latest version of node.js and npm installed.
+npm ERR! If you do, this is most likely a problem with the cpsc310project package,
+npm ERR! not with npm itself.
+npm ERR! Tell the author that this fails on your system:
+npm ERR!     istanbul cover _mocha
+npm ERR! You can get information on how to open an issue for this project with:
+npm ERR!     npm bugs cpsc310project
+npm ERR! Or if that isn't available, you can get their info via:
+npm ERR!     npm owner ls cpsc310project
+npm ERR! There is likely additional logging output above.
+
+npm ERR! Please include the following file with any support request:
+npm ERR!     /cpsc310project/npm-debug.log
+</PROJECT_COVERAGE>
+
+<DELIVERABLE_TESTS exitcode=1>
+npm info it worked if it ends with ok
+npm info using npm@3.10.3
+npm info using node@v6.3.0
+npm info lifecycle cpsc310d1-pub@0.0.1~pretestprog: cpsc310d1-pub@0.0.1
+npm info lifecycle cpsc310d1-pub@0.0.1~testprog: cpsc310d1-pub@0.0.1
+
+> cpsc310d1-pub@0.0.1 testprog /deliverable
+> mocha -R mochawesome --timeout 60000
+
+<T> 12/25/2016, 2:57:39 AM: DatasetController::init()
+<X> 12/25/2016, 2:57:39 AM: Reading: ./test/valid_keys_queries.json
+<X> 12/25/2016, 2:57:39 AM: Reading: ./test/invalid_queries.json
+<X> 12/25/2016, 2:57:39 AM: Reading: ./test/valid_queries.json
+[mochawesome] Generating report files...
+
+
+
+  REST Interface
+    ~Omega~REST PUT 204.
+<X> 12/25/2016, 2:57:39 AM: RESTSpec::beforeEach() - start
+<I> 12/25/2016, 2:57:39 AM: Server::<init>( 4321 )
+<I> 12/25/2016, 2:57:39 AM: Server::start() - start
+<I> 12/25/2016, 2:57:39 AM: Server::start() - restify listening: http://[::]:4321
+<X> 12/25/2016, 2:57:39 AM: RESTSpec::beforeEach() - started: true
+
+      ✓
+	[ PUT http://localhost:4321/dataset/rooms ] (5006ms)
+<I> 12/25/2016, 2:57:44 AM: Server::close()
+<X> 12/25/2016, 2:57:44 AM: RESTSpec::afterEach() - closed: true
+    ~Orion~Rest PUT 201.
+<X> 12/25/2016, 2:57:44 AM: RESTSpec::beforeEach() - start
+<I> 12/25/2016, 2:57:44 AM: Server::<init>( 4321 )
+<I> 12/25/2016, 2:57:44 AM: Server::start() - start
+<I> 12/25/2016, 2:57:45 AM: Server::start() - restify listening: http://[::]:4321
+<X> 12/25/2016, 2:57:45 AM: RESTSpec::beforeEach() - started: true
+
+      ✓
+	[ PUT http://localhost:4321/dataset/rooms ] (5006ms)
+<I> 12/25/2016, 2:57:50 AM: Server::close()
+<X> 12/25/2016, 2:57:50 AM: RESTSpec::afterEach() - closed: true
+    ~Phoenix~REST PUT 400.
+<X> 12/25/2016, 2:57:50 AM: RESTSpec::beforeEach() - start
+<I> 12/25/2016, 2:57:50 AM: Server::<init>( 4321 )
+<I> 12/25/2016, 2:57:50 AM: Server::start() - start
+<I> 12/25/2016, 2:57:50 AM: Server::start() - restify listening: http://[::]:4321
+<X> 12/25/2016, 2:57:50 AM: RESTSpec::beforeEach() - started: true
+
+      ✓
+	[ PUT http://localhost:4321/dataset/rooms ] (5005ms)
+<I> 12/25/2016, 2:57:55 AM: Server::close()
+<X> 12/25/2016, 2:57:55 AM: RESTSpec::afterEach() - closed: true
+    ~Revolution~ REST POST 424.
+<X> 12/25/2016, 2:57:55 AM: RESTSpec::beforeEach() - start
+<I> 12/25/2016, 2:57:55 AM: Server::<init>( 4321 )
+<I> 12/25/2016, 2:57:55 AM: Server::start() - start
+<I> 12/25/2016, 2:57:55 AM: Server::start() - restify listening: http://[::]:4321
+<X> 12/25/2016, 2:57:55 AM: RESTSpec::beforeEach() - started: true
+
+      ✓
+	[ POST http://localhost:4321//query ] (5005ms)
+<I> 12/25/2016, 2:58:00 AM: Server::close()
+<X> 12/25/2016, 2:58:00 AM: RESTSpec::afterEach() - closed: true
+    ~Piglet~ POST 200.
+<X> 12/25/2016, 2:58:00 AM: RESTSpec::beforeEach() - start
+<I> 12/25/2016, 2:58:00 AM: Server::<init>( 4321 )
+<I> 12/25/2016, 2:58:00 AM: Server::start() - start
+<I> 12/25/2016, 2:58:00 AM: Server::start() - restify listening: http://[::]:4321
+<X> 12/25/2016, 2:58:00 AM: RESTSpec::beforeEach() - started: true
+
+      ✓
+	[ POST http://localhost:4321//query ] (5005ms)
+<I> 12/25/2016, 2:58:05 AM: Server::close()
+<X> 12/25/2016, 2:58:05 AM: RESTSpec::afterEach() - closed: true
+    ~Prelude~ REST DELETE 404.
+<X> 12/25/2016, 2:58:05 AM: RESTSpec::beforeEach() - start
+<I> 12/25/2016, 2:58:05 AM: Server::<init>( 4321 )
+<I> 12/25/2016, 2:58:05 AM: Server::start() - start
+<I> 12/25/2016, 2:58:05 AM: Server::start() - restify listening: http://[::]:4321
+<X> 12/25/2016, 2:58:05 AM: RESTSpec::beforeEach() - started: true
+
+      ✓
+	[ DELETE http://localhost:4321/dataset/courses ] (5005ms)
+<I> 12/25/2016, 2:58:10 AM: Server::close()
+<X> 12/25/2016, 2:58:10 AM: RESTSpec::afterEach() - closed: true
+    ~Python~ REST DELETE 204.
+<X> 12/25/2016, 2:58:10 AM: RESTSpec::beforeEach() - start
+<I> 12/25/2016, 2:58:10 AM: Server::<init>( 4321 )
+<I> 12/25/2016, 2:58:10 AM: Server::start() - start
+<I> 12/25/2016, 2:58:10 AM: Server::start() - restify listening: http://[::]:4321
+<X> 12/25/2016, 2:58:10 AM: RESTSpec::beforeEach() - started: true
+
+      ✓
+	[ DELETE http://localhost:4321/dataset/rooms ] (5006ms)
+<I> 12/25/2016, 2:58:15 AM: Server::close()
+<X> 12/25/2016, 2:58:15 AM: RESTSpec::afterEach() - closed: true
+    ~Quadro~ REST DELETE 404.
+<X> 12/25/2016, 2:58:15 AM: RESTSpec::beforeEach() - start
+<I> 12/25/2016, 2:58:15 AM: Server::<init>( 4321 )
+<I> 12/25/2016, 2:58:15 AM: Server::start() - start
+<I> 12/25/2016, 2:58:15 AM: Server::start() - restify listening: http://[::]:4321
+<X> 12/25/2016, 2:58:15 AM: RESTSpec::beforeEach() - started: true
+
+      ✓
+	[ DELETE http://localhost:4321/dataset/courses ] (5005ms)
+<I> 12/25/2016, 2:58:20 AM: Server::close()
+<X> 12/25/2016, 2:58:20 AM: RESTSpec::afterEach() - closed: true
+    ~Quantum~ REST POST 424.
+<X> 12/25/2016, 2:58:20 AM: RESTSpec::beforeEach() - start
+<I> 12/25/2016, 2:58:20 AM: Server::<init>( 4321 )
+<I> 12/25/2016, 2:58:20 AM: Server::start() - start
+<I> 12/25/2016, 2:58:20 AM: Server::start() - restify listening: http://[::]:4321
+<X> 12/25/2016, 2:58:20 AM: RESTSpec::beforeEach() - started: true
+
+      ✓
+	[ POST http://localhost:4321//query ] (5005ms)
+<I> 12/25/2016, 2:58:25 AM: Server::close()
+<X> 12/25/2016, 2:58:25 AM: RESTSpec::afterEach() - closed: true
+    ~Quicksilver~ REST POST 400.
+<X> 12/25/2016, 2:58:25 AM: RESTSpec::beforeEach() - start
+<I> 12/25/2016, 2:58:25 AM: Server::<init>( 4321 )
+<I> 12/25/2016, 2:58:25 AM: Server::start() - start
+<I> 12/25/2016, 2:58:25 AM: Server::start() - restify listening: http://[::]:4321
+<X> 12/25/2016, 2:58:25 AM: RESTSpec::beforeEach() - started: true
+
+      ✓
+	[ POST http://localhost:4321//query ] (5005ms)
+<I> 12/25/2016, 2:58:30 AM: Server::close()
+<X> 12/25/2016, 2:58:30 AM: RESTSpec::afterEach() - closed: true
+
+  D3 Facade Tests
+<X> 12/25/2016, 2:58:30 AM: QueryService::before() - started
+<T> 12/25/2016, 2:58:30 AM: DatasetController::process( courses... )
+<T> 12/25/2016, 2:58:30 AM: DatasetController::init()
+beginning false
+<T> 12/25/2016, 2:58:30 AM: DatasetController::process( rooms... )
+<T> 12/25/2016, 2:58:30 AM: DatasetController::init()
+<T> 12/25/2016, 2:58:30 AM: DatasetController::process(..) - unzipped
+<T> 12/25/2016, 2:58:30 AM: DatasetController::process(..) - unzipped
+before fulfill false
+parsing html files
+false
+<X> 12/25/2016, 2:58:32 AM: QueryService::before() - stopped
+<T> 12/25/2016, 2:58:32 AM: DatasetController::process(..) - unzip ERROR: getaddrinfo ENOTFOUND skaha.cs.ubc.ca skaha.cs.ubc.ca:8022
+<E> 12/25/2016, 2:58:32 AM: QueryService::before() - ERROR: [object Object]
+
+    1) "before all" hook
+
+
+  10 passing (2m)
+  1 failing
+
+  1) D3 Facade Tests "before all" hook:
+     Error: timeout of 60000ms exceeded. Ensure the done() callback is being called in this test.
+
+
+
+
+
+[mochawesome] Report saved to /cpsc310project/mocha_output/mochawesome.html
+
+
+
+npm info lifecycle cpsc310d1-pub@0.0.1~testprog: Failed to exec testprog script
+npm ERR! Linux 4.8.13-300.fc25.x86_64
+npm ERR! argv "/usr/local/bin/node" "/usr/local/bin/npm" "run" "testprog"
+npm ERR! node v6.3.0
+npm ERR! npm  v3.10.3
+npm ERR! code ELIFECYCLE
+npm ERR! cpsc310d1-pub@0.0.1 testprog: `mocha -R mochawesome --timeout 60000`
+npm ERR! Exit status 1
+npm ERR!
+npm ERR! Failed at the cpsc310d1-pub@0.0.1 testprog script 'mocha -R mochawesome --timeout 60000'.
+npm ERR! Make sure you have the latest version of node.js and npm installed.
+npm ERR! If you do, this is most likely a problem with the cpsc310d1-pub package,
+npm ERR! not with npm itself.
+npm ERR! Tell the author that this fails on your system:
+npm ERR!     mocha -R mochawesome --timeout 60000
+npm ERR! You can get information on how to open an issue for this project with:
+npm ERR!     npm bugs cpsc310d1-pub
+npm ERR! Or if that isn't available, you can get their info via:
+npm ERR!     npm owner ls cpsc310d1-pub
+npm ERR! There is likely additional logging output above.
+
+npm ERR! Please include the following file with any support request:
+npm ERR!     /deliverable/npm-debug.log
+</DELIVERABLE_TESTS>
+
+<FILE_OPERATIONS exitcode=0>
+Copying /cpsc310project/mocha_output/mochawesome.json to /output/mocha.json.
+Archiving /cpsc310project/coverage as /output/coverage.zip.
+  adding: cpsc310project/coverage/ (stored 0%)
+  adding: cpsc310project/coverage/coverage.json (deflated 86%)
+  adding: cpsc310project/coverage/lcov.info (deflated 75%)
+  adding: cpsc310project/coverage/lcov-report/ (stored 0%)
+  adding: cpsc310project/coverage/lcov-report/base.css (deflated 68%)
+  adding: cpsc310project/coverage/lcov-report/sort-arrow-sprite.png (stored 0%)
+  adding: cpsc310project/coverage/lcov-report/sorter.js (deflated 73%)
+  adding: cpsc310project/coverage/lcov-report/prettify.css (deflated 55%)
+  adding: cpsc310project/coverage/lcov-report/prettify.js (deflated 60%)
+  adding: cpsc310project/coverage/lcov-report/index.html (deflated 73%)
+  adding: cpsc310project/coverage/lcov-report/src/ (stored 0%)
+  adding: cpsc310project/coverage/lcov-report/src/index.html (deflated 71%)
+  adding: cpsc310project/coverage/lcov-report/src/Util.js.html (deflated 73%)
+  adding: cpsc310project/coverage/lcov-report/src/controller/ (stored 0%)
+  adding: cpsc310project/coverage/lcov-report/src/controller/index.html (deflated 78%)
+  adding: cpsc310project/coverage/lcov-report/src/controller/DatasetController.js.html (deflated 81%)
+  adding: cpsc310project/coverage/lcov-report/src/controller/InsightFacade.js.html (deflated 86%)
+  adding: cpsc310project/coverage/lcov-report/src/controller/ProcessHtml.js.html (deflated 89%)
+  adding: cpsc310project/coverage/lcov-report/src/controller/ProcessJson.js.html (deflated 82%)
+  adding: cpsc310project/coverage/lcov-report/src/controller/QueryController.js.html (deflated 90%)
+</FILE_OPERATIONS>

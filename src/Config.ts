@@ -1,13 +1,13 @@
 let env = require('node-env-file');
 
 import {Connection as DBConn, Database} from './model/Database';
-import TestQueue from './model/TestQueue';
+import * as Url from 'url';
 
 //http://stackoverflow.com/questions/2503489/design-pattern-for-one-time-loaded-configuration-properties
 
 export interface IConfig {
   getDBConnection(): DBConn;
-  getTestQueue(): TestQueue;
+  getRedisAddress(): Url.Url;
   getMentionTag(): string;
   getGithubToken(): string;
 }
@@ -18,7 +18,7 @@ export interface IConfig {
 class Config {
   private static instance: Config;
   private DBConn: DBConn;
-  private testQueue: TestQueue;
+  private redisAddress: Url.Url;
   private mentionTag: string;
   private githubToken: string;
 
@@ -28,13 +28,13 @@ class Config {
     let dbInstance = process.env.DB_INSTANCE || 'http://localhost:5984';
     let dbAppUser = process.env.DB_APP_USERNAME;
     let dbAppPass = process.env.DB_APP_PASSWORD;
-    let redisAddress = process.env.REDIS_ADDRESS;
+    let redisAddress = process.env.REDIS_ADDRESS || 'http://localhost:6379';
     let mentionTag = process.env.MENTION_TAG || '@cpsc310bot';
     let githubToken = process.env.GITHUB_API_KEY;
 
 
     this.DBConn = new DBConn(dbInstance, dbAppUser, dbAppPass);
-    this.testQueue = new TestQueue(redisAddress, 'autotest-testQueue')
+    this.redisAddress = Url.parse(redisAddress);
     this.mentionTag = mentionTag;
     this.githubToken = githubToken;
   }
@@ -51,8 +51,8 @@ class Config {
     return this.DBConn;
   }
 
-  public getTestQueue(): TestQueue {
-    return this.testQueue;
+  public getRedisAddress(): Url.Url {
+    return this.redisAddress;
   }
 
   public getMentionTag(): string {
@@ -68,8 +68,8 @@ export class AppConfig implements IConfig {
   public getDBConnection(): DBConn {
     return Config.getInstance().getDBConnection();
   }
-  public getTestQueue(): TestQueue {
-    return Config.getInstance().getTestQueue();
+  public getRedisAddress(): Url.Url {
+    return Config.getInstance().getRedisAddress();
   }
   public getMentionTag(): string {
     return Config.getInstance().getMentionTag();
