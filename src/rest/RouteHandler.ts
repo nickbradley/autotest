@@ -83,6 +83,7 @@ export default class RouteHandler {
     let controller;
     // enumerate GitHub event
     switch (req.header('X-GitHub-Event')) {
+
       case 'commit_comment':
         Log.trace('Got commit_comment event.');
         controller = new CommitCommentController();
@@ -96,19 +97,25 @@ export default class RouteHandler {
           res.json(404);
         });
         break;
+
       case 'push':
         try {
           Log.trace('Got push event.');
           controller = new PushController();
           controller.process(body).then(result => {
-            // indicate in queue
+            console.log(result);
+            let tests: string[] = result.map(job => {return job.data.test.name});
+            res.json(201, {body: 'Commit has been queued for testing against: ' + tests.join(', ')});
           }).catch(err => {
-            // couldn't be added to queue
+            Log.warn('Failed to queue commit for testing. ' + err);
+            res.json(500, {body: 'Failed to queue commit for testing.'});
           });
         } catch(err) {
-
+          Log.warn('Failed to queue commit for testing. ' + err);
+          res.json(500, {body: 'Failed to queue commit for testing.'});
         }
         break;
+
       default:
         Log.warn('Unhandled GitHub event.');
     }

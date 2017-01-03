@@ -1,3 +1,9 @@
+export interface GithubResponse {
+  statusCode: number;
+  body: string;
+}
+
+
 export class GithubUtil {
 
   public static getTeam(repositoryName: string): string {

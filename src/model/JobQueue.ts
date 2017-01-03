@@ -6,16 +6,16 @@ import {Deliverable} from './settings/DeliverableRecord'
 export {Job} from 'bull';
 
 // Newest version supports more option then specified in type file
-interface AddOptions extends bull.AddOptions{
+export interface JobOpts extends bull.AddOptions {
   jobId?: number | string;
   removeOnComplete?: boolean;
 }
 
-export interface JobData {
-  dName: string,
-  team: string,
-  commit: Commit
-}
+// export interface JobData {
+//   dName: string,
+//   team: string,
+//   commit: Commit
+// }
 
 
 // interface ProcessJobCallback {
@@ -70,13 +70,9 @@ export class JobQueue {
   }
 
 
-  public async add(job: JobData): Promise<bull.Job> {
+  public async add(job: Object, opts: JobOpts): Promise<bull.Job> {
     if (!this.initialized) {
       await this.init();
-    }
-    let opts: AddOptions = {
-      jobId: job.dName + '-'  + job.team + '#' + job.commit.short,
-      removeOnComplete: true
     }
     return this.queue.add(job, opts);
   }

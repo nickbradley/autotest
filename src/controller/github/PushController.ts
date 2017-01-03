@@ -2,9 +2,9 @@ import {IConfig, AppConfig} from '../../Config';
 import {Database} from '../../model/Database';
 import PushRecord from '../../model/requests/PushRecord';
 import TestJobController from '../TestJobController';
-import {JobData, Job} from '../../model/JobQueue';
+import {Job} from '../../model/JobQueue';
 import {DeliverableRecord} from '../../model/settings/DeliverableRecord';
-
+import {TestJob} from '../TestJobController';
 
 export default class PushController {
   private config: IConfig;
@@ -28,14 +28,22 @@ export default class PushController {
       for (const key of Object.keys(deliverableRecord.deliverables)) {
         if (key.match(/d\d+/)) {
           let deliverable = deliverableRecord.deliverables[key];
-          let jobData: JobData = {
-            dName: deliverable.repos[0].name,
-            team: record.team,
-            commit: record.commit
-          }
           let rDate: Date = new Date(deliverable.releaseDate);
           if (rDate <= currentDate) {
-            promises.push(this.enqueue(jobData));
+            for (let repo of deliverable.repos) {
+              let testJob: TestJob = {
+                user: record.user,
+                team: record.team,
+                commit: record.commit.short,
+                test: {
+                  name: repo.name,
+                  image: 'autotest/' + repo.name + ':' + (repo.commit ? repo.commit : 'latest'),
+                  visibility: repo.visibility,
+                  deliverable: key
+                }
+              }
+              promises.push(this.enqueue(testJob));
+            }
           }
         }
       }
@@ -51,7 +59,7 @@ export default class PushController {
     return db.createRecord(record);
   }
 
-  private async enqueue(job: JobData): Promise<Job> {
+  private async enqueue(job: TestJob): Promise<Job> {
     let controller: TestJobController = TestJobController.getInstance();
     return controller.addJob(job);
   }

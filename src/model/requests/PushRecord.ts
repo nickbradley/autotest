@@ -5,7 +5,7 @@ import {GithubUtil, Commit} from '../GithubUtil';
 export default class PushRecord implements DatabaseRecord {
   private payload: JSON;
   private _team: string;
-  private user: string;
+  private _user: string;
   private _commit: Commit;
   private timestamp: number;
 
@@ -13,7 +13,7 @@ export default class PushRecord implements DatabaseRecord {
     try {
       this.payload = payload;
       this._team = GithubUtil.getTeam(payload.repository.name);
-      this.user = payload.pusher.name;
+      this._user = payload.pusher.name;
       this._commit = new Commit(payload.after);
       this.timestamp = +new Date();
     } catch(err) {
@@ -23,6 +23,10 @@ export default class PushRecord implements DatabaseRecord {
 
   get team(): string {
     return this._team;
+  }
+
+  get user(): string {
+    return this._user;
   }
 
   get commit(): Commit {

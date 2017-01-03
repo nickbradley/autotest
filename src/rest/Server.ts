@@ -2,18 +2,19 @@ import restify = require('restify');
 
 import Log from "../Util";
 import RouteHandler from "../rest/RouteHandler";
-
-
+import {IConfig, AppConfig} from '../Config';
+import TestJobController from '../controller/TestJobController';
 /**
  * This configures the REST endpoints for the server.
  */
 export default class Server {
   private rest: restify.Server;
-  private port: string;
+  private port: number;
 
-  constructor(port: string) {
-    this.port = port;
-    Log.info("Server::<init>( " + port + " )");
+  constructor() {
+    let config: IConfig = new AppConfig();
+    this.port = config.getAppPort();
+    Log.info("Server::<init>( " + this.port + " )");
   }
 
   /**
@@ -22,10 +23,11 @@ export default class Server {
    *
    * @returns {Promise<boolean>}
    */
-  public stop(): Promise<boolean> {
+  public async stop(): Promise<boolean> {
     Log.info('Server::close()');
     let that = this;
-    return new Promise(function (fulfill) {
+    await TestJobController.getInstance().close();
+    return new Promise<boolean>(function (fulfill) {
       that.rest.close(function () {
           fulfill(true);
       });

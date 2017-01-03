@@ -17,12 +17,17 @@ describe('Push Controller', function() {
     controller = new PushController();
   });
   after(async function() {
-    do {
-      await timeout(100);
-    } while(await jobQueueController.count() > 0)
+
     await jobQueueController.close();
   });
   it('should process.', async function() {
-    await controller.process(data);
+    this.timeout(4*60*1000);
+    let result = await controller.process(data);
+    // console.log('****************************************');
+    // console.log(result);
+    do {
+      await timeout(100);
+    } while(await jobQueueController.count() > 0)
+    await timeout(2*60*1000);
   });
 });

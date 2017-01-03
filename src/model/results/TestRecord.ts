@@ -5,16 +5,7 @@ import {IConfig, AppConfig} from '../../Config';
 
 import {Commit} from '../GithubUtil';
 import {CouchDatabase,Database, DatabaseRecord, InsertResponse} from '../Database';
-
-
-export interface Deliverable {
-  name: string;  // short name: d1-priv
-  repo: string;  // full name: cpsc310d1-priv
-  visibility: number;
-  image: string;
-}
-
-
+import {TestJob, TestJobDeliverable} from '../../controller/TestJobController';
 
 
 
@@ -51,22 +42,6 @@ export interface ProcessedTag {
   exitcode: number;
 }
 
-
-export interface ITestRecord {
-  _id: string;
-  _rev?: string;
-
-  team: string;
-  deliverable: Deliverable;
-
-
-  stdio: string;
-  coverageZip: Buffer;
-
-}
-
-
-
 export default class TestRecord implements DatabaseRecord {
   // private config: IConfig;
 
@@ -77,7 +52,7 @@ export default class TestRecord implements DatabaseRecord {
   private _id: string;
   private _rev: string;
   private team: string;
-  private deliverable: Deliverable;
+  private deliverable: TestJobDeliverable;
   private testStats: TestStats;
   private coverageStats: CoverageStats;
   private buildFailed: boolean;
@@ -85,23 +60,20 @@ export default class TestRecord implements DatabaseRecord {
   private testReport: any;
   private commit: string;
   private committer: string;
+  private containerExitCode: number = 0;
   private timestamp: number;
 
-  constructor(githubToken: string, team: string, user: string, commit: Commit, deliverable: Deliverable) {
-    //this.config = new AppConfig();
+  constructor(githubToken: string, testJob: TestJob) {
     this.githubToken = githubToken;
-    this.team = team;
-    this.deliverable = deliverable
-    this.commit = commit.short;
-    this.committer = user;
+    this.team = testJob.team;
+    this.deliverable = testJob.test;
+    this.commit = testJob.commit;
+    this.committer = testJob.user;
     this.timestamp = +new Date();
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.name;
   }
 
   public async generate() {
-    //let db: Database = new Database(this.config.getDBConnection(), 'results');
-    let promises: Promise<boolean>[] = [];
-    //let db = require('nano')("http://localhost:5984/results");
     let tempDir = tmp.dirSync();
     let file: string = './docker/tester/run-test-container.sh';
     let args: string[] = [
@@ -115,63 +87,72 @@ export default class TestRecord implements DatabaseRecord {
       encoding: 'utf8'
     }
 
-    await new Promise((fulfill, reject) => {
+    return new Promise((fulfill, reject) => {
       cp.execFile(file, args, options, (error, stdout, stderr) => {
-        if (error) reject(error);
-        fulfill();
-      });
-    });
-
-    let readTranscript: Promise<boolean> = new Promise((fulfill, reject) => {
-      fs.readFile(tempDir.name + '/stdio.txt', 'utf8', (err, data) => {
-        if (err) reject(err);
-        try {
-          this.stdio = data;
-
-          // Process the project build tag
-          let buildTag: ProcessedTag = this.processProjectBuildTag(data);
-          this.buildFailed = (buildTag.exitcode > 0 ? true : false);
-          this.buildMsg = buildTag.content;
-
-          // Process the coverage tag
-          let coverageTag: ProcessedTag = this.processCoverageTag(data);
-          this.coverageStats = coverageTag.content;
-
-          fulfill(true);
-        } catch(err) {
-          reject(err);
+        if (error) {
+          this.containerExitCode = error.code;
         }
-      });
-    });
-    promises.push(readTranscript);
 
-    let readTests: Promise<boolean> = new Promise((fulfill, reject) => {
-      fs.readFile(tempDir.name + '/mocha.json', 'utf8', (err, data) => {
-        if (err) reject(err);
-        try {
-          let tests: TestOutput = this.processMochaJson(data);
-          this.testStats = tests.testStats;
-          this.testReport = tests.mocha;
+        let promises: Promise<boolean>[] = [];
+        let readTranscript: Promise<boolean> = new Promise((fulfill, reject) => {
+          fs.readFile(tempDir.name + '/stdio.txt', 'utf8', (err, data) => {
+            if (err) {
+              console.log('No stdout!')
+              return reject(err);
+            }
+            try {
+              this.stdio = data;
+
+              // Process the project build tag
+              let buildTag: ProcessedTag = this.processProjectBuildTag(data);
+              this.buildFailed = (buildTag.exitcode > 0 ? true : false);
+              this.buildMsg = buildTag.content;
+
+              // Process the coverage tag
+              let coverageTag: ProcessedTag = this.processCoverageTag(data);
+              this.coverageStats = coverageTag.content;
+
+              fulfill(true);
+            } catch(err) {
+              fulfill(err);
+            }
+          });
+        });
+        promises.push(readTranscript);
+
+        let readTests: Promise<boolean> = new Promise((fulfill, reject) => {
+          fs.readFile(tempDir.name + '/mocha.json', 'utf8', (err, data) => {
+            if (err) fulfill(err);
+            try {
+              let tests: TestOutput = this.processMochaJson(data);
+              this.testStats = tests.testStats;
+              this.testReport = tests.mocha;
+              fulfill();
+            } catch(err) {
+              fulfill(err);
+            }
+          });
+        });
+        promises.push(readTests);
+
+        let readCoverage: Promise<boolean> = new Promise((fulfill, reject) => {
+          fs.readFile(tempDir.name + '/coverage.zip', (err, data) => {
+            if (err) fulfill(err);
+            this.coverageZip = data;
+            fulfill();
+          });
+        });
+        promises.push(readCoverage);
+
+        Promise.all(promises).then(() => {
           fulfill();
-        } catch(err) {
+        }).catch(err => {
           reject(err);
-        }
+        });
+
+        console.log('Done. Stdout: ');
       });
     });
-    promises.push(readTests);
-
-    let readCoverage: Promise<boolean> = new Promise((fulfill, reject) => {
-      fs.readFile(tempDir.name + '/coverage.zip', (err, data) => {
-        if (err) reject(err);
-        this.coverageZip = data;
-        fulfill();
-      });
-    });
-    promises.push(readCoverage);
-
-    await Promise.all(promises);
-
-    //return db.insert(record);
   }
 
 
@@ -303,48 +284,24 @@ export default class TestRecord implements DatabaseRecord {
       'timestamp': this.timestamp
     }
 
-    let attachments = [
-      {name: 'stdio.txt', data: this.stdio, content_type: 'application/plain'},
-      {name: 'coverage.zip', data: this.coverageZip, content_type: 'application/zip'}
-    ]
+    let attachments = [];
+    if (this.stdio) {
+      attachments.push({name: 'stdio.txt', data: this.stdio, content_type: 'application/plain'});
+    }
+    if (this.coverageZip) {
+      attachments.push({name: 'coverage.zip', data: this.coverageZip, content_type: 'application/zip'});
+    }
 
 
     let that = this;
     return new Promise<InsertResponse>((fulfill, reject) => {
       db.multipart.insert(doc, attachments, this._id, (err, body) => {
-        if (err) reject(err);
+        if (err) {
+          console.log('Failed to insert record!.', err)
+          reject(err);
+        }
         fulfill(body);
       });
     });
   }
-
-  // public async insertWithAttachments(db: CouchDatabase): Promise<InsertResponse> {
-  //   let doc = {
-  //     'team': this.team,
-  //     'deliverable': this.deliverable,
-  //     'testStats': this.testStats,
-  //     'coverStats': this.coverageStats,
-  //     'buildFailed': this.buildFailed,
-  //     'buildMsg': this.buildMsg,
-  //     'testReport': this.testReport,
-  //     'commit': this.commit,
-  //     'committer': this.committer,
-  //     'timestamp': this.timestamp
-  //   }
-  //
-  //   let attachments = [
-  //     {name: 'stdio.txt', data: this.stdio, content_type: 'application/plain'},
-  //     {name: 'coverage.zip', data: this.coverageZip, content_type: 'application/zip'}
-  //   ]
-  //
-  //
-  //   let that = this;
-  //   return new Promise<InsertResponse>((fulfill, reject) => {
-  //     db.multipart.insert(doc, attachments, this._id, (err, body) => {
-  //       if (err) reject(err);
-  //       fulfill(body);
-  //     });
-  //   });
-  // }
-
 }

@@ -1,5 +1,6 @@
 let https = require('https');
-let url = require('url');
+import url = require('url');
+import {Url} from 'url';
 
 import {IConfig, AppConfig} from '../../Config';
 
@@ -10,15 +11,15 @@ export default class PostbackController {
   private config: IConfig;
   private reqOptions: any;
 
-  constructor(hook: string) {
+  constructor(hook: Url) {
     try {
       this.config = new AppConfig();
 
-      let hookUrl = url.parse(hook);
+      //let hookUrl = url.parse(hook);
       this.reqOptions = {
-          host: hookUrl.host,
+          host: hook.host,
           port: 443,
-          path: hookUrl.path,
+          path: hook.path,
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

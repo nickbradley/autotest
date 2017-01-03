@@ -147,9 +147,9 @@ printf "<DELIVERABLE_TESTS exitcode=%d>\n%s\n</DELIVERABLE_TESTS>\n\n" "${status
 # http://stackoverflow.com/questions/18933975/zip-file-and-print-to-stdout
 out=$(
   echo "Copying ${projectDir}/mocha_output/mochawesome.json to ${outputDir}/mocha.json."
-  cp "${projectDir}/mocha_output/mochawesome.json" "${outputDir}/mocha.json"
+  cp "${projectDir}/mocha_output/mochawesome.json" "${outputDir}/mocha.json" 2>&1
   echo "Archiving ${projectDir}/coverage as ${outputDir}/coverage.zip."
-  zip -r "${outputDir}/coverage.zip" "${projectDir}/coverage"
+  zip -r "${outputDir}/coverage.zip" "${projectDir}/coverage" 2>&1
 )
 status=$?
 printf "<FILE_OPERATIONS exitcode=%d>\n%s\n</FILE_OPERATIONS>\n\n" "${status}" "${out}"

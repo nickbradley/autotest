@@ -50,10 +50,10 @@ export interface ViewResponse {
 }
 
 // docs.couchdb.org/en/2.0.0/api/ddoc/views.html?highlight=get
-export interface QueryParamters {
+export interface QueryParameters {
   conflict?: boolean;  // Includes conflicts information in response. Ignored if "include_docs" isn't true. Default is false.
   descending?: boolean;
-  endkey?: JSON;
+  endkey?: {};
   endkey_docid?: string;
   group?: boolean;
   group_level?: number;
@@ -61,8 +61,8 @@ export interface QueryParamters {
   attachements?: boolean;
   att_encoding_info?: boolean;
   inclusive_end?: boolean;
-  key?: JSON;
-  keys?: JSON[];
+  key?: {} | string;
+  keys?: {}[];
   limit?: number;
   reduce?: boolean;
   skip?: number;
@@ -70,7 +70,7 @@ export interface QueryParamters {
   stale?: string;
   startkey?: JSON;
   startkey_docid?: string;
-  start_key_doc_id: string;
+  start_key_doc_id?: string;
   update_seq?: boolean;
 }
 
@@ -228,7 +228,7 @@ export class Database {
     }
   }
 
-  async view(design: string, name: string, params?: QueryParamters): Promise<ViewResponse> {
+  async view(design: string, name: string, params?: QueryParameters): Promise<ViewResponse> {
     let that = this;
     await this.conn.authenticate();
     return new Promise<ViewResponse>((fulfill, reject) => {

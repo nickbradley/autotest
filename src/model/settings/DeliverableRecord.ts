@@ -21,7 +21,9 @@ export interface Deliverable {
   dueDate: Date;
   releaseDate: Date;
   repos: Repository[];
-
+  rate: number;  // milliseconds
+  gradeFormula: string;
+  runs?: number;  // total number of requests to view test results
   // external servers that should be accessible inside the test container
   externalUrls?: Url.Url[];
 }
