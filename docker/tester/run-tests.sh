@@ -26,14 +26,14 @@ projectDir="/cpsc310project"
 deliverableDir="/deliverable"
 outputDir="/output"
 
-buildCmd="npm run build"
-coverCmd="npm run cover"
-testsCmd="npm run testprog"
+buildCmd="yarn run build"
+coverCmd="yarn run cover"
+testsCmd="yarn run test"
 
 
 # Clone the specified student repo into the projectDir
 # Exit if unable to clone the student's repo
-out=$(./pull-repo.sh $@ "/cpsc310project" 2>&1)
+out=$(./pull-repo.sh $@ "${projectDir}" 2>&1)
 status=$?
 
 printf "<PROJECT_PULL exitcode=%d>\n%s\n</PROJECT_PULL>\n\n" "${status}" "${out}"

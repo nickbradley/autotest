@@ -47,7 +47,7 @@ else
 fi
 
 docker build --tag autotest/${repoName}:${commit} \
- --build-arg deliverableRepoUrl=https://${githubApiKey}@github.com/CS310-2016Fall/${repoName}.git \
+ --build-arg deliverableRepoUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
  --build-arg deliverableCommit=${commit} \
  --build-arg allowDNS=${allowDNS} \
  --build-arg externalServers="${externalServers}" \
@@ -55,7 +55,7 @@ docker build --tag autotest/${repoName}:${commit} \
 
 
  docker build --tag autotest/${repoName}:latest \
- --build-arg deliverableRepoUrl=https://${githubApiKey}@github.com/CS310-2016Fall/${repoName}.git \
+ --build-arg deliverableRepoUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
  --build-arg deliverableCommit=${commit} \
  --build-arg allowDNS=${allowDNS:0} \
  --build-arg externalServers="${externalServers}" \

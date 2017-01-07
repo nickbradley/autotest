@@ -33,7 +33,7 @@ testImage=${4}
 tempDir=${5}
 
 docker run --cap-add=NET_ADMIN \
-           --env PROJECT_URL=https://${githubApiKey}@github.com/CS310-2016Fall/cpsc310project_${team}.git \
+           --env PROJECT_URL=https://${githubApiKey}@github.com/CS310-2017Jan/cpsc310d0_${team}.git \
            --env PROJECT_COMMIT=$projectCommit \
            --volume "${tempDir}":/output/ \
            --rm \
