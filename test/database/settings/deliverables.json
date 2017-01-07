@@ -1,28 +1,17 @@
 {
-  "d1": {
+  "d0": {
     "description": "",
-    "releaseDate": "2016-10-01T23:59:59-08:00",
-    "dueDate": "2016-12-01T23:59:59-08:00",
+    "releaseDate": "2017-01-06T09:00:00",
+    "dueDate": "2017-01-16T12:00:00",
     "repos": [
-      {"name": "cpsc310d1-priv", "url": "https://github.com/CS310-2016Fall/cpsc310d1-priv.git", "visibility": 2}
+      {
+        "name": "d0-testsuite",
+        "url": "https://github.com/CS310-2017Jan/d0-testsuite",
+        "visibility": 0
+      }
     ],
-    "rate": 123 
-  },
-  "d2": {
-    "description": "",
-    "releaseDate": "2016-10-10T23:59:59-08:00",
-    "dueDate": "2016-12-10T23:59:59-08:00",
-    "repos": [
-      {"name": "cpsc310d2-priv", "url": "https://github.com/CS310-2016Fall/cpsc310d2-priv.git", "visibility": 2}
-    ]
-  },
-  "d3": {
-    "description": "",
-    "releaseDate": "2016-10-18T23:59:59-08:00",
-    "dueDate": "2016-12-18T23:59:59-08:00",
-    "repos": [
-      {"name": "cpsc310d3-priv", "url": "https://github.com/CS310-2016Fall/cpsc310d3-priv.git", "visibility": 2}
-    ],
-    "externalUrls": ["http://skaha.cs.ubc.ca:8022"]
+    "rate": 43200000,
+    "gradeFormula": "0.8*<TEST_PERCENTAGE> + 0.2*Math.min(<COVERAGE_PERCENTAGE>+5, 100)",
+    "externalUrls": ["http://skaha.cs.ubc.ca:11313"]
   }
 }

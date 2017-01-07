@@ -30,6 +30,7 @@ export default class CommitCommentRecord implements DatabaseRecord {
   private _deliverable: string;
   private _deliverableRate: number;
   private _isRequest: boolean;
+  private _isProcessed: boolean;
 
   constructor() {
     try {
@@ -45,7 +46,7 @@ export default class CommitCommentRecord implements DatabaseRecord {
     let that = this;
     return new Promise(async (fulfill, reject) => {
       try {
-        that.payload = JSON.parse(payload);
+        that.payload = JSON.parse(JSON.stringify(payload));
         that._commit = new Commit(payload.comment.commit_id);
         that._team = GithubUtil.getTeam(payload.repository.name);
         that._user = payload.comment.user.login;
@@ -53,7 +54,7 @@ export default class CommitCommentRecord implements DatabaseRecord {
         that.message = payload.comment.body;
 
         that._isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
-
+        that._isProcessed = true;
         if (that._isRequest) {
           let reqDeliverable: string = that.extractDeliverable(that.message);
           let deliverable: FetchedDeliverable = await that.fetchDeliverable(reqDeliverable);
@@ -78,21 +79,24 @@ export default class CommitCommentRecord implements DatabaseRecord {
         let deliverableRecord: DeliverableRecord = new DeliverableRecord(deliverablesDoc);
         let now: Date = new Date();
 
-        if (Object.keys(deliverableRecord).includes(key)) {
+        if (deliverableRecord.containsKey(key)) {
           fulfill({
             key: key,
-            deliverable: deliverableRecord[key]
+            deliverable: deliverableRecord.item(key)
           });
         } else {
-          let fetchedDeliverables: FetchedDeliverable[];
-          for (const key of Object.keys(deliverableRecord.deliverables)) {
-            if (key.match(/d\d+/)) {
-              fetchedDeliverables.push({key: key, deliverable: deliverableRecord[key]});
+          let fetchedDeliverables: FetchedDeliverable[] = [];
+          for (const key of deliverableRecord.keys()) {
+            let deliverable: Deliverable = deliverableRecord.item(key);
+            if (new Date(deliverable.releaseDate) <= now) {
+              fetchedDeliverables.push({key: key, deliverable: deliverable});
             }
           }
-          let latestDeliverable: FetchedDeliverable = fetchedDeliverables.filter(record => {
-            return record.deliverable.dueDate <= now;
-          }).reduce((prev, current) => (prev.deliverable.dueDate > current.deliverable.dueDate) ? prev : current)
+
+          let latestDeliverable: FetchedDeliverable = fetchedDeliverables.reduce((prev, current) => {
+            return (prev.deliverable.dueDate > current.deliverable.dueDate) ? prev : current
+          }, fetchedDeliverables[0]);
+
           fulfill(latestDeliverable);
         }
       } catch(err) {
@@ -125,8 +129,12 @@ export default class CommitCommentRecord implements DatabaseRecord {
   get deliverableRate(): number {
     return this._deliverableRate;
   }
-
-
+  get isProcessed(): boolean {
+    return this._isProcessed;
+  }
+  set isProcessed(value: boolean) {
+    this._isProcessed = value;
+  }
 
   public async create(db: CouchDatabase): Promise<InsertResponse> {
     return this.insert(db);
@@ -141,8 +149,8 @@ export default class CommitCommentRecord implements DatabaseRecord {
     Log.trace('CommitCommentRecord::insert()');
     let that = this;
     let comment = JSON.stringify(this.payload);
-    let doc = {isRequest: this._isRequest, deliverable: this._deliverable, team: this.team, user: this.user, commit: this.commit, body: this.message, type: 'commit_comment', timestamp: this.timestamp}
-    let attachments = [{name: 'comment.json', payload: comment, content_type: 'application/json'}];
+    let doc = {isRequest: this._isRequest, isProcessed: this._isProcessed, deliverable: this._deliverable, team: this.team, user: this.user, commit: this.commit, body: this.message, type: 'commit_comment', timestamp: this.timestamp}
+    let attachments = [{name: 'comment.json', data: comment, content_type: 'application/json'}];
     let docName = this.timestamp + '_' + this.team + ':' + this.user + '_' + this._deliverable;
 
     return new Promise<InsertResponse>((fulfill, reject) => {

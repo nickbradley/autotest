@@ -1,16 +1,75 @@
 import restify = require("restify");
-// import {JsonObject, JsonMember, TypedJSON} from "typedjson";
 
 import PushController from '../controller/github/PushController';
+import {TestJob} from '../Controller/TestJobController';
 import CommitCommentController from '../controller/github/CommitCommentController';
-
 import Log from "../Util";
 import Server from "./Server";
-// import {settings, submissionQueue} from "../App";
-// import GithubCommitComment from "../model/GithubCommitComment";
-// import SubmissionController from "../controller/SubmissionController";
+
 
 export default class RouteHandler {
+
+  /**
+   * Handles GitHub POSTs, currently:
+   *  - commit_comment
+   *  - push
+   */
+  public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
+    let body = req.body;
+    let githubEvent: string = req.header('X-GitHub-Event');
+    // enumerate GitHub event
+    switch (githubEvent) {
+      case 'commit_comment':
+        Log.trace('RouteHandler::postGithubHook() - received commit comment.');
+
+        try {
+          let controller: CommitCommentController = new CommitCommentController();
+          controller.process(body).then(result => {
+            res.json(result.statusCode, result.body);
+          }).catch(err => {
+            Log.error('RouteHandler::postGithubHook() - ERROR processing commit comment. ' + err);
+            res.json(404, {body: "Failed to process commit comment."});
+          });
+        } catch(err) {
+          Log.error('RouteHandler::postGithubHook() - ERROR processing commit comment. ' + err);
+          res.json(404, {body: "Failed to process commit comment"});
+        }
+        break;
+
+      case 'push':
+        Log.trace('RouteHandler::postGithubHook() - received push event.');
+
+        try {
+          let controller: PushController = new PushController();
+          controller.process(body).then(result => {
+            let tests: string[] = result.map(job => {
+              let testJob: TestJob = job.data as TestJob;
+              return testJob.test.name;
+            });
+            res.json(202, {body: 'Commit has been queued for testing against: ' + tests.join(', ')});
+          }).catch(err => {
+            Log.error('RouteHandler::postGithubHook() - ERROR enqueuing commit for testing. ' + err);
+            res.json(500, {body: 'Failed to enqueue commit for testing.'});
+          });
+        } catch(err) {
+          Log.error('RouteHandler::postGithubHook() - ERROR enqueuing commit for testing. ' + err);
+          res.json(500, {body: 'Failed to enqueue commit for testing.'});
+        }
+        break;
+
+      default:
+        Log.warn('RouteHandler::postGithubHook() - Unhandled GitHub event: ' + githubEvent);
+    }
+    return next();
+  }
+
+
+
+
+
+
+
+
   // Notify endpoints
 
   // // Return list of registered notification addresses
@@ -77,51 +136,7 @@ export default class RouteHandler {
   // // }
 
 
-  // GitHub webhook endpoint
-  public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
-    let body = req.body;
-    let controller;
-    // enumerate GitHub event
-    switch (req.header('X-GitHub-Event')) {
 
-      case 'commit_comment':
-        Log.trace('Got commit_comment event.');
-        controller = new CommitCommentController();
-        Log.trace('Processing');
-        controller.process(body).then(result => {
-          Log.trace('Porcessed tffjdsf');
-          // return json response
-          res.json(200, {'body': 'Make tea'});
-        }).catch(err => {
-          Log.error(err);
-          res.json(404);
-        });
-        break;
-
-      case 'push':
-        try {
-          Log.trace('Got push event.');
-          controller = new PushController();
-          controller.process(body).then(result => {
-            console.log(result);
-            let tests: string[] = result.map(job => {return job.data.test.name});
-            res.json(201, {body: 'Commit has been queued for testing against: ' + tests.join(', ')});
-          }).catch(err => {
-            Log.warn('Failed to queue commit for testing. ' + err);
-            res.json(500, {body: 'Failed to queue commit for testing.'});
-          });
-        } catch(err) {
-          Log.warn('Failed to queue commit for testing. ' + err);
-          res.json(500, {body: 'Failed to queue commit for testing.'});
-        }
-        break;
-
-      default:
-        Log.warn('Unhandled GitHub event.');
-    }
-
-    return next();
-  }
 
 
 

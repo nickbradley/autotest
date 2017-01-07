@@ -88,7 +88,7 @@ export default class TestRecord implements DatabaseRecord {
     }
 
     return new Promise((fulfill, reject) => {
-      cp.execFile(file, args, options, (error, stdout, stderr) => {
+      cp.execFile(file, args, options, (error: any, stdout, stderr) => {
         if (error) {
           this.containerExitCode = error.code;
         }
@@ -281,6 +281,7 @@ export default class TestRecord implements DatabaseRecord {
       'testReport': this.testReport,
       'commit': this.commit,
       'committer': this.committer,
+      'containerExitCode': this.containerExitCode,
       'timestamp': this.timestamp
     }
 

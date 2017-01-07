@@ -8,8 +8,9 @@ export enum Role {
 }
 
 export interface Admin {
-  details: GithubAccount;
-  role: Role
+  firstname: string;
+  lastname: string;
+  role: Role;
 }
 
 export class AdminRecord implements DatabaseRecord {

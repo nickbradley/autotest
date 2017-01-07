@@ -1,0 +1,7 @@
+{
+  "views": {
+    "byTeamDeliverableCommit": {
+      "map": "function(doc) {\n          if (doc.team && doc.deliverable && doc.commit) {\n            var tStats = doc.testStats;\n            emit([doc.team, doc.deliverable.deliverable, doc.commit],\n              {\n                'deliverable': doc.deliverable,\n                'exitCode': doc.containerExitCode,\n                'buildFailed': doc.buildFailed,\n                'buildMsg': doc.buildMsg,\n                'grade': +(0.8*tStats.passPercent + 0.2*Math.min(doc.coverStats.lines.percentage+5, 100)).toFixed(2),\n                'testGrade': tStats.passPercent,\n                'testSummary': tStats.passCount + ' passing, ' + tStats.failCount + ' failing, ' + tStats.skipCount + ' skipped',\n                'coverageGrade': doc.coverStats.lines.percentage,\n                'failedTests': doc.testReport.allFailures.map(function(test) {\n                  var name = test.title;\n                  var code = name.substring(name.indexOf('~')+1, name.lastIndexOf('~'));\n                  return code + ': ' + name.substring(name.lastIndexOf('~')+1, name.indexOf('.')+1);\n                })\n              }\n            )\n          }\n        }"
+    }
+  }
+}

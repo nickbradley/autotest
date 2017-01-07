@@ -1,3 +1,4 @@
+import Log from '../../Util';
 import {IConfig, AppConfig} from '../../Config';
 import {Database} from '../../model/Database';
 import PushRecord from '../../model/requests/PushRecord';
@@ -14,6 +15,7 @@ export default class PushController {
   }
 
   async process(data: JSON) {
+    Log.trace('PushController::process()');
     try {
       let record = new PushRecord(data);
       await this.store(record);
@@ -42,6 +44,7 @@ export default class PushController {
                   deliverable: key
                 }
               }
+              Log.info('PushController::process() - ' + record.team +'#'+ record.commit.short + ' enqueued to run against ' + repo.name + '.');
               promises.push(this.enqueue(testJob));
             }
           }
@@ -50,7 +53,7 @@ export default class PushController {
 
       return Promise.all(promises);
     } catch(err) {
-      throw 'Failed to process Push request. ' + err;
+      throw 'Failed to process push request. ' + err;
     }
   }
 

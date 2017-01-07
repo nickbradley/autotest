@@ -30,9 +30,9 @@ before(async function() {
 after(async function() {
   console.log('Global teardown');
 
-  // this.timeout(2*60*1000+2000);
-  // console.log(' + You have 2 minutes to check the database.');
-  // await timeout(2*60*1000);
+  this.timeout(2*60*1000+2000);
+  console.log(' + You have 2 minutes to check the database.');
+  await timeout(2*60*1000);
 
 
   // Remove Redis container if it was started.
@@ -95,11 +95,14 @@ async function teardownRedis(handle: string) {
 
 async function setupCouchdb() {
   console.log("+ Setting up CouchDB container.");
-  let cmd: string = 'CONTAINER=$(docker run  -p 5984:5984 -d couchdb) && echo ~${CONTAINER}~\
+  let cmd: string = 'CONTAINER=$(docker run  -p 11312:5984 -d couchdb) && echo ~${CONTAINER}~\
   && sleep 1 && env $(cat autotest.env | xargs) ./dbconfig.sh';
 
   return new Promise<string>((fulfill, reject) => {
     cp.exec(cmd, (err, stdout, stderr) => {
+      // console.log(stdout);
+      // console.log(stderr);
+
       let contId: string;
       let parsedStdout: string[] = stdout.split('~');
       if (parsedStdout.length >= 2) {
@@ -150,7 +153,7 @@ async function insertDocumentsFrom(path: string) {
 
     await new Promise((fulfill, reject) => {
         let promises: Promise<any>[] = [];
-        let address: string = 'http://localhost:5984'
+        let address: string = 'http://localhost:11312'
         files.forEach(file => {
           let parts: string[] = file.split('/');
           let dbName: string = parts[parts.length-2];

@@ -11,10 +11,11 @@ import {DeliverableRecord} from '../../model/settings/DeliverableRecord';
 
 interface GradeSummary {
   deliverable: string;
-  timeoutExceeded: boolean;
+  exitCode: number;
   buildFailed: boolean;
   buildMsg: string;
   grade: number;
+  testGrade: number;
   testSummary: string;
   coverageSummary: string;
   failedTests: string[];
@@ -38,32 +39,59 @@ export default class CommitCommentContoller {
         let response: GithubResponse;
 
         await record.process(data);
-        await that.store(record);
 
         let isAdmin: boolean = await that.isAdmin(record.user);
+
         if (record.isRequest) {
           let lastRequest: Date = await that.latestRequest(record.user, record.deliverable);
           let diff: number = +new Date() - +lastRequest;
           if (diff > record.deliverableRate || isAdmin) {
-            let resultRaw: GradeSummary = await that.getResult(record.team, record.commit, record.deliverable);
-            let body: string = that.formatResult(resultRaw);
-            response = {
-              statusCode: 200,
-              body: body
+
+            Log.info('CommitCommentContoller::process() - Request OK.');
+            try {
+              let result: GradeSummary = await that.getResult(record.team, record.commit, record.deliverable);
+              let body: string = that.formatResult(result);
+              response = {
+                statusCode: 200,
+                body: body
+              }
+            } catch(err) {
+              Log.error('CommitCommentContoller::process() - No results for request.');
+              record.isProcessed = false;
+              response = {
+                statusCode: 404,
+                body: 'No results found. Commit may still be queued for processing. Please try again later.'
+              }
             }
           } else {
+            Log.info('CommitCommentContoller::process() - Request rate exceeded.');
+            let waitTime: number = record.deliverableRate - diff;
+            record.isProcessed = false;
             response = {
               statusCode: 429,
-              body: 'Sorry, you must wait ' + Moment.duration(diff).humanize() + ' before you make another request'
+              body: 'Sorry, you must wait ' + Moment.duration(waitTime).humanize() + ' before you make another request.'
             }
           }
-          await this.postComment(record.hook, response.body);
+
+          try {
+            //await that.postComment(record.hook, response.body);
+          } catch(err) {
+            Log.error('CommitCommentContoller::process() - ERROR. Failed to post result. ' + err);
+          }
         } else {
+          Log.info('CommitCommentContoller::process() - Not request.');
           response = {
             statusCode: 204,
             body: ''
           }
         }
+
+        try {
+          await that.store(record);
+        } catch(err) {
+          Log.error('CommitCommentContoller::process() - ERROR. Failed to store result. ' + err);
+        }
+        Log.info('CommitCommentContoller::process() - Request completed with status ' + response.statusCode + '.');
 
         fulfill(response);
 
@@ -86,7 +114,9 @@ export default class CommitCommentContoller {
     return new Promise<boolean>(async (fulfill, reject) => {
       try {
         let adminRecord: any = await db.readRecord('admins');
-        let admins: string[] = adminRecord.body;
+        let admins: string[] = Object.keys(adminRecord).filter(key => {
+          return !key.startsWith('_');
+        });
         fulfill(admins.includes(user));
       } catch(err) {
         reject('Failed to retrieve admin list. ' + err);
@@ -113,16 +143,19 @@ export default class CommitCommentContoller {
     let designName: string = 'latest';
     let viewName: string = 'byUserDeliverable';
     let params: QueryParameters = {
-      key: {user: user, deliverable: deliverable}
+      key: [user, deliverable]
     };
     let that = this;
     return new Promise<Date>(async (fulfill, reject) => {
       try {
         let view: ViewResponse = await db.view(designName, viewName, params);
-        let latestDate: number = +view.rows[0].value || 0;
-        fulfill(new Date(latestDate));
+        let latestDate: Date = new Date(0);
+        if (view.rows.length > 0) {
+          latestDate = new Date(+view.rows[0].value)
+        }
+        fulfill(latestDate);
       } catch(err) {
-        reject('Failed to get latest request of user ' + user + ' for deliverable ' + deliverable);
+        reject('Failed to get latest request of user ' + user + ' for deliverable ' + deliverable + '. ' + err);
       }
     });
   }
@@ -138,41 +171,44 @@ export default class CommitCommentContoller {
    */
   private async getResult(team: string, commit: Commit, deliverable: string): Promise<GradeSummary> {
     let db = new Database(this.config.getDBConnection(), 'results');
-    let designName: string = 'default';
-    let viewName: string = 'byTeamCommitDeliverable';
+    let designName: string = 'grades';
+    let viewName: string = 'byTeamDeliverableCommit';
     let params: QueryParameters = {
-      key: {
-        team: team,
-        commit: commit.toString(),
-        deliverable: deliverable
-      }
+      key: [team, deliverable, commit.short]
     };
+
     let that = this;
     return new Promise<GradeSummary>(async (fulfill, reject) => {
       try {
         let view: ViewResponse = await db.view(designName, viewName, params);
-        let publicTests = view.rows.filter(obj => {
-          return obj.value.visibility == 0
-        });
-        let privateTests = view.rows.filter(obj => {
-          return obj.value.visibility == 1
-        });
-        let tStats = privateTests.testStats;
-        let cStats = privateTests.coverageStats;
+        // console.log('view is ', view);
+        // let publicTests = view.rows.filter(obj => {
+        //   return obj.value.visibility == 0
+        // }).map(obj => {
+        //   return obj.value;
+        // })[0];
+        // let privateTests = view.rows.filter(obj => {
+        //   return obj.value.visibility == 0
+        // }).map(obj => {
+        //   return obj.value;
+        // })[0];
+
+        let publicTests = view.rows[0].value;
+        let privateTests = view.rows[0].value;
+
         let gradeSummary: GradeSummary = {
           deliverable: deliverable,
-          timeoutExceeded: privateTests.timeoutExceeded,
+          exitCode: privateTests.exitCode,
           buildFailed: privateTests.buildFailed,
           buildMsg: privateTests.buildMsg,
-          grade: await that.grade(deliverable, privateTests),
-          testSummary: tStats.passCount + ' passing, ' + tStats.failCount + ' failing, ' + tStats.skipCount + ' skipped',
-          coverageSummary: cStats.statements.percentage + ' statements, ' + cStats.branches.percentage + ' branches, ' + cStats.functions.percentage + ' functions, ' + cStats.lines.percentage + ' lines',
-          failedTests: publicTests.testReport.allFailures.map(test => {
-            let name: string = test.fullTitle;
-            let code: string = test.substring(name.indexOf('~'), name.lastIndexOf('~'));
-            return code + ': ' + name.substring(name.lastIndexOf('~')+1, name.indexOf('.')+1);
-          })
+          grade: privateTests.grade,
+          testGrade: privateTests.testGrade,
+          testSummary: privateTests.testSummary,
+          coverageSummary: privateTests.coverageGrade,
+          failedTests: publicTests.failedTests
         }
+
+
         fulfill(gradeSummary)
       } catch(err) {
         reject('Unable to get test result for ' + team + ' commit ' + commit.short + '. ' + err);
@@ -180,18 +216,20 @@ export default class CommitCommentContoller {
     });
   }
 
-  private async grade(deliverable: string, privateTests) {
-    let db: Database = new Database(this.config.getDBConnection(), 'settings');
-    let record: DeliverableRecord = <DeliverableRecord>(await db.readRecord('deliverables')).body;
-    let gradeFormula: string = record[deliverable];
-
-    let gradeExp: string = gradeFormula.replace(
-      '<TEST_PERCENTAGE>', privateTests.testStats.passPercent
-    ).replace(
-      '<COVERAGE_PERCENTAGE>', privateTests.coverageStats.statements.percent
-    );
-    return Promise.resolve(eval(gradeExp))
-  }
+  // private async grade(deliverable: string, privateTests) {
+  //   let resultsDB = new Database(this.config.getDBConnection(), 'settings');
+  //   let deliverablesDoc = await resultsDB.readRecord('deliverables');
+  //   let deliverableRecord: DeliverableRecord = new DeliverableRecord(deliverablesDoc);
+  //   let gradeFormula: string = deliverableRecord.item(deliverable).gradeFormula;
+  //
+  //   let gradeExp: string = gradeFormula.replace(
+  //     '<TEST_PERCENTAGE>', privateTests.testStats.passPercent
+  //   ).replace(
+  //     '<COVERAGE_PERCENTAGE>', privateTests.coverageStats.lines.percentage
+  //   );
+  //   console.log('gradeExp', gradeExp);
+  //   return Promise.resolve(eval(gradeExp))
+  // }
 
 
 
@@ -211,31 +249,40 @@ export default class CommitCommentContoller {
        <BUILD_MSG>
       \`\`\`
       `;
-      output.replace(
+      output = output.replace(
         '<GRADE>', '0'
       ).replace(
         '<BUILD_MSG>', gradeSummary.buildMsg
       );
-    } else if (gradeSummary.timeoutExceeded) {
+    } else if (gradeSummary.exitCode == 124) {
       output += `
         - Timeout exceeded while executing tests.
       `;
-      output.replace('<GRADE>', '0');
-     } else {
+      output = output.replace('<GRADE>', '0');
+    } else if (gradeSummary.exitCode != 0) {
       output += `
-       - Test summary: <TEST_SUMMARY>
-       - Coverage summary: <COVERAGE_SUMMARY>
+        - Autotest encountered an error during testing (<EXIT_CODE>).
       `;
-      output.replace(
+      output = output.replace(
+        '<GRADE>', '0'
+      ).replace(
+        '<EXIT_CODE>', gradeSummary.exitCode.toString()
+      );
+    } else {
+      output += '- Test summary: <TEST_GRADE>% (<TEST_SUMMARY>)\n- Line coverage: <COVERAGE_SUMMARY>%';
+
+      output = output.replace(
         '<GRADE>', gradeSummary.grade.toFixed()
+      ).replace(
+        '<TEST_GRADE>', gradeSummary.testGrade.toFixed()
       ).replace(
         '<TEST_SUMMARY>', gradeSummary.testSummary
       ).replace(
         '<COVERAGE_SUMMARY>', gradeSummary.coverageSummary
       );
 
-      if (gradeSummary.grade < 100) {
-        output += '\nIt failed the proxy tests:';
+      if (gradeSummary.failedTests.length > 0) {
+        output += '\n\nIt failed the tests:\n - ';
         output += gradeSummary.failedTests.join('\n - ');
       }
     }

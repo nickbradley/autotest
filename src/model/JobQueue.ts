@@ -1,3 +1,4 @@
+import Log from '../Util';
 import * as bull from 'bull';
 import {Url} from 'url';
 import {Commit} from './GithubUtil';
@@ -40,6 +41,7 @@ export class JobQueue {
   }
 
   public async init() {
+    Log.trace('JobQueue::init() - Starting.');
     try {
       if (!this.initialized) {
         this.initialized = true;
@@ -60,6 +62,7 @@ export class JobQueue {
         let that = this;
         return new Promise((fulfill, reject) => {
           that.queue.on('ready', () => {
+            Log.trace('JobQueue::init() - Ready.')
             fulfill();
           });
         });
@@ -74,6 +77,7 @@ export class JobQueue {
     if (!this.initialized) {
       await this.init();
     }
+    Log.info('JobQueue::add() - Added job ' + opts.jobId + '.')
     return this.queue.add(job, opts);
   }
 
@@ -86,6 +90,7 @@ export class JobQueue {
   }
 
   public async close() {
+    Log.info('JobQueue::close() - Closing.')
     this.initialized = false;
     return this.queue.close();
   }

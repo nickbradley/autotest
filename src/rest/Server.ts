@@ -75,7 +75,7 @@ export default class Server {
 
 
               // GitHub Webhook endpoints
-              that.rest.post('/github', restify.bodyParser(), RouteHandler.postGithubHook);
+              that.rest.post('/submit', restify.bodyParser(), RouteHandler.postGithubHook);
 
 
 /*

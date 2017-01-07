@@ -1,1 +1,7 @@
-{}
+{
+  "rtholmes" : {
+    "firstname": "Reid",
+    "lastname": "Holmes",
+    "role": "Instructor"
+  }
+}

@@ -1,3 +1,4 @@
+import Log from '../Util';
 import {JobQueue, ProcessJobCallback, Job,JobOpts} from '../model/JobQueue';
 import {IConfig, AppConfig} from '../Config';
 import TestController from './TestController';

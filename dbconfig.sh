@@ -39,6 +39,34 @@ curl -X PUT ${DB_INSTANCE}/settings/_design/current \
       }
     }'
 
+curl -X PUT ${DB_INSTANCE}/requests/_design/latest \
+  -H "Content-Type: application/json" \
+  -d '{
+      "_id": "_design/latest",
+      "views": {
+        "byUserDeliverable": {
+          "map": "function(doc) {\n  if (doc.user && doc.deliverable && doc.isRequest && doc.isProcessed) {\n emit([doc.user, doc.deliverable], doc.timestamp);  \n} \n}",
+          "reduce": "function(key, values, rereduce) {\n return Math.max.apply(null, values); \n}"
+        }
+      }
+    }'
+
+curl -X PUT ${DB_INSTANCE}/results/_design/default \
+  -H "Content-Type: application/json" \
+  -d '{
+      "_id": "_design/default",
+      "views": {
+        "byTeamCommitDeliverable": {
+          "map": "function(doc) {\n  if (doc.team && doc.deliverable && doc.commit) {\n emit([doc.team, doc.deliverable.deliverable, doc.commit], {\"visibility\":doc.deliverable.visibility, \"containerExitCode\":doc.containerExitCode, \"buildFailed\":doc.buildFailed, \"buildMsg\":doc.buildMsg, \"testStats\":doc.testStats, \"coverageStats\":doc.coverStats, \"testReport\":doc.testReport, \"timestamp\":doc.timestamp});  \n} \n}"
+        }
+      }
+    }'
+
+
+curl -X PUT ${DB_INSTANCE}/results/_design/grades \
+     -H "Content-Type: application/json" \
+     -d @./database/results/views/grades/byTeamDeliverableCommit.json
+
 # Create users
 printf "Creating user ${DB_APP_USERNAME} "
 curl -X PUT ${DB_INSTANCE}/_users/org.couchdb.user:${DB_APP_USERNAME} \

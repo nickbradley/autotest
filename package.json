@@ -12,7 +12,10 @@
   "scripts": {
     "config": "npm install; typings install",
     "build": "tsc",
-    "test": "mocha --recursive"
+    "test": "mocha --recursive",
+    "initContainer": "docker create --name autotest-redis redis && docker create --name autotest-db -p 11312:5984 -v /usr/local/var/lib/couchdb couchdb",
+    "dbconfig": "docker start autotest-db && env $(cat autotest.env | xargs) ./dbconfig.sh && docker stop autotest-db",
+    "start": "docker start autotest-redis && docker start autotest-db && node src/App.js"
   },
   "devDependencies": {
     "@types/node": "^6.0.52",
