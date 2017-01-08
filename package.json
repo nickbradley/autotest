@@ -18,6 +18,7 @@
     "start": "docker start autotest-redis && docker start autotest-db && node src/App.js"
   },
   "devDependencies": {
+    "@types/core-js": "^0.9.35",
     "@types/mocha": "^2.2.36",
     "@types/node": "^6.0.52",
     "@types/bull": "^1.0.31",
