@@ -1,5 +1,5 @@
 import {DatabaseRecord, CouchDatabase, InsertResponse} from '../Database';
-import {User} from '../github/GithubUtil';
+import {User} from '../GithubUtil';
 
 export interface Team {
   members: User[];

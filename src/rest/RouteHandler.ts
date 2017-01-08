@@ -1,7 +1,7 @@
 import restify = require("restify");
 
 import PushController from '../controller/github/PushController';
-import {TestJob} from '../Controller/TestJobController';
+import {TestJob} from '../controller/TestJobController';
 import CommitCommentController from '../controller/github/CommitCommentController';
 import Log from "../Util";
 import Server from "./Server";
