@@ -1,16 +1,10 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "ES6",
-    "types": [
-      "node",
-      "mocha"
-    ]
+    "target": "ES6"
   },
   "filesGlob": [
-    "./typings/index.d.ts",
-    "**/src/**/*.ts",
-    "**/test/**/*.ts"
+    "**/src/**/*.ts"
   ],
   "exclude": [
     "node_modules"
