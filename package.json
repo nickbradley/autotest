@@ -27,10 +27,6 @@
     "icedfrisby": "^0.3.0",
     "tslint": "^4.0.0",
     "typescript": "^2.0.0",
-    "typings": "^2.0.0",
-    "typed-nano": "^1.0.3",
-    "typedjson-npm": "^0.1.6",
-    "reflect-metadata": "^0.1.8"
   },
   "dependencies": {
     "restify": "^4.3.0",
@@ -38,7 +34,6 @@
     "bull": "^2.0.0",
     "redis": "^2.6.0",
     "nano": "^6.2.0",
-    "winston": "^2.3.0",
     "tmp": "^0.0.31"
   }
 }
