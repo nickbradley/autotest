@@ -27,7 +27,7 @@ class Config {
   private constructor() {
     env('./autotest.env');
 
-    let appPort = process.env.APP_PORT || 8080;
+    let appPort = process.env.APP_PORT || 11311;
     let dbInstance = process.env.DB_INSTANCE || 'http://localhost:5984';
     let dbAppUser = process.env.DB_APP_USERNAME;
     let dbAppPass = process.env.DB_APP_PASSWORD;

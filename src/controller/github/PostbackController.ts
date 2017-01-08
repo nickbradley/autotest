@@ -32,15 +32,16 @@ export default class PostbackController {
     }
   }
 
-  async submit(msg: string) {
-    let body = JSON.stringify({body: msg});
+  public async submit(msg: string): Promise<number> {
+    let body: string = JSON.stringify({body: msg});
     this.reqOptions.headers['Content-Length'] = Buffer.byteLength(body);
 
-    return new Promise<boolean>((fulfill, reject) => {
+    return new Promise<number>((fulfill, reject) => {
       let req = https.request(this.reqOptions, res => {
-        res.on('end', () => {
-          fulfill(true)
-        });
+        // res.on('end', () => {
+        //   fulfill(true)
+        // });
+        fulfill(res.statusCode);
       });
       req.on('error', err => {
         reject(err);
@@ -49,4 +50,6 @@ export default class PostbackController {
       req.end();
     });
   }
+
+
 }

@@ -46,8 +46,6 @@ export default class CommitCommentContoller {
           let lastRequest: Date = await that.latestRequest(record.user, record.deliverable);
           let diff: number = +new Date() - +lastRequest;
           if (diff > record.deliverableRate || isAdmin) {
-
-            Log.info('CommitCommentContoller::process() - Request OK.');
             try {
               let result: GradeSummary = await that.getResult(record.team, record.commit, record.deliverable);
               let body: string = that.formatResult(result);
@@ -74,7 +72,7 @@ export default class CommitCommentContoller {
           }
 
           try {
-            //await that.postComment(record.hook, response.body);
+            //let status: number = await that.postComment(record.hook, response.body);
           } catch(err) {
             Log.error('CommitCommentContoller::process() - ERROR. Failed to post result. ' + err);
           }
@@ -91,6 +89,7 @@ export default class CommitCommentContoller {
         } catch(err) {
           Log.error('CommitCommentContoller::process() - ERROR. Failed to store result. ' + err);
         }
+
         Log.info('CommitCommentContoller::process() - Request completed with status ' + response.statusCode + '.');
 
         fulfill(response);
@@ -124,7 +123,7 @@ export default class CommitCommentContoller {
     });
   }
 
-  private async postComment(hook: Url.Url, msg: string) {
+  private async postComment(hook: Url.Url, msg: string): Promise<number> {
     let controller: PostbackController = new PostbackController(hook);
     return controller.submit(msg);
   }
@@ -243,26 +242,17 @@ export default class CommitCommentContoller {
 
 
     if (gradeSummary.buildFailed) {
-      output += `
-       - Build failed
-      \`\`\`
-       <BUILD_MSG>
-      \`\`\`
-      `;
+      output += '\nBuild failed:\n\n```<BUILD_MSG>\n```';
       output = output.replace(
         '<GRADE>', '0'
       ).replace(
         '<BUILD_MSG>', gradeSummary.buildMsg
       );
     } else if (gradeSummary.exitCode == 124) {
-      output += `
-        - Timeout exceeded while executing tests.
-      `;
+      output += ' - Timeout exceeded while executing tests.';
       output = output.replace('<GRADE>', '0');
     } else if (gradeSummary.exitCode != 0) {
-      output += `
-        - Autotest encountered an error during testing (<EXIT_CODE>).
-      `;
+      output += ' - Autotest encountered an error during testing (<EXIT_CODE>).';
       output = output.replace(
         '<GRADE>', '0'
       ).replace(

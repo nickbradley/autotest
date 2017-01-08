@@ -4,7 +4,7 @@ import {Url} from 'url';
 import {Commit} from './GithubUtil';
 import {Deliverable} from './settings/DeliverableRecord'
 
-export {Job} from 'bull';
+export {Job, JobPromise} from 'bull';
 
 // Newest version supports more option then specified in type file
 export interface JobOpts extends bull.AddOptions {
@@ -24,6 +24,9 @@ export interface JobOpts extends bull.AddOptions {
 // }
 
 export type ProcessJobCallback = (job: bull.Job) => Promise<any>;
+export type ActiveJobCallback = (job: bull.Job, jobPromise: bull.JobPromise) => void;
+export type CompletedJobCallback = (job: bull.Job, result: Object) => void;
+export type FailedJobCallback = (job: bull.Job, error: Error) => void;
 
 export class JobQueue {
   private queue: bull.Queue;
@@ -31,13 +34,19 @@ export class JobQueue {
   private name: string;
   private concurrency: number;
   private processCallback: ProcessJobCallback;
+  private activeCallback: ActiveJobCallback;
+  private completedCallback: CompletedJobCallback;
+  private failedCallback: FailedJobCallback;
   private initialized: boolean = false;
 
-  constructor(name: string, concurrency: number, redisAddress: Url, process: ProcessJobCallback) {
+  constructor(name: string, concurrency: number, redisAddress: Url, process: ProcessJobCallback, completed: CompletedJobCallback, failed: FailedJobCallback, active: ActiveJobCallback) {
     this.name = name;
     this.redis = redisAddress;
     this.concurrency = (concurrency <= 0 ? 0 : concurrency);
     this.processCallback = process;
+    this.completedCallback = completed;
+    this.failedCallback = failed;
+    this.activeCallback = active;
   }
 
   public async init() {
@@ -47,18 +56,9 @@ export class JobQueue {
         this.initialized = true;
         this.queue = bull(this.name, +this.redis.port, this.redis.host);
         this.queue.process(this.concurrency, this.processCallback);
-        // this.queue.on('active', (job, jobPromise) => {
-        //   console.log("Job is active.");
-        // });
-        // this.queue.on('completed', (job, result) => {
-        //   console.log("Job is completed.")
-        //   this.queue.count().then(count => {
-        //     console.log("Jobs remaining ", count)
-        //   })
-        // });
-        // this.queue.on('failed', (job, err) => {
-        //   console.log('Job is failed.');
-        // });
+        this.queue.on('active', this.activeCallback);
+        this.queue.on('completed', this.completedCallback);
+        this.queue.on('failed', this.failedCallback);
         let that = this;
         return new Promise((fulfill, reject) => {
           that.queue.on('ready', () => {

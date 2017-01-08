@@ -42,6 +42,13 @@ export interface ProcessedTag {
   exitcode: number;
 }
 
+export interface TestStatus {
+  buildFailed: boolean,
+  buildMsg: string,
+  containerExitCode: number,
+  processErrors: string[]
+}
+
 export default class TestRecord implements DatabaseRecord {
   // private config: IConfig;
 
@@ -73,7 +80,7 @@ export default class TestRecord implements DatabaseRecord {
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.name;
   }
 
-  public async generate() {
+  public async generate(): Promise<TestStatus> {
     let tempDir = tmp.dirSync();
     let file: string = './docker/tester/run-test-container.sh';
     let args: string[] = [
@@ -87,17 +94,16 @@ export default class TestRecord implements DatabaseRecord {
       encoding: 'utf8'
     }
 
-    return new Promise((fulfill, reject) => {
+    return new Promise<TestStatus>((fulfill, reject) => {
       cp.execFile(file, args, options, (error: any, stdout, stderr) => {
         if (error) {
           this.containerExitCode = error.code;
         }
 
-        let promises: Promise<boolean>[] = [];
-        let readTranscript: Promise<boolean> = new Promise((fulfill, reject) => {
+        let promises: Promise<string>[] = [];
+        let readTranscript: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.name + '/stdio.txt', 'utf8', (err, data) => {
             if (err) {
-              console.log('No stdout!')
               return reject(err);
             }
             try {
@@ -112,7 +118,7 @@ export default class TestRecord implements DatabaseRecord {
               let coverageTag: ProcessedTag = this.processCoverageTag(data);
               this.coverageStats = coverageTag.content;
 
-              fulfill(true);
+              fulfill();
             } catch(err) {
               fulfill(err);
             }
@@ -120,7 +126,7 @@ export default class TestRecord implements DatabaseRecord {
         });
         promises.push(readTranscript);
 
-        let readTests: Promise<boolean> = new Promise((fulfill, reject) => {
+        let readTests: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.name + '/mocha.json', 'utf8', (err, data) => {
             if (err) fulfill(err);
             try {
@@ -135,7 +141,7 @@ export default class TestRecord implements DatabaseRecord {
         });
         promises.push(readTests);
 
-        let readCoverage: Promise<boolean> = new Promise((fulfill, reject) => {
+        let readCoverage: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.name + '/coverage.zip', (err, data) => {
             if (err) fulfill(err);
             this.coverageZip = data;
@@ -144,13 +150,17 @@ export default class TestRecord implements DatabaseRecord {
         });
         promises.push(readCoverage);
 
-        Promise.all(promises).then(() => {
-          fulfill();
+        Promise.all(promises).then((err) => {
+          let testStatus: TestStatus = {
+            buildFailed: this.buildFailed,
+            buildMsg: this.buildMsg,
+            containerExitCode: this.containerExitCode,
+            processErrors: err
+          }
+          fulfill(testStatus);
         }).catch(err => {
           reject(err);
         });
-
-        console.log('Done. Stdout: ');
       });
     });
   }

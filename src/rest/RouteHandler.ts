@@ -19,6 +19,11 @@ export default class RouteHandler {
     let githubEvent: string = req.header('X-GitHub-Event');
     // enumerate GitHub event
     switch (githubEvent) {
+      case 'ping':req
+        Log.trace('RouteHandler::postGithubHook() - received ping.');
+        res.json(200, 'pong');
+      break;
+
       case 'commit_comment':
         Log.trace('RouteHandler::postGithubHook() - received commit comment.');
 
@@ -28,11 +33,11 @@ export default class RouteHandler {
             res.json(result.statusCode, result.body);
           }).catch(err => {
             Log.error('RouteHandler::postGithubHook() - ERROR processing commit comment. ' + err);
-            res.json(404, {body: "Failed to process commit comment."});
+            res.json(404, 'Failed to process commit comment.');
           });
         } catch(err) {
           Log.error('RouteHandler::postGithubHook() - ERROR processing commit comment. ' + err);
-          res.json(404, {body: "Failed to process commit comment"});
+          res.json(404, 'Failed to process commit comment');
         }
         break;
 
@@ -49,11 +54,11 @@ export default class RouteHandler {
             res.json(202, {body: 'Commit has been queued for testing against: ' + tests.join(', ')});
           }).catch(err => {
             Log.error('RouteHandler::postGithubHook() - ERROR enqueuing commit for testing. ' + err);
-            res.json(500, {body: 'Failed to enqueue commit for testing.'});
+            res.json(500, 'Failed to enqueue commit for testing.');
           });
         } catch(err) {
           Log.error('RouteHandler::postGithubHook() - ERROR enqueuing commit for testing. ' + err);
-          res.json(500, {body: 'Failed to enqueue commit for testing.'});
+          res.json(500, 'Failed to enqueue commit for testing.');
         }
         break;
 

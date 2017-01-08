@@ -151,7 +151,7 @@ export default class CommitCommentRecord implements DatabaseRecord {
     let comment = JSON.stringify(this.payload);
     let doc = {isRequest: this._isRequest, isProcessed: this._isProcessed, deliverable: this._deliverable, team: this.team, user: this.user, commit: this.commit, body: this.message, type: 'commit_comment', timestamp: this.timestamp}
     let attachments = [{name: 'comment.json', data: comment, content_type: 'application/json'}];
-    let docName = this.timestamp + '_' + this.team + ':' + this.user + '_' + this._deliverable;
+    let docName = this.timestamp + '_' + this.team + ':' + this.user + (this.deliverable ? '_' + this._deliverable : '');
 
     return new Promise<InsertResponse>((fulfill, reject) => {
       db.multipart.insert(doc, attachments, docName, (err, result) => {

@@ -4,6 +4,7 @@
 *.log
 
 # Directories
+dbdata
 node_modules
 coverage
 typings

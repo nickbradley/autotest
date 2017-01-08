@@ -37,6 +37,7 @@ export default class PushController {
                 user: record.user,
                 team: record.team,
                 commit: record.commit.short,
+                hook: record.commentHook,
                 test: {
                   name: repo.name,
                   image: 'autotest/' + repo.name + ':' + (repo.commit ? repo.commit : 'latest'),

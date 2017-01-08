@@ -1,5 +1,6 @@
 import {CouchDatabase, DatabaseRecord, InsertResponse} from '../Database';
 import {GithubUtil, Commit} from '../GithubUtil';
+import * as Url from 'url';
 
 
 export default class PushRecord implements DatabaseRecord {
@@ -7,6 +8,7 @@ export default class PushRecord implements DatabaseRecord {
   private _team: string;
   private _user: string;
   private _commit: Commit;
+  private _commentHook: Url.Url;
   private timestamp: number;
 
   constructor(payload: any) {
@@ -15,6 +17,7 @@ export default class PushRecord implements DatabaseRecord {
       this._team = GithubUtil.getTeam(payload.repository.name);
       this._user = payload.pusher.name;
       this._commit = new Commit(payload.after);
+      this._commentHook = Url.parse(payload.repository.commits_url.replace('{/sha}', '/' + this._commit) + '/comments');
       this.timestamp = +new Date();
     } catch(err) {
       throw 'Failed to create new PushRecord. ' + err;
@@ -32,7 +35,9 @@ export default class PushRecord implements DatabaseRecord {
   get commit(): Commit {
     return this._commit;
   }
-
+  get commentHook(): Url.Url {
+    return this._commentHook;
+  }
   public async create(db: CouchDatabase): Promise<InsertResponse> {
     return this.insert(db);
   }
