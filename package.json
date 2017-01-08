@@ -10,6 +10,7 @@
   "keywords": [],
   "version": "1.0.0",
   "scripts": {
+    "clean": "rm -rf node_modules; rm -rf typings",
     "config": "npm install; typings install",
     "build": "tsc",
     "test": "mocha --recursive",
