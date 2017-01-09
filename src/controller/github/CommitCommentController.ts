@@ -72,7 +72,7 @@ export default class CommitCommentContoller {
           }
 
           try {
-            //let status: number = await that.postComment(record.hook, response.body);
+            let status: number = await that.postComment(record.hook, response.body);
           } catch(err) {
             Log.error('CommitCommentContoller::process() - ERROR. Failed to post result. ' + err);
           }
