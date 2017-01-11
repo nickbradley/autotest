@@ -115,8 +115,10 @@ export class Connection {
   async authenticate(): Promise<AuthenticationResponse> {
     let that = this;
     return new Promise<AuthenticationResponse>((fulfill, reject) => {
-      console.log('Calling auth with ');
+      console.log('Calling auth with ', that.username, that.password);
+
       that.dbServer.auth(that.username, that.password, (err, body, headers) => {
+        console.log(body, headers);
         if (err) {
           console.log('error', err, headers)
           reject(err);
