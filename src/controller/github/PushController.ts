@@ -18,8 +18,9 @@ export default class PushController {
     Log.trace('PushController::process()');
     try {
       let record = new PushRecord(data);
+      console.log('here')
       await this.store(record);
-
+      console.log('********there')
       let resultsDB = new Database(this.config.getDBConnection(), 'settings');
       let deliverablesDoc = await resultsDB.readRecord('deliverables');
       let deliverableRecord: DeliverableRecord = new DeliverableRecord(deliverablesDoc);
