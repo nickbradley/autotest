@@ -115,7 +115,7 @@ export class Connection {
   async authenticate(): Promise<AuthenticationResponse> {
     let that = this;
     return new Promise<AuthenticationResponse>((fulfill, reject) => {
-      console.log('Calling auth');
+      console.log('Calling auth with ');
       that.dbServer.auth(that.username, that.password, (err, body, headers) => {
         if (err) {
           console.log('error', err, headers)
@@ -124,6 +124,7 @@ export class Connection {
 
         if (headers && headers['set-cookie']) {
           that.auth = headers['set-cookie'];
+          console.log('cookie-set');
         }
 
         fulfill(body);
@@ -218,6 +219,7 @@ export class Database {
   }
   public async headRecord(id: string): Promise<HeadResponse> {
     let that = this;
+    await this.conn.authenticate();
     try {
       return new Promise<HeadResponse>((fulfill, reject) => {
         that.db.head(id, (err, _, headers) => {
@@ -247,6 +249,7 @@ export class Database {
   }
 
   private async exists(): Promise<boolean> {
+    await this.conn.authenticate();
     let dbList: string[] = await this.conn.list();
     let that = this;
     return new Promise<boolean>((fulfill, reject) => {
