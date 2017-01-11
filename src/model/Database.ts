@@ -118,7 +118,6 @@ export class Connection {
     let that = this;
     return new Promise<AuthenticationResponse>((fulfill, reject) => {
       that.dbServer.auth(that.username, that.password, (err, body, headers) => {
-        console.log(body, headers);
         if (err) {
           reject(err);
         }
