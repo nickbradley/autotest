@@ -125,7 +125,7 @@ export class Connection {
         }
 
         if (headers && headers['set-cookie']) {
-          that.auth = headers['set-cookie'];
+          that.auth = headers['set-cookie'][0];
           console.log('cookie-set');
         }
 
