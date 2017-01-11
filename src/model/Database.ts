@@ -182,7 +182,7 @@ export class Database {
     try {
       await this.exists();
       await this.conn.authenticate();
-      return record.create(this.db);
+      return record.create(this.conn.dbServer.use(this.name));
     } catch(err) {
       throw 'Failed to create record in database. ' + err;
     }
@@ -190,7 +190,7 @@ export class Database {
   public async updateRecord(id: string, record: DatabaseRecord): Promise<UpdateResponse> {
     try {
       await this.conn.authenticate();
-      return record.update(this.db, id);
+      return record.update(this.conn.dbServer.use(this.name), id);
     } catch (err) {
       throw 'Failed to update database record "' + id + '". ' + err;
     }
@@ -201,7 +201,7 @@ export class Database {
       let that = this;
       await this.conn.authenticate();
       return new Promise<any>((fulfill, reject) => {
-        that.db.get(id, (err, body) => {
+        this.conn.dbServer.use(this.name).get(id, (err, body) => {
           if (err) reject(err);
           fulfill(body);
         });
@@ -226,7 +226,7 @@ export class Database {
     await this.conn.authenticate();
     try {
       return new Promise<HeadResponse>((fulfill, reject) => {
-        that.db.head(id, (err, _, headers) => {
+        this.conn.dbServer.use(this.name).head(id, (err, _, headers) => {
           if (err) reject(err);
           fulfill(headers);
         })
@@ -241,11 +241,11 @@ export class Database {
     await this.conn.authenticate();
     return new Promise<ViewResponse>((fulfill, reject) => {
       if (params) {
-      that.db.view(design, name, params, (err, result) => {
+      this.conn.dbServer.use(this.name).view(design, name, params, (err, result) => {
         err ? reject(err) : fulfill(result);
       });
     } else {
-      that.db.view(design, name, (err, result) => {
+      this.conn.dbServer.use(this.name).view(design, name, (err, result) => {
         err ? reject(err) : fulfill(result);
       })
     }
