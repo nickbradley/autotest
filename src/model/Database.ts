@@ -81,11 +81,13 @@ export interface QueryParameters {
 export class Connection {
   public dbServer: CouchServer;
   private auth: string;
+  private address: string;
   private username: string;
   private password: string;
 
   constructor(address: string, username: string, password: string) {
     this.dbServer = require('nano')(address);
+    this.address = address;
     this.username = username;
     this.password = password;
   }
@@ -128,7 +130,7 @@ export class Connection {
           that.auth = headers['set-cookie'][0];
           console.log('cookie-set');
         }
-
+        that.dbServer = require('nano')({url: that.address, cookie: that.auth});
         fulfill(body);
       });
     });
