@@ -29,8 +29,8 @@ class Config {
 
     let appPort = process.env.APP_PORT || 11311;
     let dbInstance = process.env.DB_INSTANCE || 'http://localhost:5984';
-    let dbAppUser = process.env.DB_APP_USERNAME || 'testuser';
-    let dbAppPass = process.env.DB_APP_PASSWORD || 'test-password';
+    let dbAppUser = process.env.DB_APP_USERNAME;
+    let dbAppPass = process.env.DB_APP_PASSWORD;
     let redisAddress = process.env.REDIS_ADDRESS || 'http://localhost:6379';
     let mentionTag = process.env.MENTION_TAG || '@cpsc310bot';
     let githubToken = process.env.GITHUB_API_KEY;
@@ -41,9 +41,9 @@ class Config {
     this.mentionTag = mentionTag;
     this.githubToken = githubToken;
 
-    console.log('dbInstance: ', dbInstance);
-    console.log('dbAppUser: ', dbAppUser);
-    console.log('dbAppPass:', dbAppPass);
+    // console.log('dbInstance: ', dbInstance);
+    // console.log('dbAppUser: ', dbAppUser);
+    // console.log('dbAppPass:', dbAppPass);
   }
 
   static getInstance() {
