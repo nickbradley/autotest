@@ -132,7 +132,7 @@ printf "<DELIVERABLE_BUILD exitcode=%d>\n%s\n</DELIVERABLE_BUILD>\n\n" "${status
 
 
 # Run the coverage tool
-out=$(cd "${projectDir}" && ${coverCmd} 2>&1 | awk '/===/{y=1}y')
+out=$(cd "${projectDir}" && ${coverCmd} 2>&1)
 status=$?
 
 printf "<PROJECT_COVERAGE exitcode=%d>\n%s\n</PROJECT_COVERAGE>\n\n" "${status}" "${out}"
