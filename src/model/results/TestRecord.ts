@@ -104,7 +104,8 @@ export default class TestRecord implements DatabaseRecord {
         let readTranscript: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.name + '/stdio.txt', 'utf8', (err, data) => {
             if (err) {
-              return reject(err);
+              //return reject(err);
+              return fulfill(err);
             }
             try {
               this.stdio = data;
