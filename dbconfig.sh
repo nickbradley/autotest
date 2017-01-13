@@ -9,26 +9,26 @@
 
 # Check if the admin user has been set
 # If so, include username/password in instance: http://user:pass@localhost:5984
-if [ -n "${DB_ADMIN_USERNAME}" ]
-then
-  DB_INSTANCE=${DB_INSTANCE/"//"/"//${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD}@"}
-fi
+# if [ -n "${DB_ADMIN_USERNAME}" ]
+# then
+#   DB_INSTANCE=${DB_INSTANCE/"//"/"//${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD}@"}
+# fi
 
 echo "DB_INSTANCE set to ${DB_INSTANCE}"
 
 # Create Databases
 printf "Creating database settings "
-curl -X PUT ${DB_INSTANCE}/settings
+curl -X PUT ${DB_INSTANCE}/settings -u ${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD}
 
 printf "Creating database results "
-curl -X PUT ${DB_INSTANCE}/results
+curl -X PUT ${DB_INSTANCE}/results -u ${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD}
 
 printf "Creating database requests "
-curl -X PUT ${DB_INSTANCE}/requests
+curl -X PUT ${DB_INSTANCE}/requests -u ${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD}
 
 # Create views
 printf "Creating views "
-curl -X PUT ${DB_INSTANCE}/settings/_design/current \
+curl -X PUT ${DB_INSTANCE}/settings/_design/current -u ${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD} \
   -H "Content-Type: application/json" \
   -d '{
       "_id": "_design/current",
@@ -39,7 +39,7 @@ curl -X PUT ${DB_INSTANCE}/settings/_design/current \
       }
     }'
 
-curl -X PUT ${DB_INSTANCE}/requests/_design/latest \
+curl -X PUT ${DB_INSTANCE}/requests/_design/latest -u ${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD} \
   -H "Content-Type: application/json" \
   -d '{
       "_id": "_design/latest",
@@ -51,7 +51,7 @@ curl -X PUT ${DB_INSTANCE}/requests/_design/latest \
       }
     }'
 
-curl -X PUT ${DB_INSTANCE}/results/_design/default \
+curl -X PUT ${DB_INSTANCE}/results/_design/default -u ${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD} \
   -H "Content-Type: application/json" \
   -d '{
       "_id": "_design/default",
@@ -63,13 +63,13 @@ curl -X PUT ${DB_INSTANCE}/results/_design/default \
     }'
 
 
-curl -X PUT ${DB_INSTANCE}/results/_design/grades \
+curl -X PUT ${DB_INSTANCE}/results/_design/grades -u ${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD} \
      -H "Content-Type: application/json" \
      -d @./database/results/views/grades/byTeamDeliverableCommit.json
 
 # Create users
 printf "Creating user ${DB_APP_USERNAME} "
-curl -X PUT ${DB_INSTANCE}/_users/org.couchdb.user:${DB_APP_USERNAME} \
+curl -X PUT ${DB_INSTANCE}/_users/org.couchdb.user:${DB_APP_USERNAME} -u ${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD} \
   -H "Content-Type: application/json" \
   -d '{
       "_id": "org.couchdb.user:'${DB_APP_USERNAME}'",

@@ -111,6 +111,8 @@ fi
 ln -s "${deliverableDir}/node_modules" "${projectDir}"
 ln -s "${deliverableDir}/typings" "${projectDir}"
 
+# Overwrite project's package.json with the deliverable's package.json
+cp "${deliverableDir}/package.json" "${projectDir}/package.json"
 
 # Build the student's project
 # Exit if the build fails
