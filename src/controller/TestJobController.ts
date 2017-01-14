@@ -52,28 +52,33 @@ export default class TestJobController {
             reject(err);
           })
         }).catch(err => {
+          console.log('Error executing')
           reject(err);
         })
       });
     };
 
     this.completed = async function(job: Job, result: TestStatus) {
-      Log.info('JobQueue::init() - Job Completed.')
+      Log.info('JobQueue::completed() - ' + job.jobId + '.');
       let jobData: TestJob = job.data as TestJob;
       let controller: PostbackController = new PostbackController(jobData.hook);
 
       if (result.buildFailed) {
+        Log.info('JobQueue::completed() - build failed for ' + job.jobId + '.');
         let msg: string = ':warning:**AutoTest Warning**: Unable to build project.\n\n```' + result.buildMsg + '\n```';
         await controller.submit(msg);
       } else if (result.containerExitCode > 0) {
+        Log.info('JobQueue::completed() - container exited with code ' + result.containerExitCode + ' for ' + job.jobId + '.');
         let msg: string = ':warning:**AutoTest Warning**: Unable to run tests. Please ensure all promises return to avoid hitting a timeout. Exit ' + result.containerExitCode +'.';
         await controller.submit(msg);
       }
     }
     this.failed = function(job: Job, error: Error) {
-      Log.error('JobQueue::init() - Job failed.')
+      Log.error('JobQueue::failed() - ' + job.jobId + '. ' + error);
     }
-    this.active = function(job: Job, jobPromise: JobPromise) {}
+    this.active = function(job: Job, jobPromise: JobPromise) {
+      Log.trace('JobQueue::active() - ' + job.jobId + '.');
+    }
 
     this.testQueue = new JobQueue(this.name, this.concurrency, this.redisAddress, this.process, this.completed, this.failed, this.active);
   }

@@ -59,9 +59,19 @@ export class JobQueue {
         this.queue.on('active', this.activeCallback);
         this.queue.on('completed', this.completedCallback);
         this.queue.on('failed', this.failedCallback);
+        this.queue.on('error', err => {
+          Log.error('JobQueue::init() - ERROR with queue. ' + err);
+        });
+        this.queue.on('stalled', job => {
+          Log.error('JobQueue::init() - ERROR Job ' + job.jobId + ' is stalled.');
+        });
+        
         let that = this;
         return new Promise((fulfill, reject) => {
           that.queue.on('ready', () => {
+            // that.queue.clean(1000, 'delayed').then(() => {
+            //
+            // })
             Log.trace('JobQueue::init() - Ready.')
             fulfill();
           });

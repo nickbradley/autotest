@@ -6,7 +6,7 @@ import {IConfig, AppConfig} from '../../Config';
 import {Commit} from '../GithubUtil';
 import {CouchDatabase,Database, DatabaseRecord, InsertResponse} from '../Database';
 import {TestJob, TestJobDeliverable} from '../../controller/TestJobController';
-
+import Log from '../../Util';
 
 
 
@@ -97,6 +97,7 @@ export default class TestRecord implements DatabaseRecord {
     return new Promise<TestStatus>((fulfill, reject) => {
       cp.execFile(file, args, options, (error: any, stdout, stderr) => {
         if (error) {
+          console.log('Error', error);
           this.containerExitCode = error.code;
         }
 
@@ -104,7 +105,7 @@ export default class TestRecord implements DatabaseRecord {
         let readTranscript: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.name + '/stdio.txt', 'utf8', (err, data) => {
             if (err) {
-              //return reject(err);
+              Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
               return fulfill(err);
             }
             try {
@@ -129,7 +130,10 @@ export default class TestRecord implements DatabaseRecord {
 
         let readTests: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.name + '/mocha.json', 'utf8', (err, data) => {
-            if (err) fulfill(err);
+            if (err) {
+              Log.error('TestRecord::generate() - ERROR reading mocha.json. ' + err);
+              fulfill(err);
+            }
             try {
               let tests: TestOutput = this.processMochaJson(data);
               this.testStats = tests.testStats;
@@ -144,7 +148,10 @@ export default class TestRecord implements DatabaseRecord {
 
         let readCoverage: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.name + '/coverage.zip', (err, data) => {
-            if (err) fulfill(err);
+            if (err) {
+              Log.error('TestRecord::generate() - ERROR reading coverage.zip. ' + err);
+              fulfill(err);
+            }
             this.coverageZip = data;
             fulfill();
           });
@@ -160,6 +167,7 @@ export default class TestRecord implements DatabaseRecord {
           }
           fulfill(testStatus);
         }).catch(err => {
+          Log.error('TestRecord::generate() - ERROR processing container output. ' + err);
           reject(err);
         });
       });
