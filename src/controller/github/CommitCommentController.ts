@@ -173,7 +173,8 @@ export default class CommitCommentContoller {
     let designName: string = 'grades';
     let viewName: string = 'byTeamDeliverableCommit';
     let params: QueryParameters = {
-      key: [team, deliverable, commit.short]
+      key: [team, deliverable, commit.short],
+      descending: true
     };
 
     let that = this;
