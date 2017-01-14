@@ -8,7 +8,7 @@ RUN apt-get update
 RUN apt-get -y install iptables
 RUN apt-get -y install zip
 RUN apt-get -y install yarn
-
+RUN yarn global add nyc
 
 ARG deliverableRepoUrl
 ARG deliverableCommit
@@ -30,4 +30,4 @@ ENV MOCHAWESOME_REPORTDIR=/cpsc310project/mocha_output
 ENV ALLOW_DNS=$allowDNS
 ENV WHITELISTED_SERVERS=$externalServers
 
-CMD timeout 5m /run-tests.sh $PROJECT_URL $PROJECT_COMMIT 2>&1 | tee /output/stdio.txt
+CMD timeout 5m /run-tests.sh $PROJECT_URL $PROJECT_COMMIT >/output/stdio.txt 2>&1

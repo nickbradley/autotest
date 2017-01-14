@@ -27,6 +27,7 @@ deliverableDir="/deliverable"
 outputDir="/output"
 
 buildCmd="yarn run build"
+#coverCmd="nyc -r json yarn run test"
 coverCmd="yarn run cover"
 testsCmd="yarn run test"
 
@@ -134,7 +135,7 @@ printf "<DELIVERABLE_BUILD exitcode=%d>\n%s\n</DELIVERABLE_BUILD>\n\n" "${status
 
 
 # Run the coverage tool
-out=$(cd "${projectDir}" && ${coverCmd} 2>&1)
+out=$(cd "${projectDir}" && ${coverCmd} && ls 2>&1)
 status=$?
 
 printf "<PROJECT_COVERAGE exitcode=%d>\n%s\n</PROJECT_COVERAGE>\n\n" "${status}" "${out}"
@@ -155,3 +156,5 @@ out=$(
 )
 status=$?
 printf "<FILE_OPERATIONS exitcode=%d>\n%s\n</FILE_OPERATIONS>\n\n" "${status}" "${out}"
+
+exit 0
