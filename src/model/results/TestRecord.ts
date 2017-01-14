@@ -106,6 +106,7 @@ export default class TestRecord implements DatabaseRecord {
           fs.readFile(tempDir.name + '/stdio.txt', 'utf8', (err, data) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
+              this.containerExitCode = 30;
               return fulfill(err);
             }
             try {
@@ -132,6 +133,7 @@ export default class TestRecord implements DatabaseRecord {
           fs.readFile(tempDir.name + '/mocha.json', 'utf8', (err, data) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading mocha.json. ' + err);
+              this.containerExitCode = 31;
               fulfill(err);
             }
             try {
@@ -150,6 +152,7 @@ export default class TestRecord implements DatabaseRecord {
           fs.readFile(tempDir.name + '/coverage.zip', (err, data) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading coverage.zip. ' + err);
+              this.containerExitCode = 32;
               fulfill(err);
             }
             this.coverageZip = data;
@@ -168,6 +171,7 @@ export default class TestRecord implements DatabaseRecord {
           fulfill(testStatus);
         }).catch(err => {
           Log.error('TestRecord::generate() - ERROR processing container output. ' + err);
+          this.containerExitCode = 39;
           reject(err);
         });
       });
