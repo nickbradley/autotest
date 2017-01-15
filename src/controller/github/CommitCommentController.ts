@@ -115,8 +115,10 @@ export default class CommitCommentContoller {
         let adminRecord: any = await db.readRecord('admins');
         let admins: string[] = Object.keys(adminRecord).filter(key => {
           return !key.startsWith('_');
+        }).map(name => {
+          return name.toLowerCase()
         });
-        fulfill(admins.includes(user));
+        fulfill(admins.indexOf(user.toLowerCase()) !== -1);
       } catch(err) {
         reject('Failed to retrieve admin list. ' + err);
       }
