@@ -65,7 +65,7 @@ export class JobQueue {
         this.queue.on('stalled', job => {
           Log.error('JobQueue::init() - ERROR Job ' + job.jobId + ' is stalled.');
         });
-        
+
         let that = this;
         return new Promise((fulfill, reject) => {
           that.queue.on('ready', () => {
@@ -93,6 +93,10 @@ export class JobQueue {
 
   public async remove(id: string) {
 
+  }
+
+  public async get(id: string) {
+    return this.queue.getJob(id);
   }
 
   public async count() {
