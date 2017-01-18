@@ -20,11 +20,14 @@
 # $3: The commit SHA (first 7 characters). This is used to both set the version
 #     of the deliverable repository in the Docker image and as its version tag.
 #
-# $4+: List of external servers that should be accesible inside the test container.
+# $4: The name of the test suite this container should run (e.g. d1, d2, d3, d1p, d2p, d3p).
+#     Becomes the TS environment variable for the test suite.
+#
+# $5+: List of external servers that should be accesible inside the test container.
 #      Each server address should include the scheme (default is http) and the port (default is 80).
 #
 # Example:
-#  ./build-test-container.sh af345rt3tt14636d1779g0452c47g25cd4ad75bce cpsc310d3-priv d3c6e11 "skaha.cs.ubc.ca:8525" "http://www.google.com"
+#  ./build-test-container.sh af345rt3tt14636d1779g0452c47g25cd4ad75bce testsuite d3c6e11 d1 "skaha.cs.ubc.ca:8525" "http://www.google.com"
 # ##############################################################################
 
 set -o errexit  # exit on command failure
@@ -47,17 +50,19 @@ else
   externalServers=""
 fi
 
-docker build --tag autotest/${repoName}:${commit} \
- --build-arg deliverableRepoUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
- --build-arg deliverableCommit=${commit} \
+docker build --tag autotest/${deliverable}:${commit} \
+ --build-arg testsuiteUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
+ --build-arg testsuiteCommit=${commit} \
  --build-arg allowDNS=${allowDNS} \
  --build-arg externalServers="${externalServers}" \
+ --build-arg deliverable="${deliverable}" \
  "${dockerDir}"
 
 
- docker build --tag autotest/${repoName}:latest \
- --build-arg deliverableRepoUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
- --build-arg deliverableCommit=${commit} \
+ docker build --tag autotest/${deliverable}:latest \
+ --build-arg testsuiteUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
+ --build-arg testsuiteCommit=${commit} \
  --build-arg allowDNS=${allowDNS:0} \
  --build-arg externalServers="${externalServers}" \
+ --build-arg deliverable="${deliverable}" \
  "${dockerDir}"

@@ -17,27 +17,38 @@
 # Environment Variables
 #  WHITELISTED_SERVERS="host:port host:port ..." List of hostnames to allow access
 #  ALLOW_DNS=1|0 If enabled then WHITELISTED_SERVERS can contain hostnames in addition to IP addresses
+#  TESTSUITE_VERSION=commit The SHA of the commit
 #
 # Notes:
 #  1) Expects the deliverable repo exist in deliverableDir with up to date packages (node_modules)
 # ##############################################################################
 
+version=0.0.2
+
+
 projectDir="/cpsc310project"
-deliverableDir="/deliverable"
+deliverableDir="/testsuite"
 outputDir="/output"
 
 buildCmd="yarn run build"
-#coverCmd="nyc -r json yarn run test"
+#coverCmd="nyc -r json-summary yarn run test"
 coverCmd="yarn run cover"
 testsCmd="yarn run test"
+
+date=$(date --utc +%FT%T.%3NZ)
+
+printf "<INFO exitcode=0, completed=%s, duration=0s>\n%s\n%s\n</INFO>\n\n\n" "${date}" "script version: ${version}" "test suite version: ${TESTSUITE_VERSION}"
 
 
 # Clone the specified student repo into the projectDir
 # Exit if unable to clone the student's repo
+startTime=$(date +%s)
 out=$(./pull-repo.sh $@ "${projectDir}" 2>&1)
 status=$?
+duration=$(($(date +%s) - $startTime))
+date=$(date --utc +%FT%T.%3NZ)
 
-printf "<PROJECT_PULL exitcode=%d>\n%s\n</PROJECT_PULL>\n\n" "${status}" "${out}"
+printf "<PROJECT_PULL exitcode=%d, completed=%s, duration=%ds>\n%s\n</PROJECT_PULL>\n\n" "${status}" "${date}" "${duration}" "${out}"
 
 if [ $status -ne 0 ]
 then
@@ -46,6 +57,7 @@ fi
 
 # Configure the firewall to block all connections except those explicitly allowed
 # Exit if problem configuring the firewall
+startTime=$(date +%s)
 out=$({
 IPT="iptables"
 dnsServers=$(grep -oP "(?<=nameserver ).*" /etc/resolv.conf | tr "\n" " ")
@@ -99,8 +111,10 @@ do
 done
 } 2>&1 )
 status=$?
+duration=$(($(date +%s) - $startTime))
+date=$(date --utc +%FT%T.%3NZ)
 
-printf "<NETWORK exitcode=%d>\n%s\n</NETWORK>\n\n" "${status}" "${out}"
+printf "<NETWORK exitcode=%d, completed=%s, duration=%ds>\n%s\n</NETWORK>\n\n" "${status}" "${date}" "${duration}" "${out}"
 
 if [ $status -ne 0 ]
 then
@@ -117,10 +131,13 @@ cp "${deliverableDir}/package.json" "${projectDir}/package.json"
 
 # Build the student's project
 # Exit if the build fails
+startTime=$(date +%s)
 out=$(cd "${projectDir}" && ${buildCmd} 2>&1)
 status=$?
+duration=$(($(date +%s) - $startTime))
+date=$(date --utc +%FT%T.%3NZ)
 
-printf "<PROJECT_BUILD exitcode=%d>\n%s\n</PROJECT_BUILD>\n\n" "${status}" "${out}"
+printf "<PROJECT_BUILD exitcode=%d, completed=%s, duration=%ds>\n%s\n</PROJECT_BUILD>\n\n" "${status}" "${date}" "${duration}" "${out}"
 
 if [ $status -ne 0 ]
 then
@@ -128,33 +145,50 @@ then
 fi
 
 # Build the deliverable's code (depends on the student's code)
+startTime=$(date +%s)
 out=$(cd "${deliverableDir}" && ${buildCmd} 2>&1)
 status=$?
+duration=$(($(date +%s) - $startTime))
+date=$(date --utc +%FT%T.%3NZ)
 
-printf "<DELIVERABLE_BUILD exitcode=%d>\n%s\n</DELIVERABLE_BUILD>\n\n" "${status}" "${out}"
+printf "<DELIVERABLE_BUILD exitcode=%d, completed=%s, duration=%ds>\n%s\n</DELIVERABLE_BUILD>\n\n" "${status}" "${date}" "${duration}" "${out}"
 
 
 # Run the coverage tool
-out=$(cd "${projectDir}" && ${coverCmd} && ls 2>&1)
+startTime=$(date +%s)
+out=$(cd "${projectDir}" && ${coverCmd} 2>&1)
 status=$?
+duration=$(($(date +%s) - $startTime))
+date=$(date --utc +%FT%T.%3NZ)
 
-printf "<PROJECT_COVERAGE exitcode=%d>\n%s\n</PROJECT_COVERAGE>\n\n" "${status}" "${out}"
+printf "<PROJECT_COVERAGE exitcode=%d, completed=%s, duration=%ds>\n%s\n</PROJECT_COVERAGE>\n\n" "${status}" "${date}" "${duration}" "${out}"
+
 
 # Run the tests
+startTime=$(date +%s)
 out=$(cd "${deliverableDir}" && ${testsCmd} 2>&1)
 status=$?
+duration=$(($(date +%s) - $startTime))
+date=$(date --utc +%FT%T.%3NZ)
 
-printf "<DELIVERABLE_TESTS exitcode=%d>\n%s\n</DELIVERABLE_TESTS>\n\n" "${status}" "${out}"
+printf "<DELIVERABLE_TESTS exitcode=%d, completed=%s, duration=%ds>\n%s\n</DELIVERABLE_TESTS>\n\n" "${status}" "${date}" "${duration}" "${out}"
+
 
 # Zip the coverage directory and copy it and the mocha report to the output directory
 # http://stackoverflow.com/questions/18933975/zip-file-and-print-to-stdout
+startTime=$(date +%s)
 out=$(
   echo "Copying ${projectDir}/mocha_output/mochawesome.json to ${outputDir}/mocha.json."
   cp "${projectDir}/mocha_output/mochawesome.json" "${outputDir}/mocha.json" 2>&1
-  echo "Archiving ${projectDir}/coverage as ${outputDir}/coverage.zip."
-  zip -r "${outputDir}/coverage.zip" "${projectDir}/coverage" 2>&1
+  echo "Copying ${projectDir}/coverage/coverage-summary.json to ${outputDir}/coverage.json"
+  cp "${projectDir}/coverage/coverage-summary.json" "${outputDir}/coverage.json"
+  # echo "Archiving ${projectDir}/coverage as ${outputDir}/coverage.zip."
+  # zip -r "${outputDir}/coverage.zip" "${projectDir}/coverage" 2>&1
 )
 status=$?
-printf "<FILE_OPERATIONS exitcode=%d>\n%s\n</FILE_OPERATIONS>\n\n" "${status}" "${out}"
+duration=$(($(date +%s) - $startTime))
+date=$(date --utc +%FT%T.%3NZ)
+
+printf "<FILE_OPERATIONS exitcode=%d, completed=%s, duration=%ds>\n%s\n</FILE_OPERATIONS>\n\n" "${status}" "${date}" "${duration}" "${out}"
 
 exit 0
