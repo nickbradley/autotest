@@ -36,8 +36,9 @@ dockerDir=$(dirname $BASH_SOURCE)
 githubApiKey=${1}
 repoName=${2}
 commit=${3}
+deliverable=${4}
 
-if [[ ! -z "${@:4}" ]]
+if [[ ! -z "${@:5}" ]]
 then
   allowDNS=1
   externalServers="${@:4}"
