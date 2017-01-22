@@ -50,7 +50,7 @@ else
   externalServers=""
 fi
 
-docker build --tag autotest/${deliverable}:${commit} \
+docker build --tag autotest/${deliverable}-${repoName}:${commit} \
  --build-arg testsuiteUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
  --build-arg testsuiteCommit=${commit} \
  --build-arg allowDNS=${allowDNS} \
@@ -59,7 +59,7 @@ docker build --tag autotest/${deliverable}:${commit} \
  "${dockerDir}"
 
 
- docker build --tag autotest/${deliverable}:latest \
+ docker build --tag autotest/${deliverable}-${repoName}:latest \
  --build-arg testsuiteUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
  --build-arg testsuiteCommit=${commit} \
  --build-arg allowDNS=${allowDNS:0} \

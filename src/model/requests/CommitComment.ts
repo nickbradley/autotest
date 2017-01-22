@@ -31,6 +31,8 @@ export default class CommitCommentRecord implements DatabaseRecord {
   private _deliverableRate: number;
   private _isRequest: boolean;
   private _isProcessed: boolean;
+  private _options: string[] = [];
+  private _note: string;
 
   constructor() {
     try {
@@ -56,10 +58,13 @@ export default class CommitCommentRecord implements DatabaseRecord {
         that._isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
         that._isProcessed = true;
         if (that._isRequest) {
-          let reqDeliverable: string = that.extractDeliverable(that.message);
+          that._options = this.extractOptions(this.message);
+          let reqDeliverable: string = this._options[0];//that.extractDeliverable(that.message);
           let deliverable: FetchedDeliverable = await that.fetchDeliverable(reqDeliverable);
           that._deliverable = deliverable.key;
           that._deliverableRate = deliverable.deliverable.rate;
+          console.log(deliverable);
+          console.log('***', this._note);
         }
         fulfill();
       } catch(err) {
@@ -71,34 +76,55 @@ export default class CommitCommentRecord implements DatabaseRecord {
 
 
   private async fetchDeliverable(key: string): Promise<FetchedDeliverable> {
+    console.log(key);
+    if (!key) this._note = 'No deliverable specified; using latest. To specify an earlier deliverable, follow the metion with "#dX", where X is the deliverable.';
     let that = this;
     return new Promise<FetchedDeliverable>(async (fulfill, reject) => {
       try {
         let resultsDB = new Database(that.config.getDBConnection(), 'settings');
         let deliverablesDoc = await resultsDB.readRecord('deliverables');
         let deliverableRecord: DeliverableRecord = new DeliverableRecord(deliverablesDoc);
+        let fetchedDeliverables: FetchedDeliverable[] = [];
         let now: Date = new Date();
 
         if (deliverableRecord.containsKey(key)) {
-          fulfill({
-            key: key,
-            deliverable: deliverableRecord.item(key)
-          });
+          let deliverable: Deliverable = deliverableRecord.item(key);
+
+          // The key refers to a vaild deliverable that has been released
+          if (new Date(deliverable.releaseDate) <= now) {
+            return fulfill({
+              key: key,
+              deliverable: deliverableRecord.item(key)
+            });
+          // The key refers to a vaild deliverable that hasn't been released
+          // Get all deliverables that have been released
+          } else {
+            this._note = 'The specified deliverable has not been released yet; using latest released.';
+            for (const key of deliverableRecord.keys()) {
+              let deliverable: Deliverable = deliverableRecord.item(key);
+              if (new Date(deliverable.releaseDate) <= now) {
+                fetchedDeliverables.push({key: key, deliverable: deliverable});
+              }
+            }
+          }
+          // The key refers to an invaild deliverable
+          // Get all deliverables that have been released
         } else {
-          let fetchedDeliverables: FetchedDeliverable[] = [];
+          if (!this._note)
+            this._note = 'Invalid deliverable specified; using latest. To specify an earlier deliverable, follow the metion with "#dX", where X is the deliverable.';
           for (const key of deliverableRecord.keys()) {
             let deliverable: Deliverable = deliverableRecord.item(key);
             if (new Date(deliverable.releaseDate) <= now) {
               fetchedDeliverables.push({key: key, deliverable: deliverable});
             }
           }
-
-          let latestDeliverable: FetchedDeliverable = fetchedDeliverables.reduce((prev, current) => {
-            return (prev.deliverable.dueDate > current.deliverable.dueDate) ? prev : current
-          }, fetchedDeliverables[0]);
-
-          fulfill(latestDeliverable);
         }
+        // Of the released deliverables, return the one with the latest due date
+        let latestDeliverable: FetchedDeliverable = fetchedDeliverables.reduce((prev, current) => {
+          return (prev.deliverable.dueDate > current.deliverable.dueDate) ? prev : current
+        }, fetchedDeliverables[0]);
+
+        fulfill(latestDeliverable);
       } catch(err) {
           reject(err);
       }
@@ -166,11 +192,25 @@ export default class CommitCommentRecord implements DatabaseRecord {
 
   private extractDeliverable(comment: string): string {
     let deliverable: string;
-    let matches: string[] = /.*#[dD](\d{1,2}).*/i.exec(this.message);
+    let matches: string[] = /.*#[dD](\d{1,2}).*/i.exec(comment);
     if (matches) {
       deliverable = 'd' + +matches[1];
     }
 
     return deliverable;
+  }
+
+  private extractOptions(comment: string): string[] {
+    let options: string[] = [];
+    let mentionTag: string = this.config.getMentionTag();
+    let re: RegExp = new RegExp(mentionTag + '\\s*#([a-zA-Z0-9]+)','gi');
+    let matches: string[] = re.exec(comment);
+    if (matches) {
+      matches.shift()
+      options = matches.map(option => {
+        return option.toLowerCase();
+      });
+    }
+    return options;
   }
 }

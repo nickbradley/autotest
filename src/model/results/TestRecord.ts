@@ -1,5 +1,5 @@
 import cp = require('child_process');
-import tmp = require('tmp');
+import tmp = require('tmp-promise');
 import fs = require('fs');
 import {IConfig, AppConfig} from '../../Config';
 
@@ -11,8 +11,13 @@ import Log from '../../Util';
 
 
 interface TestOutput {
-  mocha: JSON,
-  testStats: TestStats
+  mocha: JSON;
+  testStats: TestStats;
+}
+
+interface CoverageOutput {
+  report: JSON;
+  coverageStats: CoverageStats;
 }
 
 interface TestStats {
@@ -27,14 +32,15 @@ interface TestStats {
 
 export interface CoverageStat {
   percentage: number;
-  touched: number;
   total: number;
+  covered: number;
+  skipped: number;
 }
 export interface CoverageStats {
+  lines: CoverageStat;
   statements: CoverageStat;
   branches: CoverageStat;
   functions: CoverageStat;
-  lines: CoverageStat;
 }
 
 export interface ProcessedTag {
@@ -61,6 +67,7 @@ export default class TestRecord implements DatabaseRecord {
   private team: string;
   private deliverable: TestJobDeliverable;
   private testStats: TestStats;
+  private coverageReport: any;
   private coverageStats: CoverageStats;
   private buildFailed: boolean;
   private buildMsg: string;
@@ -69,6 +76,8 @@ export default class TestRecord implements DatabaseRecord {
   private committer: string;
   private containerExitCode: number = 0;
   private timestamp: number;
+  private scriptVersion: string;
+  private suiteVersion: string;
 
   constructor(githubToken: string, testJob: TestJob) {
     this.githubToken = githubToken;
@@ -77,18 +86,18 @@ export default class TestRecord implements DatabaseRecord {
     this.commit = testJob.commit;
     this.committer = testJob.user;
     this.timestamp = +new Date();
-    this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.name;
+    this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '#';
   }
 
   public async generate(): Promise<TestStatus> {
-    let tempDir = tmp.dirSync();
+    let tempDir = await tmp.dir({ dir: '/tmp', unsafeCleanup: true });
     let file: string = './docker/tester/run-test-container.sh';
     let args: string[] = [
       this.githubToken,
       this.team,
       this.commit,
       this.deliverable.image,
-      tempDir.name
+      tempDir.path
     ];
     let options = {
       encoding: 'utf8'
@@ -103,14 +112,19 @@ export default class TestRecord implements DatabaseRecord {
 
         let promises: Promise<string>[] = [];
         let readTranscript: Promise<string> = new Promise((fulfill, reject) => {
-          fs.readFile(tempDir.name + '/stdio.txt', 'utf8', (err, data) => {
+          fs.readFile(tempDir.path + '/stdio.txt', 'utf8', (err, data) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
-              this.containerExitCode = 30;
+              if (this.containerExitCode == 0) this.containerExitCode = 30;
               return fulfill(err);
             }
             try {
               this.stdio = data;
+
+              // Process the info tag
+              let infoTag: any = this.processInfoTag(data);
+              this.scriptVersion = infoTag.scriptVersion;
+              this.suiteVersion = infoTag.suiteVersion;
 
               // Process the project build tag
               let buildTag: ProcessedTag = this.processProjectBuildTag(data);
@@ -118,8 +132,8 @@ export default class TestRecord implements DatabaseRecord {
               this.buildMsg = buildTag.content;
 
               // Process the coverage tag
-              let coverageTag: ProcessedTag = this.processCoverageTag(data);
-              this.coverageStats = coverageTag.content;
+              //let coverageTag: ProcessedTag = this.processCoverageTag(data);
+              //this.coverageStats = coverageTag.content;
 
               fulfill();
             } catch(err) {
@@ -130,10 +144,10 @@ export default class TestRecord implements DatabaseRecord {
         promises.push(readTranscript);
 
         let readTests: Promise<string> = new Promise((fulfill, reject) => {
-          fs.readFile(tempDir.name + '/mocha.json', 'utf8', (err, data) => {
+          fs.readFile(tempDir.path + '/mocha.json', 'utf8', (err, data) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading mocha.json. ' + err);
-              this.containerExitCode = 31;
+              if (this.containerExitCode == 0) this.containerExitCode = 31;
               fulfill(err);
             }
             try {
@@ -149,17 +163,36 @@ export default class TestRecord implements DatabaseRecord {
         promises.push(readTests);
 
         let readCoverage: Promise<string> = new Promise((fulfill, reject) => {
-          fs.readFile(tempDir.name + '/coverage.zip', (err, data) => {
+          fs.readFile(tempDir.path + '/coverage.json', 'utf8', (err, data) => {
             if (err) {
-              Log.error('TestRecord::generate() - ERROR reading coverage.zip. ' + err);
-              this.containerExitCode = 32;
+              Log.error('TestRecord::generate() - ERROR reading coverage.json. ' + err);
+              if (this.containerExitCode == 0) this.containerExitCode = 31;
               fulfill(err);
             }
-            this.coverageZip = data;
-            fulfill();
+            try {
+              let coverage: CoverageOutput = this.processCoverageJson(data);
+              this.coverageStats = coverage.coverageStats;
+              this.coverageReport = coverage.report;
+              fulfill();
+            } catch(err) {
+              fulfill(err);
+            }
           });
         });
-        promises.push(readCoverage);
+        promises.push(readTests);
+
+        // let readCoverage: Promise<string> = new Promise((fulfill, reject) => {
+        //   fs.readFile(tempDir.name + '/coverage.zip', (err, data) => {
+        //     if (err) {
+        //       Log.error('TestRecord::generate() - ERROR reading coverage.zip. ' + err);
+        //       if (this.containerExitCode == 0) this.containerExitCode = 32;
+        //       fulfill(err);
+        //     }
+        //     this.coverageZip = data;
+        //     fulfill();
+        //   });
+        // });
+        // promises.push(readCoverage);
 
         Promise.all(promises).then((err) => {
           let testStatus: TestStatus = {
@@ -168,24 +201,39 @@ export default class TestRecord implements DatabaseRecord {
             containerExitCode: this.containerExitCode,
             processErrors: err
           }
+          tempDir.cleanup();
           fulfill(testStatus);
         }).catch(err => {
           Log.error('TestRecord::generate() - ERROR processing container output. ' + err);
-          this.containerExitCode = 39;
+          if (this.containerExitCode == 0) this.containerExitCode = 39;
           reject(err);
         });
       });
     });
   }
 
+  public processInfoTag(stdout: string): any {
+    try {
+      let infoTagRegex: RegExp = /^<INFO exitcode=(\d+), completed=(.+), duration=(\d+)s>\nscript version: (.+)\ntest suite version: (.+)\n<\/INFO>$/gm
+      //let infoMsgRegex: RegExp = /^(npm.*)$/gm;
+      let matches: string[] = infoTagRegex.exec(stdout);
+      let processed: any = {
+        scriptVersion: matches[4].trim(),
+        suiteVersion: matches[5].trim()
+      };
+      return processed;
+    } catch (err) {
+      throw 'Failed to process <INFO> tag. ' + err;
+    }
+  }
 
   public processProjectBuildTag(stdout: string): ProcessedTag {
     try {
-      let buildTagRegex: RegExp = /^<PROJECT_BUILD exitcode=(\d+)>((?!npm)[\s\S]*)<\/PROJECT_BUILD>$/gm
+      let buildTagRegex: RegExp = /^<PROJECT_BUILD exitcode=(\d+), completed=(.+), duration=(\d+)s>((?!npm)[\s\S]*)<\/PROJECT_BUILD>$/gm
       let buildMsgRegex: RegExp = /^(npm.*)$/gm;
       let matches: string[] = buildTagRegex.exec(stdout);
       let processed: ProcessedTag = {
-        content: matches[2].replace(buildMsgRegex, '').trim(),
+        content: matches[4].replace(buildMsgRegex, '').trim(),
         exitcode: +matches[1]
       };
       return processed;
@@ -195,42 +243,66 @@ export default class TestRecord implements DatabaseRecord {
   }
 
 
-  public processCoverageTag(stdout: string): ProcessedTag {
+  // public processCoverageTag(stdout: string): ProcessedTag {
+  //   try {
+  //     let coverageTagRegex: RegExp = /^<PROJECT_COVERAGE exitcode=(\d+)>([\s\S]*)<\/PROJECT_COVERAGE>$/gm;
+  //     let matches: string[] = coverageTagRegex.exec(stdout);
+  //     let exitcode: number = +matches[1];
+  //     let content: string = matches[2];
+  //     let stats: CoverageStat[] = [];
+  //
+  //     for (let stat of ['Statements', 'Branches', 'Functions', 'Lines']) {
+  //       let regex: RegExp = new RegExp(stat+'\\s+: ([0-9\\.]+)% \\( (\\d+)\\/(\\d+) \\)','gm');
+  //       let matches: string[] = regex.exec(content);
+  //
+  //       let coverStat: CoverageStat = {
+  //         percentage: +matches[1],
+  //         touched: +matches[2],
+  //         total: +matches[3]
+  //       }
+  //       stats.push(coverStat);
+  //     }
+  //
+  //     let processed: ProcessedTag = {
+  //       content: {
+  //         statements: stats[0],
+  //         branches: stats[1],
+  //         functions: stats[2],
+  //         lines: stats[3]
+  //       },
+  //       exitcode: exitcode
+  //     };
+  //
+  //     return processed;
+  //   } catch(err) {
+  //     throw 'Failed to process <PROJECT_COVERAGE> tag. ' + err;
+  //   }
+  // }
+
+
+  public processCoverageJson(text: string): CoverageOutput {
     try {
-      let coverageTagRegex: RegExp = /^<PROJECT_COVERAGE exitcode=(\d+)>([\s\S]*)<\/PROJECT_COVERAGE>$/gm;
-      let matches: string[] = coverageTagRegex.exec(stdout);
-      let exitcode: number = +matches[1];
-      let content: string = matches[2];
-      let stats: CoverageStat[] = [];
+      let report: any = JSON.parse(text);
+      let statements = report.total.statements;
+      let branches = report.total.branches;
+      let functions = report.total.functions;
+      let lines = report.total.lines;
 
-      for (let stat of ['Statements', 'Branches', 'Functions', 'Lines']) {
-        let regex: RegExp = new RegExp(stat+'\\s+: ([0-9\\.]+)% \\( (\\d+)\\/(\\d+) \\)','gm');
-        let matches: string[] = regex.exec(content);
-
-        let coverStat: CoverageStat = {
-          percentage: +matches[1],
-          touched: +matches[2],
-          total: +matches[3]
+      let processed: CoverageOutput = {
+        report: report,
+        coverageStats: {
+          lines: {percentage: lines.pct, total: lines.total, covered: lines.covered, skipped: lines.skipped},
+          statements: {percentage: statements.pct, total: statements.total, covered: lines.covered, skipped: lines.skipped},
+          branches: {percentage: branches.pct, total: branches.total, covered: branches.covered, skipped: branches.skipped},
+          functions: {percentage: functions.pct, total: functions.total, covered: functions.covered, skipped: functions.skipped}
         }
-        stats.push(coverStat);
       }
-
-      let processed: ProcessedTag = {
-        content: {
-          statements: stats[0],
-          branches: stats[1],
-          functions: stats[2],
-          lines: stats[3]
-        },
-        exitcode: exitcode
-      };
 
       return processed;
     } catch(err) {
-      throw 'Failed to process <PROJECT_COVERAGE> tag. ' + err;
+      throw 'Failed to process coverage report (JSON). ' + err;
     }
   }
-
 
 
   public processMochaJson(text: string): TestOutput {
@@ -293,28 +365,37 @@ export default class TestRecord implements DatabaseRecord {
   }
 
   private async insert(db: CouchDatabase): Promise<InsertResponse> {
+    this._id += this.suiteVersion;
+    let container = {
+      scriptVersion: this.scriptVersion,
+      suiteVersion: this.suiteVersion,
+      image: this.deliverable.image,
+      exitcode: this.containerExitCode
+    }
 
     let doc = {
       'team': this.team,
-      'deliverable': this.deliverable,
+      'deliverable': this.deliverable.deliverable,
       'testStats': this.testStats,
       'coverStats': this.coverageStats,
+      'coverReport': this.coverageReport,
       'buildFailed': this.buildFailed,
       'buildMsg': this.buildMsg,
       'testReport': this.testReport,
       'commit': this.commit,
       'committer': this.committer,
-      'containerExitCode': this.containerExitCode,
-      'timestamp': this.timestamp
+      'timestamp': this.timestamp,
+      'container': container
+
     }
 
     let attachments = [];
     if (this.stdio) {
       attachments.push({name: 'stdio.txt', data: this.stdio, content_type: 'application/plain'});
     }
-    if (this.coverageZip) {
-      attachments.push({name: 'coverage.zip', data: this.coverageZip, content_type: 'application/zip'});
-    }
+    // if (this.coverageZip) {
+    //   attachments.push({name: 'coverage.zip', data: this.coverageZip, content_type: 'application/zip'});
+    // }
 
 
     let that = this;

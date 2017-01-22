@@ -32,8 +32,8 @@ outputDir="/output"
 
 buildCmd="yarn run build"
 #coverCmd="nyc -r json-summary yarn run test"
-coverCmd="yarn run cover"
-testsCmd="yarn run test"
+coverCmd="yarn run autocover"
+testsCmd="yarn run autotest"
 
 date=$(date --utc +%FT%T.%3NZ)
 

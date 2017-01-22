@@ -1,0 +1,178 @@
+{
+  "ref": "refs/heads/master",
+  "before": "387471626bd213440ff2fe73feeb2cc46b9e05a1",
+  "after": "7c25a1e0a32e9fb4133a1740a72ebe329a927f70",
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/CS310-2017Jan/cpsc310d0_nickbradley/compare/387471626bd2...7c25a1e0a32e",
+  "commits": [
+    {
+      "id": "7c25a1e0a32e9fb4133a1740a72ebe329a927f70",
+      "tree_id": "94e7c6583111003a17122868ed6db295201472b6",
+      "distinct": true,
+      "message": "remove trailing comma",
+      "timestamp": "2017-01-06T15:41:50-08:00",
+      "url": "https://github.com/CS310-2017Jan/cpsc310d0_nickbradley/commit/7c25a1e0a32e9fb4133a1740a72ebe329a927f70",
+      "author": {
+        "name": "nickbradley",
+        "email": "nickbradley@live.ca",
+        "username": "nickbradley"
+      },
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com",
+        "username": "web-flow"
+      },
+      "added": [
+
+      ],
+      "removed": [
+
+      ],
+      "modified": [
+        "package.json"
+      ]
+    }
+  ],
+  "head_commit": {
+    "id": "7c25a1e0a32e9fb4133a1740a72ebe329a927f70",
+    "tree_id": "94e7c6583111003a17122868ed6db295201472b6",
+    "distinct": true,
+    "message": "remove trailing comma",
+    "timestamp": "2017-01-06T15:41:50-08:00",
+    "url": "https://github.com/CS310-2017Jan/cpsc310d0_nickbradley/commit/7c25a1e0a32e9fb4133a1740a72ebe329a927f70",
+    "author": {
+      "name": "nickbradley",
+      "email": "nickbradley@live.ca",
+      "username": "nickbradley"
+    },
+    "committer": {
+      "name": "GitHub",
+      "email": "noreply@github.com",
+      "username": "web-flow"
+    },
+    "added": [
+
+    ],
+    "removed": [
+
+    ],
+    "modified": [
+      "package.json"
+    ]
+  },
+  "repository": {
+    "id": 78239514,
+    "name": "cpsc310d0_nickbradley",
+    "full_name": "CS310-2017Jan/cpsc310d0_nickbradley",
+    "owner": {
+      "name": "CS310-2017Jan",
+      "email": null
+    },
+    "private": true,
+    "html_url": "https://github.com/CS310-2017Jan/cpsc310d0_nickbradley",
+    "description": null,
+    "fork": false,
+    "url": "https://github.com/CS310-2017Jan/cpsc310d0_nickbradley",
+    "forks_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/forks",
+    "keys_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/keys{/key_id}",
+    "collaborators_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/collaborators{/collaborator}",
+    "teams_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/teams",
+    "hooks_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/hooks",
+    "issue_events_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/issues/events{/number}",
+    "events_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/events",
+    "assignees_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/assignees{/user}",
+    "branches_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/branches{/branch}",
+    "tags_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/tags",
+    "blobs_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/git/blobs{/sha}",
+    "git_tags_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/git/tags{/sha}",
+    "git_refs_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/git/refs{/sha}",
+    "trees_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/git/trees{/sha}",
+    "statuses_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/statuses/{sha}",
+    "languages_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/languages",
+    "stargazers_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/stargazers",
+    "contributors_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/contributors",
+    "subscribers_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/subscribers",
+    "subscription_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/subscription",
+    "commits_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/commits{/sha}",
+    "git_commits_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/git/commits{/sha}",
+    "comments_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/comments{/number}",
+    "issue_comment_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/issues/comments{/number}",
+    "contents_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/contents/{+path}",
+    "compare_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/compare/{base}...{head}",
+    "merges_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/merges",
+    "archive_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/{archive_format}{/ref}",
+    "downloads_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/downloads",
+    "issues_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/issues{/number}",
+    "pulls_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/pulls{/number}",
+    "milestones_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/milestones{/number}",
+    "notifications_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/notifications{?since,all,participating}",
+    "labels_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/labels{/name}",
+    "releases_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/releases{/id}",
+    "deployments_url": "https://api.github.com/repos/CS310-2017Jan/cpsc310d0_nickbradley/deployments",
+    "created_at": 1483737463,
+    "updated_at": "2017-01-06T21:17:50Z",
+    "pushed_at": 1483746110,
+    "git_url": "git://github.com/CS310-2017Jan/cpsc310d0_nickbradley.git",
+    "ssh_url": "git@github.com:CS310-2017Jan/cpsc310d0_nickbradley.git",
+    "clone_url": "https://github.com/CS310-2017Jan/cpsc310d0_nickbradley.git",
+    "svn_url": "https://github.com/CS310-2017Jan/cpsc310d0_nickbradley",
+    "homepage": null,
+    "size": 13,
+    "stargazers_count": 0,
+    "watchers_count": 0,
+    "language": "TypeScript",
+    "has_issues": true,
+    "has_downloads": false,
+    "has_wiki": false,
+    "has_pages": false,
+    "forks_count": 0,
+    "mirror_url": null,
+    "open_issues_count": 0,
+    "forks": 0,
+    "open_issues": 0,
+    "watchers": 0,
+    "default_branch": "master",
+    "stargazers": 0,
+    "master_branch": "master",
+    "organization": "CS310-2017Jan"
+  },
+  "pusher": {
+    "name": "nickbradley",
+    "email": "nickbradley@live.ca"
+  },
+  "organization": {
+    "login": "CS310-2017Jan",
+    "id": 23175485,
+    "url": "https://api.github.com/orgs/CS310-2017Jan",
+    "repos_url": "https://api.github.com/orgs/CS310-2017Jan/repos",
+    "events_url": "https://api.github.com/orgs/CS310-2017Jan/events",
+    "hooks_url": "https://api.github.com/orgs/CS310-2017Jan/hooks",
+    "issues_url": "https://api.github.com/orgs/CS310-2017Jan/issues",
+    "members_url": "https://api.github.com/orgs/CS310-2017Jan/members{/member}",
+    "public_members_url": "https://api.github.com/orgs/CS310-2017Jan/public_members{/member}",
+    "avatar_url": "https://avatars.githubusercontent.com/u/23175485?v=3",
+    "description": null
+  },
+  "sender": {
+    "login": "nickbradley",
+    "id": 2560480,
+    "avatar_url": "https://avatars.githubusercontent.com/u/2560480?v=3",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/nickbradley",
+    "html_url": "https://github.com/nickbradley",
+    "followers_url": "https://api.github.com/users/nickbradley/followers",
+    "following_url": "https://api.github.com/users/nickbradley/following{/other_user}",
+    "gists_url": "https://api.github.com/users/nickbradley/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/nickbradley/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/nickbradley/subscriptions",
+    "organizations_url": "https://api.github.com/users/nickbradley/orgs",
+    "repos_url": "https://api.github.com/users/nickbradley/repos",
+    "events_url": "https://api.github.com/users/nickbradley/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/nickbradley/received_events",
+    "type": "User",
+    "site_admin": false
+  }
+}

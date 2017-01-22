@@ -67,6 +67,7 @@ curl -X PUT ${DB_INSTANCE}/results/_design/grades -u ${DB_ADMIN_USERNAME}:${DB_A
      -H "Content-Type: application/json" \
      -d @./database/results/views/grades/byTeamDeliverableCommit.json
 
+
 # Create users
 printf "Creating user ${DB_APP_USERNAME} "
 curl -X PUT ${DB_INSTANCE}/_users/org.couchdb.user:${DB_APP_USERNAME} -u ${DB_ADMIN_USERNAME}:${DB_ADMIN_PASSWORD} \

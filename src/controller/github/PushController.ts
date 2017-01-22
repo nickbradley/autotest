@@ -41,7 +41,7 @@ export default class PushController {
                 hook: record.commentHook,
                 test: {
                   name: repo.name,
-                  image: 'autotest/' + repo.name + ':' + (repo.commit ? repo.commit : 'latest'),
+                  image: 'autotest/' + key + '-' + repo.name + ':' + (repo.commit ? repo.commit : 'latest'),
                   visibility: repo.visibility,
                   deliverable: key
                 }

@@ -98,6 +98,10 @@ export default class TestJobController {
     return this.testQueue.add(job, opts);
   }
 
+  public async get(jobId: string) {
+    return this.testQueue.get(jobId);
+  }
+
   public async count(): Promise<number> {
     return this.testQueue.count();
   }

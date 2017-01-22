@@ -8,6 +8,8 @@ import CommitCommentRecord from '../../model/requests/CommitComment';
 import {GithubResponse, Commit} from '../../model/GithubUtil';
 import PostbackController from './PostbackController'
 import {DeliverableRecord} from '../../model/settings/DeliverableRecord';
+import TestJobController from '../TestJobController';
+
 
 interface GradeSummary {
   deliverable: string;
@@ -54,11 +56,22 @@ export default class CommitCommentContoller {
                 body: body
               }
             } catch(err) {
-              Log.error('CommitCommentContoller::process() - No results for request.');
+              Log.info('CommitCommentContoller::process() - No results for request.');
               record.isProcessed = false;
-              response = {
-                statusCode: 404,
-                body: 'No results found. Commit may still be queued for processing. Please try again later.'
+              try {
+                Log.info('CommitCommentController::process() - Checking if commit is queued.')
+                let maxPos: number = await that.isQueued(record.deliverable, record.team, record.commit);
+                let body: string = 'Your commit is still queued for processing. Please try again in a few minutes.';// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
+                response = {
+                  statusCode: 200,
+                  body: body
+                }
+              } catch(err) {
+                Log.error('CommitCommentContoller::process() - ERROR Unable to locate test results.')
+                response = {
+                  statusCode: 404,
+                  body: 'We can\'t seem to find any results for this commit. Please make a new commit and try again.'
+                }
               }
             }
           } else {
@@ -100,8 +113,16 @@ export default class CommitCommentContoller {
     });
   }
 
+  /**
+   * Extract the mention options which can be 'force' or the deliverable name.
+   *
+   * @param requestMsg: string
+   */
+  //  private async extractMentionOptions(requestMsg: string): string {
+  //
+  //  }
 
-  // TODO @nickbradley Check the output of db.readRecord
+
   /**
    * Checks to see if the user is in the admin list in the database.
    *
@@ -130,8 +151,32 @@ export default class CommitCommentContoller {
     return controller.submit(msg);
   }
 
+  /**
+   * Checks if the request is in the job queue.
+   *
+   */
+   private async isQueued(deliverable: string, team: string, commit: Commit): Promise<number> {
+     //  jobId: job.test.image + '|'  + job.team + '#' + job.commit,
+     return new Promise<number>((fulfill, reject) => {
+       let jobId: string = 'autotest/' + deliverable + '-testsuite:latest|' + team + '#' + commit.short;
+       let queue: TestJobController = TestJobController.getInstance();
+       queue.get(jobId).then(job => {
+         if (job) {
+           queue.count().then(count => {
+             fulfill(count);
+           }).catch(err => {
+             reject(err);
+           })
+         } else {
+           reject('Job has completed.');
+         }
+       }).catch(err => {
+         reject(err);
+       });
+     });
+   }
 
-  // TODO @nickbradley create view (and design document)
+
   /**
    * Query the database to determine the date of the most recent request for the
    * deliverable made by the user.
