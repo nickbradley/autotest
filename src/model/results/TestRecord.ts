@@ -87,7 +87,7 @@ export default class TestRecord implements DatabaseRecord {
     this.commit = testJob.commit;
     this.committer = testJob.user;
     this.timestamp = +new Date();
-    this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '#';
+    this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
   }
 
   public async generate(): Promise<TestStatus> {
