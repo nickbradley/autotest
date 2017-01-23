@@ -144,24 +144,6 @@ export default class TestRecord implements DatabaseRecord {
         });
         promises.push(readTranscript);
 
-        let readTests: Promise<string> = new Promise((fulfill, reject) => {
-          fs.readFile(tempDir.path + '/mocha.json', 'utf8', (err, data) => {
-            if (err) {
-              Log.error('TestRecord::generate() - ERROR reading mocha.json. ' + err);
-              if (this.containerExitCode == 0) this.containerExitCode = 31;
-              fulfill(err);
-            }
-            try {
-              let tests: TestOutput = this.processMochaJson(data);
-              this.testStats = tests.testStats;
-              this.testReport = tests.mocha;
-              fulfill();
-            } catch(err) {
-              fulfill(err);
-            }
-          });
-        });
-        promises.push(readTests);
 
         let readCoverage: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.path + '/coverage.json', 'utf8', (err, data) => {
@@ -180,7 +162,27 @@ export default class TestRecord implements DatabaseRecord {
             }
           });
         });
+        promises.push(readCoverage);
+
+        let readTests: Promise<string> = new Promise((fulfill, reject) => {
+          fs.readFile(tempDir.path + '/mocha.json', 'utf8', (err, data) => {
+            if (err) {
+              Log.error('TestRecord::generate() - ERROR reading mocha.json. ' + err);
+              if (this.containerExitCode == 0) this.containerExitCode = 32;
+              fulfill(err);
+            }
+            try {
+              let tests: TestOutput = this.processMochaJson(data);
+              this.testStats = tests.testStats;
+              this.testReport = tests.mocha;
+              fulfill();
+            } catch(err) {
+              fulfill(err);
+            }
+          });
+        });
         promises.push(readTests);
+
 
         // let readCoverage: Promise<string> = new Promise((fulfill, reject) => {
         //   fs.readFile(tempDir.name + '/coverage.zip', (err, data) => {

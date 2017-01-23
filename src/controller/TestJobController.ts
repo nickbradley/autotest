@@ -69,7 +69,21 @@ export default class TestJobController {
         await controller.submit(msg);
       } else if (result.containerExitCode > 0) {
         Log.info('JobQueue::completed() - container exited with code ' + result.containerExitCode + ' for ' + job.jobId + '.');
-        let msg: string = ':warning:**AutoTest Warning**: Unable to run tests. Please ensure all promises return to avoid hitting a timeout. Exit ' + result.containerExitCode +'.';
+        let msg: string = ':warning:**AutoTest Warning**: Unable to run tests. Exit ' + result.containerExitCode +'.';
+        switch(result.containerExitCode) {
+          case 124:
+            msg = ':warning:**AutoTest Warning**: Test container forcefully terminated after executing for >5 minutes. (Exit 124: Test cotnainer timeout exceeded)';
+          break;
+          case 30:
+            msg = ':warning:**AutoTest Warning**: Test container failed to emit stdio. Try making another commit and, if it fails, post a comment on Piazza including your team and commit SHA. (Exit 30: Test container failed to emit stdio.txt).';
+          break;
+          case 31:
+            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed **your** tests. Please make sure your tests run without error on your computer before committing to GitHub. (Exit 31: Test container failed to emit coverage.json).';
+          break;
+          case 32:
+            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed its test suite. Please make sure you handle exceptions before committing to GitHub. (Exit 31: Test container failed to emit mocha.json).';
+          break;
+        }
         await controller.submit(msg);
       }
     }
