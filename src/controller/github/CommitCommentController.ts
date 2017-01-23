@@ -21,6 +21,8 @@ interface GradeSummary {
   testSummary: string;
   coverageSummary: string;
   coverageFailed: string;
+  scriptVersion: string;
+  suiteVersion: string;
   failedTests: string[];
 }
 
@@ -256,7 +258,9 @@ export default class CommitCommentContoller {
           testSummary: privateTests.testSummary,
           coverageSummary: privateTests.coverageGrade,
           coverageFailed: privateTests.coverStderr,
-          failedTests: publicTests.failedTests,
+          scriptVersion: privateTests.scriptVersion,
+          suiteVersion: privateTests.suiteVersion,
+          failedTests: publicTests.failedTests
         }
 
 
@@ -321,7 +325,7 @@ export default class CommitCommentContoller {
       ).replace(
         '<TEST_SUMMARY>', gradeSummary.testSummary
       ).replace(
-        '<COVERAGE_SUMMARY>', gradeSummary.coverageSummary
+        '<COVERAGE_SUMMARY>', (+gradeSummary.coverageSummary).toFixed()
       );
 
       if (gradeSummary.coverageFailed) {
@@ -338,6 +342,8 @@ export default class CommitCommentContoller {
         output += gradeSummary.failedTests.join('\n - ');
       }
     }
+
+    output += '\n\n<sub>suite: ' + gradeSummary.suiteVersion + '  |  script: ' + gradeSummary.scriptVersion + '.</sub>';
 
     return output;
   }
