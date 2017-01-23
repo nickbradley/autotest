@@ -78,6 +78,7 @@ export default class TestRecord implements DatabaseRecord {
   private timestamp: number;
   private scriptVersion: string;
   private suiteVersion: string;
+  private failedCoverage: string;
 
   constructor(githubToken: string, testJob: TestJob) {
     this.githubToken = githubToken;
@@ -132,8 +133,8 @@ export default class TestRecord implements DatabaseRecord {
               this.buildMsg = buildTag.content;
 
               // Process the coverage tag
-              //let coverageTag: ProcessedTag = this.processCoverageTag(data);
-              //this.coverageStats = coverageTag.content;
+              let coverageTag: ProcessedTag = this.processCoverageTag(data);
+              this.failedCoverage = coverageTag.content;
 
               fulfill();
             } catch(err) {
@@ -243,41 +244,24 @@ export default class TestRecord implements DatabaseRecord {
   }
 
 
-  // public processCoverageTag(stdout: string): ProcessedTag {
-  //   try {
-  //     let coverageTagRegex: RegExp = /^<PROJECT_COVERAGE exitcode=(\d+)>([\s\S]*)<\/PROJECT_COVERAGE>$/gm;
-  //     let matches: string[] = coverageTagRegex.exec(stdout);
-  //     let exitcode: number = +matches[1];
-  //     let content: string = matches[2];
-  //     let stats: CoverageStat[] = [];
-  //
-  //     for (let stat of ['Statements', 'Branches', 'Functions', 'Lines']) {
-  //       let regex: RegExp = new RegExp(stat+'\\s+: ([0-9\\.]+)% \\( (\\d+)\\/(\\d+) \\)','gm');
-  //       let matches: string[] = regex.exec(content);
-  //
-  //       let coverStat: CoverageStat = {
-  //         percentage: +matches[1],
-  //         touched: +matches[2],
-  //         total: +matches[3]
-  //       }
-  //       stats.push(coverStat);
-  //     }
-  //
-  //     let processed: ProcessedTag = {
-  //       content: {
-  //         statements: stats[0],
-  //         branches: stats[1],
-  //         functions: stats[2],
-  //         lines: stats[3]
-  //       },
-  //       exitcode: exitcode
-  //     };
-  //
-  //     return processed;
-  //   } catch(err) {
-  //     throw 'Failed to process <PROJECT_COVERAGE> tag. ' + err;
-  //   }
-  // }
+  public processCoverageTag(stdout: string): ProcessedTag {
+    try {
+      let coverageTagRegex: RegExp = /^<PROJECT_COVERAGE exitcode=(\d+), completed=(.+), duration=(\d+)s>([\s\S]*)<\/PROJECT_COVERAGE>$/gm;
+      let matches: string[] = coverageTagRegex.exec(stdout);
+      let exitcode: number = +matches[1];
+      if (exitcode == 0)
+        return {content:'', exitcode:0};
+
+
+      let content: string = matches[4];
+      let failedTestsRegex: RegExp = /^  \d+\) [\s\S]*\n\n$/gm;
+      let failedTests: string[] = failedTestsRegex.exec(content);
+
+      return {content: failedTests[0], exitcode: exitcode};
+    } catch(err) {
+      throw 'Failed to process <PROJECT_COVERAGE> tag. ' + err;
+    }
+  }
 
 
   public processCoverageJson(text: string): CoverageOutput {
@@ -379,6 +363,7 @@ export default class TestRecord implements DatabaseRecord {
       'testStats': this.testStats,
       'coverStats': this.coverageStats,
       'coverReport': this.coverageReport,
+      'coverStderr': this.failedCoverage,
       'buildFailed': this.buildFailed,
       'buildMsg': this.buildMsg,
       'testReport': this.testReport,

@@ -63,8 +63,6 @@ export default class CommitCommentRecord implements DatabaseRecord {
           let deliverable: FetchedDeliverable = await that.fetchDeliverable(reqDeliverable);
           that._deliverable = deliverable.key;
           that._deliverableRate = deliverable.deliverable.rate;
-          console.log(deliverable);
-          console.log('***', this._note);
         }
         fulfill();
       } catch(err) {
@@ -76,8 +74,7 @@ export default class CommitCommentRecord implements DatabaseRecord {
 
 
   private async fetchDeliverable(key: string): Promise<FetchedDeliverable> {
-    console.log(key);
-    if (!key) this._note = 'No deliverable specified; using latest. To specify an earlier deliverable, follow the metion with "#dX", where X is the deliverable.';
+    if (!key) this._note = 'No deliverable specified; using latest. To specify an earlier deliverable, follow the metion with `#dX`.';
     let that = this;
     return new Promise<FetchedDeliverable>(async (fulfill, reject) => {
       try {
@@ -111,7 +108,7 @@ export default class CommitCommentRecord implements DatabaseRecord {
           // Get all deliverables that have been released
         } else {
           if (!this._note)
-            this._note = 'Invalid deliverable specified; using latest. To specify an earlier deliverable, follow the metion with "#dX", where X is the deliverable.';
+            this._note = 'Invalid deliverable specified; using latest. To specify an earlier deliverable, follow the metion with `#dX`, where `X` is the deliverable.';
           for (const key of deliverableRecord.keys()) {
             let deliverable: Deliverable = deliverableRecord.item(key);
             if (new Date(deliverable.releaseDate) <= now) {
@@ -144,6 +141,10 @@ export default class CommitCommentRecord implements DatabaseRecord {
   }
   get hook(): Url.Url {
     return this._hook;
+  }
+
+  get note(): string {
+    return this._note;
   }
 
   public get isRequest(): boolean {

@@ -20,11 +20,13 @@ interface GradeSummary {
   testGrade: number;
   testSummary: string;
   coverageSummary: string;
+  coverageFailed: string;
   failedTests: string[];
 }
 
 export default class CommitCommentContoller {
   private config: IConfig;
+  private record: CommitCommentRecord;
 
 
   constructor() {
@@ -41,6 +43,7 @@ export default class CommitCommentContoller {
         let response: GithubResponse;
 
         await record.process(data);
+        this.record = record;
 
         let isAdmin: boolean = await that.isAdmin(record.user);
 
@@ -252,7 +255,8 @@ export default class CommitCommentContoller {
           testGrade: privateTests.testGrade,
           testSummary: privateTests.testSummary,
           coverageSummary: privateTests.coverageGrade,
-          failedTests: publicTests.failedTests
+          coverageFailed: privateTests.coverStderr,
+          failedTests: publicTests.failedTests,
         }
 
 
@@ -286,7 +290,8 @@ export default class CommitCommentContoller {
    * @param gradeSummary
    */
   private formatResult(gradeSummary: GradeSummary): string {
-    let output: string = 'For deliverable **' + gradeSummary.deliverable + '**, this commit received a grade of **<GRADE>%**.\n';
+    let preamble: string = this.record.note ? '_' + this.record.note + '_\n\n' : '';
+    let output: string = preamble + 'For deliverable **' + gradeSummary.deliverable + '**, this commit received a grade of **<GRADE>%**.\n';
 
 
     if (gradeSummary.buildFailed) {
@@ -319,8 +324,17 @@ export default class CommitCommentContoller {
         '<COVERAGE_SUMMARY>', gradeSummary.coverageSummary
       );
 
+      if (gradeSummary.coverageFailed) {
+        output += '\n\nSome of your tests failed when run on AutoTest:\n ```\n';
+        if (gradeSummary.coverageFailed.length > 1024)
+          output += gradeSummary.coverageFailed.substring(0, 1024)+'\n...';
+        else
+          output += gradeSummary.coverageFailed
+        output += '\n```\n';
+      }
+
       if (gradeSummary.failedTests.length > 0) {
-        output += '\n\nIt failed the tests:\n - ';
+        output += '\n\nYour code failed the private tests:\n - ';
         output += gradeSummary.failedTests.join('\n - ');
       }
     }
