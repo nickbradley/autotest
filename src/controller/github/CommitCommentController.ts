@@ -334,7 +334,7 @@ export default class CommitCommentContoller {
       }
 
       if (gradeSummary.failedTests.length > 0) {
-        output += '\n\nYour code failed the private tests:\n - ';
+        output += '\n\nYour code failed the tests:\n - ';
         output += gradeSummary.failedTests.join('\n - ');
       }
     }
