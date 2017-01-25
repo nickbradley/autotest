@@ -28,11 +28,12 @@ version=0.0.2
 
 projectDir="/cpsc310project"
 deliverableDir="/testsuite"
+bootstrapDir="/bootstrap"
 outputDir="/output"
 
 buildCmd="yarn run build"
 #coverCmd="nyc -r json-summary yarn run test"
-coverCmd="yarn run autocover"
+coverCmd="yarn run cover"
 testsCmd="yarn run autotest"
 
 date=$(date --utc +%FT%T.%3NZ)
@@ -123,11 +124,11 @@ fi
 
 
 # Create a link to node_modules and typings so we don't download packages twice
-ln -s "${deliverableDir}/node_modules" "${projectDir}"
+ln -s "${bootstrapDir}/node_modules" "${projectDir}"
 #ln -s "${deliverableDir}/typings" "${projectDir}"
 
 # Overwrite project's package.json with the deliverable's package.json
-cp "${deliverableDir}/package.json" "${projectDir}/package.json"
+cp -f "${bootstrapDir}/package.json" "${projectDir}/package.json"
 
 # Build the student's project
 # Exit if the build fails
