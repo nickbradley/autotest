@@ -56,6 +56,7 @@ docker build --tag autotest/${deliverable}-${repoName}:${commit} \
  --build-arg allowDNS=${allowDNS} \
  --build-arg externalServers="${externalServers}" \
  --build-arg deliverable="${deliverable}" \
+ --no-cache \
  "${dockerDir}"
 
 
@@ -65,4 +66,5 @@ docker build --tag autotest/${deliverable}-${repoName}:${commit} \
  --build-arg allowDNS=${allowDNS:0} \
  --build-arg externalServers="${externalServers}" \
  --build-arg deliverable="${deliverable}" \
+ --no-cache \
  "${dockerDir}"
