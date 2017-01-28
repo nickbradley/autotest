@@ -308,8 +308,15 @@ export default class CommitCommentContoller {
     } else if (gradeSummary.exitCode == 124) {
       output += ' - Timeout exceeded while executing tests.';
       output = output.replace('<GRADE>', '0');
+    } else if (gradeSummary.exitCode == 29) {
+      output += ' - You must reduce your console output and make another commit before you can receive a grade.';
+      output = output.replace(
+        '<GRADE>', '0'
+      ).replace(
+        '<EXIT_CODE>', gradeSummary.exitCode.toString()
+      );
     } else if (gradeSummary.exitCode != 0) {
-      output += ' - Autotest encountered an error during testing (<EXIT_CODE>).';
+      output += ' - Autotest encountered an error during testing (Exit <EXIT_CODE>).';
       output = output.replace(
         '<GRADE>', '0'
       ).replace(

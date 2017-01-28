@@ -72,7 +72,10 @@ export default class TestJobController {
         let msg: string = ':warning:**AutoTest Warning**: Unable to run tests. Exit ' + result.containerExitCode +'.';
         switch(result.containerExitCode) {
           case 124:
-            msg = ':warning:**AutoTest Warning**: Test container forcefully terminated after executing for >5 minutes. (Exit 124: Test cotnainer timeout exceeded)';
+            msg = ':warning:**AutoTest Warning**: Test container forcefully terminated after executing for >5 minutes. (Exit 124: Test cotnainer timeout exceeded).';
+          break;
+          case 29:
+            msg = ':warning:**AutoTest Warning**: You are logging too many messages to the console. Before you can receive a grade, you must reduce your output. (Exit 29: Test container stdio.txt exceeds 5MB).'
           break;
           case 30:
             msg = ':warning:**AutoTest Warning**: Test container failed to emit stdio. Try making another commit and, if it fails, post a comment on Piazza including your team and commit SHA. (Exit 30: Test container failed to emit stdio.txt).';

@@ -57,6 +57,8 @@ export interface TestStatus {
 
 export default class TestRecord implements DatabaseRecord {
   // private config: IConfig;
+  private maxStdioSize: number = 5 * 1000000;  // 5 MB
+
 
   private stdio: string;
   private coverageZip: Buffer;
@@ -79,6 +81,7 @@ export default class TestRecord implements DatabaseRecord {
   private scriptVersion: string;
   private suiteVersion: string;
   private failedCoverage: string;
+  private stdioSize: number;
 
   constructor(githubToken: string, testJob: TestJob) {
     this.githubToken = githubToken;
@@ -111,7 +114,26 @@ export default class TestRecord implements DatabaseRecord {
           this.containerExitCode = error.code;
         }
 
+
+
         let promises: Promise<string>[] = [];
+        let getTranscriptSize: Promise<string> = new Promise((fulfill, reject) => {
+          fs.stat(tempDir.path + '/stdio.txt', (err, stats) => {
+            if (err) {
+              Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
+              if (this.containerExitCode == 0) this.containerExitCode = 30;
+              return fulfill(err);
+            }
+
+            this.stdioSize = stats.size;
+            if (stats.size > this.maxStdioSize)
+              if (this.containerExitCode == 0) this.containerExitCode = 29;
+            fulfill();
+          });
+        });
+        promises.push(getTranscriptSize);
+
+
         let readTranscript: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.path + '/stdio.txt', 'utf8', (err, data) => {
             if (err) {
@@ -377,7 +399,7 @@ export default class TestRecord implements DatabaseRecord {
     }
 
     let attachments = [];
-    if (this.stdio) {
+    if (this.stdio && this.stdioSize <= this.maxStdioSize) {
       attachments.push({name: 'stdio.txt', data: this.stdio, content_type: 'application/plain'});
     }
     // if (this.coverageZip) {
