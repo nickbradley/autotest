@@ -27,7 +27,7 @@ export interface TestJob {
 export default class TestJobController {
   private static instance: TestJobController;
   private name: string;
-  private concurrency: number = 1;
+  private concurrency: number = 3;
   private redisAddress: Url.Url;
   private process: ProcessJobCallback;
   private completed: CompletedJobCallback;
