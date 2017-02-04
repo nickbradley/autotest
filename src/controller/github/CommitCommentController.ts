@@ -9,7 +9,7 @@ import {GithubResponse, Commit} from '../../model/GithubUtil';
 import PostbackController from './PostbackController'
 import {DeliverableRecord} from '../../model/settings/DeliverableRecord';
 import TestJobController from '../TestJobController';
-
+import * as redis from 'redis';
 
 interface GradeSummary {
   deliverable: string;
@@ -29,10 +29,11 @@ interface GradeSummary {
 export default class CommitCommentContoller {
   private config: IConfig;
   private record: CommitCommentRecord;
-
+  private rclient: redis.RedisClient;
 
   constructor() {
     this.config = new AppConfig();
+    this.rclient = redis.createClient();
   }
 
 
@@ -67,6 +68,7 @@ export default class CommitCommentContoller {
                 Log.info('CommitCommentController::process() - Checking if commit is queued.')
                 let maxPos: number = await that.isQueued(record.deliverable, record.team, record.commit);
                 let body: string = 'Your commit is still queued for processing. Please try again in a few minutes.';// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
+                this.rclient.set('X', record.hook);
                 response = {
                   statusCode: 200,
                   body: body

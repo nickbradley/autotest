@@ -7,6 +7,7 @@ import * as Url from 'url';
 import {GithubUsername, Commit} from '../model/GithubUtil';
 import {Visibility} from '../model/settings/DeliverableRecord';
 import PostbackController from './github/PostbackController';
+import * as redis from 'redis';
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
@@ -34,11 +35,13 @@ export default class TestJobController {
   private failed: FailedJobCallback;
   private active: ActiveJobCallback;
   private testQueue: JobQueue;
+  private rclient: redis.RedisClient;
 
   private constructor() {
     let config: IConfig = new AppConfig();
     this.name = 'autotest-testqueue';
     this.redisAddress = config.getRedisAddress();
+    this.rclient = redis.createClient();
 
     this.process = function(job: Job) {
       return new Promise((fulfill, reject) => {
@@ -62,6 +65,7 @@ export default class TestJobController {
       Log.info('JobQueue::completed() - ' + job.jobId + '.');
       let jobData: TestJob = job.data as TestJob;
       let controller: PostbackController = new PostbackController(jobData.hook);
+      let postRequest = await this.pendingRequest('X');
 
       if (result.buildFailed) {
         Log.info('JobQueue::completed() - build failed for ' + job.jobId + '.');
@@ -88,6 +92,8 @@ export default class TestJobController {
           break;
         }
         await controller.submit(msg);
+      } else if (postRequest) {
+        await controller.submit('Food goes in here!');
       }
     }
     this.failed = function(job: Job, error: Error) {
@@ -125,5 +131,20 @@ export default class TestJobController {
 
   public async close() {
     return this.testQueue.close();
+  }
+
+  private async pendingRequest(key: string) {
+    return new Promise((fulfill, reject) => {
+      this.rclient.exists(key, (err: Error, reply: any) => {
+        if (err) reject(err);
+        console.log('Redis value ', reply);
+        if (reply == 1) {
+          fulfill("REDIS");
+          //this.rclient.get(key, ())
+        } else {
+          reject('Error fetching key.');
+        }
+      })
+    })
   }
 }
