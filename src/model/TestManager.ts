@@ -18,12 +18,13 @@ export class TestManager {
   private expressQueueName: string;
   private standardQueue: bull.Queue;
   private expressQueue: bull.Queue;
+  private expressJobs: JobId[];
   private _ready: Promise<void>;
 
   constructor(name: string) {
     let config: IConfig = new AppConfig();
     let redisAddress: Url = config.getRedisAddress();
-
+    let this.expressJobs = [];
     let stdQueueName: string = name + '-std';
     let stdQueueConcurrency: number = 1;
     let stdQueueReady: boolean = false;
@@ -118,21 +119,43 @@ export class TestManager {
     let opts = {};
     return this.standardQueue.add(data, opts);
   }
+
+  /**
+   * dsd
+   *
+   * @param
+   */
   public async getJob(id: JobId): Promise<bull.Job> {
-    // TODO check both queues
-    return this.standardQueue.getJob(<string>id);
-  }
-  public async removeJob(id: JobId): Promise<void> {
     let job: bull.Job;
+    return new Promise<bull.Job>((fulfill, reject) => {
+      try {
+        job = await this.standardQueue.getJob(<string>id);
+        return fulfill(job);
+      } catch (err) {
+        try {
+          job = await this.expressQueue.getJob(<string>id);
+          fulfill(job);
+        } catch (err) {this.standardQueue.getJob(<string>id)
+          Log.warn('TestManager::getJob() - Job ' + id + ' not found. ' + err);
+          reject('Unable to find job ' + id + '.');
+        }
+      }
+    });
+  }
+
+  /**
+   * Removes the specified job from either queue. This means it will not be processed.
+   *
+   * @param id: the id of the job to remove.
+   */
+  public async removeJob(id: JobId): Promise<void> {
     try {
-      // TODO check both queues
-      job = await this.standardQueue.getJob(<string>id);
+      let job: bull.Job = await this.getJob(id);
+      return job.remove();
     } catch(err) {
       Log.warn('TestManager::removeJob() - Job ' + id + ' not found. ' + err);
-      throw ''
+      throw 'Failed to remove job ' + id + '.';
     }
-
-    return job.remove();
   }
 
   /**
@@ -141,8 +164,18 @@ export class TestManager {
    *
    * @param id: the id of the job to prioritize.
    */
-  public async prioritizeJob(id: JobId) {
-
+  public async promoteJob(id: JobId) {
+    this.expressJobs.push(id);
+    try {
+      let job: bull.Job = this.standardQueue.getJob(id);
+      if (job.status === wait) {
+        await this.expressQueue.add(job.data, {});
+        await this.standardQueue.remove(job.jobId);
+      }
+    } catch(err) {
+      Log.warn('TestManager::promoteJob() - Failed to promote job' + id + '. ' + err);
+      throw 'Failed to promote job.';
+    }
   }
 
   /**
@@ -182,7 +215,7 @@ export class TestManager {
   }
 
   private completedCallback = async function(qname: string, job: Job, result: TestStatus) {
-
+  // TODO Make sure to remove promoted job
 
     Log.info('TestManager::completed() - ' + job.jobId + '.');
     let jobData: TestJob = job.data as TestJob;
