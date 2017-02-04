@@ -165,7 +165,10 @@ export default class CommitCommentContoller {
      return new Promise<number>((fulfill, reject) => {
        let jobId: string = 'autotest/' + deliverable + '-testsuite:latest|' + team + '#' + commit.short;
        let queue: TestJobController = TestJobController.getInstance();
+
        queue.get(jobId).then(job => {
+         console.log("job is ");
+         console.log(job);
          if (job) {
            queue.count().then(count => {
              fulfill(count);
