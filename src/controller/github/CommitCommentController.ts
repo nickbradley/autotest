@@ -9,30 +9,32 @@ import {GithubResponse, Commit} from '../../model/GithubUtil';
 import PostbackController from './PostbackController'
 import {DeliverableRecord} from '../../model/settings/DeliverableRecord';
 import TestJobController from '../TestJobController';
+import * as redis from 'redis';
+import ResultRecord from '../../model/results/ResultRecord';
 
 
-interface GradeSummary {
+interface PendingRequest {
+  commit: string;
+  team: string;
+  user: string;
   deliverable: string;
-  exitCode: number;
-  buildFailed: boolean;
-  buildMsg: string;
-  grade: number;
-  testGrade: number;
-  testSummary: string;
-  coverageSummary: string;
-  coverageFailed: string;
-  scriptVersion: string;
-  suiteVersion: string;
-  failedTests: string[];
+  hook: string;
 }
+
 
 export default class CommitCommentContoller {
   private config: IConfig;
   private record: CommitCommentRecord;
-
+  private rclient: redis.RedisClient;
+  private ready: boolean;
 
   constructor() {
     this.config = new AppConfig();
+    this.ready = false;
+    this.rclient = redis.createClient();
+    this.rclient.on('connect', () => {
+      this.ready = true;
+    });
   }
 
 
@@ -44,51 +46,101 @@ export default class CommitCommentContoller {
         let record: CommitCommentRecord = new CommitCommentRecord();
         let response: GithubResponse;
 
+
         await record.process(data);
         this.record = record;
+
+
+
+
+
+
 
         let isAdmin: boolean = await that.isAdmin(record.user);
 
         if (record.isRequest) {
-          let lastRequest: Date = await that.latestRequest(record.user, record.deliverable);
-          let diff: number = +new Date() - +lastRequest;
-          if (diff > record.deliverableRate || isAdmin) {
-            try {
-              let result: GradeSummary = await that.getResult(record.team, record.commit, record.deliverable);
-              let body: string = that.formatResult(result);
-              response = {
-                statusCode: 200,
-                body: body
-              }
-            } catch(err) {
-              Log.info('CommitCommentContoller::process() - No results for request.');
-              record.isProcessed = false;
+          let team: string = record.team;
+          let user: string = record.user;
+          let commit: string = record.commit.short;
+          let deliverable: string = record.deliverable;
+          let reqId: string = team + '-' + user + '#' + commit + ':' + deliverable;
+
+
+          let req: PendingRequest = {
+            commit: commit,
+            team: team,
+            user: user,
+            deliverable: deliverable,
+            hook: record.hook.toString()
+          }
+
+          let hasPending: boolean = true;
+          let pendingRequest: PendingRequest
+          try {
+            pendingRequest = await this.getPendingRequest(user, deliverable);
+          } catch(err) {
+            hasPending = false;
+          }
+
+          if (hasPending) {
+            Log.info('CommitCommentController::process() - ['+ reqId +'] User has pending request.');
+            let body: string;
+            if (pendingRequest.commit === commit) {
+              body = 'You have already requested a grade for this commit. Please wait for a response before making another request.';
+            } else {
+              body = 'You have a pending grade request on commit ' + pendingRequest.commit + '. Please wait for a response before making another request.';
+            }
+            response = {
+              statusCode: 429,
+              body: body
+            }
+          } else {
+            let lastRequest: Date = await that.latestRequest(record.user, record.deliverable);
+            let diff: number = +new Date() - +lastRequest;
+            if (diff > record.deliverableRate || isAdmin) {
               try {
-                Log.info('CommitCommentController::process() - Checking if commit is queued.')
-                let maxPos: number = await that.isQueued(record.deliverable, record.team, record.commit);
-                let body: string = 'Your commit is still queued for processing. Please try again in a few minutes.';// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
+                let resultRecord: ResultRecord = new ResultRecord(record.team, record.commit.short, record.deliverable, this.record.note);
+                await resultRecord.fetch();
+                let body: string = resultRecord.formatResult();
                 response = {
                   statusCode: 200,
                   body: body
                 }
               } catch(err) {
-                Log.error('CommitCommentContoller::process() - ERROR Unable to locate test results.')
-                response = {
-                  statusCode: 404,
-                  body: 'We can\'t seem to find any results for this commit. Please make a new commit and try again.'
+                Log.info('CommitCommentContoller::process() - No results for request.');
+                record.isProcessed = false;
+                try {
+                  Log.info('CommitCommentController::process() - Checking if commit is queued.')
+                  let maxPos: number = await that.isQueued(record.deliverable, record.team, record.commit);
+                  let body: string;
+                  try {
+                    await this.setRequest(req);
+                    body = 'This commit is still queued for processing. Your results will be posted here as soon as they are ready.';// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
+                  } catch(err) {
+                    body = 'This commit is still queued for processing. Please try again in a few minutes.';
+                  }
+                  response = {
+                    statusCode: 200,
+                    body: body
+                  }
+                } catch(err) {
+                  Log.error('CommitCommentContoller::process() - ERROR Unable to locate test results.')
+                  response = {
+                    statusCode: 404,
+                    body: 'We can\'t seem to find any results for this commit. Please make a new commit and try again.'
+                  }
                 }
               }
-            }
-          } else {
-            Log.info('CommitCommentContoller::process() - Request rate exceeded.');
-            let waitTime: number = record.deliverableRate - diff;
-            record.isProcessed = false;
-            response = {
-              statusCode: 429,
-              body: 'Sorry, you must wait ' + Moment.duration(waitTime).humanize() + ' before you make another request.'
+            } else {
+              Log.info('CommitCommentContoller::process() - Request rate exceeded.');
+              let waitTime: number = record.deliverableRate - diff;
+              record.isProcessed = false;
+              response = {
+                statusCode: 429,
+                body: 'Sorry, you must wait ' + Moment.duration(waitTime).humanize() + ' before you make another request.'
+              }
             }
           }
-
           try {
             let status: number = await that.postComment(record.hook, response.body);
           } catch(err) {
@@ -101,6 +153,7 @@ export default class CommitCommentContoller {
             body: ''
           }
         }
+
 
         try {
           await that.store(record);
@@ -115,6 +168,35 @@ export default class CommitCommentContoller {
       } catch(err) {
         throw 'Failed to process commit comment. ' + err;
       }
+    });
+  }
+
+  private async setRequest(req: PendingRequest) {
+    let key: string = req.user+'-'+req.deliverable;
+    return new Promise((fulfill, reject) => {
+      this.rclient.hmset(key, req, (err, reply) => {
+        if (err) {
+          Log.warn('CommitCommentContoller::setRequest() - [] Failed to store request. ' + err);
+          reject(err);
+        } else {
+          Log.info('CommitCommentContoller::setRequest() - [] Set up auto post.');
+          this.rclient.expire(key, 60*60*2);
+          fulfill();
+        }
+      });
+    });
+  }
+  private async getPendingRequest(user: string, deliverable: string): Promise<PendingRequest> {
+    return new Promise<PendingRequest>((fulfill, reject) => {
+      this.rclient.hgetall(user+'-'+deliverable, (err, object) => {
+        if (err || !object) {
+          Log.warn('CommitCommentContoller::getPendingRequest - [] Failed to get pending request. ' + err);
+          reject(err || 'null value');
+        } else {
+          Log.info('CommitCommentContoller::getPendingRequest - [] Found PendingRequest. ');
+          fulfill(object);
+        }
+      });
     });
   }
 
@@ -167,8 +249,6 @@ export default class CommitCommentContoller {
        let queue: TestJobController = TestJobController.getInstance();
 
        queue.get(jobId).then(job => {
-         console.log("job is ");
-         console.log(job);
          if (job) {
            queue.count().then(count => {
              fulfill(count);
@@ -215,148 +295,9 @@ export default class CommitCommentContoller {
   }
 
 
-  // TODO @nickbradley Create view and design document
-  /**
-   * Pulls the test/coverage results from the database.
-   *
-   * @param team - Team identifier.
-   * @param commit - The GitHub commit SHA that the tests were run against.
-   * @param deliverable - Deliverable identifier (i.e. d1, d2, etc.).
-   */
-  private async getResult(team: string, commit: Commit, deliverable: string): Promise<GradeSummary> {
-    let db = new Database(this.config.getDBConnection(), 'results');
-    let designName: string = 'grades';
-    let viewName: string = 'byTeamDeliverableCommit';
-    let params: QueryParameters = {
-      key: [team, deliverable, commit.short],
-      descending: true
-    };
-
-    let that = this;
-    return new Promise<GradeSummary>(async (fulfill, reject) => {
-      try {
-        let view: ViewResponse = await db.view(designName, viewName, params);
-        // console.log('view is ', view);
-        // let publicTests = view.rows.filter(obj => {
-        //   return obj.value.visibility == 0
-        // }).map(obj => {
-        //   return obj.value;
-        // })[0];
-        // let privateTests = view.rows.filter(obj => {
-        //   return obj.value.visibility == 0
-        // }).map(obj => {
-        //   return obj.value;
-        // })[0];
-
-        let publicTests = view.rows[0].value;
-        let privateTests = view.rows[0].value;
-
-        let gradeSummary: GradeSummary = {
-          deliverable: deliverable,
-          exitCode: privateTests.exitCode,
-          buildFailed: privateTests.buildFailed,
-          buildMsg: privateTests.buildMsg,
-          grade: privateTests.grade,
-          testGrade: privateTests.testGrade,
-          testSummary: privateTests.testSummary,
-          coverageSummary: privateTests.coverageGrade,
-          coverageFailed: privateTests.coverStderr,
-          scriptVersion: privateTests.scriptVersion,
-          suiteVersion: privateTests.suiteVersion,
-          failedTests: publicTests.failedTests
-        }
-
-
-        fulfill(gradeSummary)
-      } catch(err) {
-        reject('Unable to get test result for ' + team + ' commit ' + commit.short + '. ' + err);
-      }
-    });
-  }
-
-  // private async grade(deliverable: string, privateTests) {
-  //   let resultsDB = new Database(this.config.getDBConnection(), 'settings');
-  //   let deliverablesDoc = await resultsDB.readRecord('deliverables');
-  //   let deliverableRecord: DeliverableRecord = new DeliverableRecord(deliverablesDoc);
-  //   let gradeFormula: string = deliverableRecord.item(deliverable).gradeFormula;
-  //
-  //   let gradeExp: string = gradeFormula.replace(
-  //     '<TEST_PERCENTAGE>', privateTests.testStats.passPercent
-  //   ).replace(
-  //     '<COVERAGE_PERCENTAGE>', privateTests.coverageStats.lines.percentage
-  //   );
-  //   console.log('gradeExp', gradeExp);
-  //   return Promise.resolve(eval(gradeExp))
-  // }
 
 
 
-  /**
-   * Formats the GradeSummary as a Markdown string suitable for display on GitHub.
-   *
-   * @param gradeSummary
-   */
-  private formatResult(gradeSummary: GradeSummary): string {
-    let preamble: string = this.record.note ? '_' + this.record.note + '_\n\n' : '';
-    let output: string = preamble + 'For deliverable **' + gradeSummary.deliverable + '**, this commit received a grade of **<GRADE>%**.\n';
-
-
-    if (gradeSummary.buildFailed) {
-      output += '\nBuild failed:\n\n```<BUILD_MSG>\n```';
-      output = output.replace(
-        '<GRADE>', '0'
-      ).replace(
-        '<BUILD_MSG>', gradeSummary.buildMsg
-      );
-    } else if (gradeSummary.exitCode == 124) {
-      output += ' - Timeout exceeded while executing tests.';
-      output = output.replace('<GRADE>', '0');
-    } else if (gradeSummary.exitCode == 29) {
-      output += ' - You must reduce your console output and make another commit before you can receive a grade.';
-      output = output.replace(
-        '<GRADE>', '0'
-      ).replace(
-        '<EXIT_CODE>', gradeSummary.exitCode.toString()
-      );
-    } else if (gradeSummary.exitCode != 0) {
-      output += ' - Autotest encountered an error during testing (Exit <EXIT_CODE>).';
-      output = output.replace(
-        '<GRADE>', '0'
-      ).replace(
-        '<EXIT_CODE>', gradeSummary.exitCode.toString()
-      );
-    } else {
-      output += '- Test summary: <TEST_GRADE>% (<TEST_SUMMARY>)\n- Line coverage: <COVERAGE_SUMMARY>%';
-
-      output = output.replace(
-        '<GRADE>', gradeSummary.grade.toFixed()
-      ).replace(
-        '<TEST_GRADE>', gradeSummary.testGrade.toFixed()
-      ).replace(
-        '<TEST_SUMMARY>', gradeSummary.testSummary
-      ).replace(
-        '<COVERAGE_SUMMARY>', (+gradeSummary.coverageSummary).toFixed()
-      );
-
-      if (gradeSummary.coverageFailed) {
-        output += '\n\nSome of your tests failed when run on AutoTest:\n ```\n';
-        if (gradeSummary.coverageFailed.length > 1024)
-          output += gradeSummary.coverageFailed.substring(0, 1024)+'\n...';
-        else
-          output += gradeSummary.coverageFailed
-        output += '\n```\n';
-      }
-
-      if (gradeSummary.failedTests.length > 0) {
-        output += '\n\nYour code failed the tests:\n - ';
-        output += gradeSummary.failedTests.join('\n - ');
-      }
-    }
-
-    output += '\n\n<sub>suite: ' + gradeSummary.suiteVersion + '  |  script: ' + gradeSummary.scriptVersion + '.</sub>';
-
-    return output;
-  }
 
 
   private async store(record: CommitCommentRecord) {

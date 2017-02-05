@@ -7,6 +7,9 @@ import * as Url from 'url';
 import {GithubUsername, Commit} from '../model/GithubUtil';
 import {Visibility} from '../model/settings/DeliverableRecord';
 import PostbackController from './github/PostbackController';
+import * as redis from 'redis';
+import CommitCommentController from './github/CommitCommentController'
+import ResultRecord from '../model/results/ResultRecord';
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
@@ -62,14 +65,39 @@ export default class TestJobController {
       Log.info('JobQueue::completed() - ' + job.jobId + '.');
       let jobData: TestJob = job.data as TestJob;
       let controller: PostbackController = new PostbackController(jobData.hook);
+      let msg: string;
+
+      let key: string = jobData.user+'-'+jobData.test.deliverable;
+      let pendingRequest;
+
+      try {
+        let rclient: redis.RedisClient = redis.createClient();
+        await new Promise((fulfill) => {
+          rclient.on('connect', () => {
+            fulfill();
+          });
+        });
+        pendingRequest = await new Promise((fulfill, reject) => {
+          rclient.hgetall(key, (err, object) => {
+            if (err) {
+              reject(err);
+            } else {
+              rclient.del(key, (err, reply) => {
+                fulfill(object);
+              })
+            }
+          });
+        });
+      } catch(err) {
+
+      }
 
       if (result.buildFailed) {
         Log.info('JobQueue::completed() - build failed for ' + job.jobId + '.');
-        let msg: string = ':warning:**AutoTest Warning**: Unable to build project.\n\n```' + result.buildMsg + '\n```';
-        await controller.submit(msg);
+        msg = ':warning:**AutoTest Warning**: Unable to build project.\n\n```' + result.buildMsg + '\n```';
       } else if (result.containerExitCode > 0) {
         Log.info('JobQueue::completed() - container exited with code ' + result.containerExitCode + ' for ' + job.jobId + '.');
-        let msg: string = ':warning:**AutoTest Warning**: Unable to run tests. Exit ' + result.containerExitCode +'.';
+        msg = ':warning:**AutoTest Warning**: Unable to run tests. Exit ' + result.containerExitCode +'.';
         switch(result.containerExitCode) {
           case 124:
             msg = ':warning:**AutoTest Warning**: Test container forcefully terminated after executing for >5 minutes. (Exit 124: Test cotnainer timeout exceeded).';
@@ -87,9 +115,19 @@ export default class TestJobController {
             msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed its test suite. Please make sure you handle exceptions before committing to GitHub. (Exit 31: Test container failed to emit mocha.json).';
           break;
         }
-        await controller.submit(msg);
+      } else if (pendingRequest) {
+        let team: string = pendingRequest.team;
+        let commit: string = pendingRequest.commit;
+        let deliverable: string = pendingRequest.deliverable;
+        let controller: CommitCommentController = new CommitCommentController();
+        let resultRecord: ResultRecord = new ResultRecord(team, commit, deliverable, '');
+        await resultRecord.fetch();                
+        msg = resultRecord.formatResult();
       }
+      await controller.submit(msg);
     }
+
+
     this.failed = function(job: Job, error: Error) {
       Log.error('JobQueue::failed() - ' + job.jobId + '. ' + error);
     }
