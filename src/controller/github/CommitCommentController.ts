@@ -115,9 +115,9 @@ export default class CommitCommentContoller {
                   let body: string;
                   try {
                     await this.setRequest(req);
-                    body = 'This commit is still queued for processing. Your results will be posted here as soon as they are ready.';// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
+                    body = 'This commit is still queued for processing (Queue length: '+ maxPos||1 +'). Your results will be posted here as soon as they are ready.\n_Note: ' + this.record.note + '_';// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
                   } catch(err) {
-                    body = 'This commit is still queued for processing. Please try again in a few minutes.';
+                    body = 'This commit is still queued for processing (Queue length: '+ maxPos||1 +'). Please try again in a few minutes.';
                   }
                   response = {
                     statusCode: 200,
@@ -248,8 +248,8 @@ export default class CommitCommentContoller {
        let jobId: string = 'autotest/' + deliverable + '-testsuite:latest|' + team + '#' + commit.short;
        let queue: TestJobController = TestJobController.getInstance();
 
-       queue.get(jobId).then(job => {
-         if (job) {
+       queue.get(jobId).then(job => {         
+         if (!job.isCompleted() || !job.isFailed()) {
            queue.count().then(count => {
              fulfill(count);
            }).catch(err => {

@@ -69,6 +69,7 @@ export default class TestJobController {
 
       let key: string = jobData.user+'-'+jobData.test.deliverable;
       let pendingRequest;
+      let dl: string = jobData.test.deliverable;
 
       try {
         let rclient: redis.RedisClient = redis.createClient();
@@ -94,25 +95,25 @@ export default class TestJobController {
 
       if (result.buildFailed) {
         Log.info('JobQueue::completed() - build failed for ' + job.jobId + '.');
-        msg = ':warning:**AutoTest Warning**: Unable to build project.\n\n```' + result.buildMsg + '\n```';
+        msg = ':warning:**AutoTest Warning**: Unable to build project for ' +dl + '.\n\n```' + result.buildMsg + '\n```';
       } else if (result.containerExitCode > 0) {
         Log.info('JobQueue::completed() - container exited with code ' + result.containerExitCode + ' for ' + job.jobId + '.');
-        msg = ':warning:**AutoTest Warning**: Unable to run tests. Exit ' + result.containerExitCode +'.';
+        msg = ':warning:**AutoTest Warning**: Unable to run tests for ' +dl+ '. Exit ' + result.containerExitCode +'.';
         switch(result.containerExitCode) {
           case 124:
-            msg = ':warning:**AutoTest Warning**: Test container forcefully terminated after executing for >5 minutes. (Exit 124: Test cotnainer timeout exceeded).';
+            msg = ':warning:**AutoTest Warning**: Test container forcefully terminated after executing for >5 minutes on '+dl+'. (Exit 124: Test cotnainer timeout exceeded).';
           break;
           case 29:
-            msg = ':warning:**AutoTest Warning**: You are logging too many messages to the console. Before you can receive a grade, you must reduce your output. (Exit 29: Test container stdio.txt exceeds 5MB).'
+            msg = ':warning:**AutoTest Warning**: You are logging too many messages to the console. Before you can receive a grade for '+dl+', you must reduce your output. (Exit 29: Test container stdio.txt exceeds 5MB).'
           break;
           case 30:
-            msg = ':warning:**AutoTest Warning**: Test container failed to emit stdio. Try making another commit and, if it fails, post a comment on Piazza including your team and commit SHA. (Exit 30: Test container failed to emit stdio.txt).';
+            msg = ':warning:**AutoTest Warning**: Test container failed to emit stdio for '+dl+'. Try making another commit and, if it fails, post a comment on Piazza including your team and commit SHA. (Exit 30: Test container failed to emit stdio.txt).';
           break;
           case 31:
-            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed **your** tests. Please make sure your tests run without error on your computer before committing to GitHub. (Exit 31: Test container failed to emit coverage.json).';
+            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed **your** tests for '+dl+'. Please make sure your tests run without error on your computer before committing to GitHub. (Exit 31: Test container failed to emit coverage.json).';
           break;
           case 32:
-            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed its test suite. Please make sure you handle exceptions before committing to GitHub. (Exit 31: Test container failed to emit mocha.json).';
+            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed its test suite for '+dl+'. Please make sure you handle exceptions before committing to GitHub. (Exit 31: Test container failed to emit mocha.json).';
           break;
         }
       } else if (pendingRequest) {
@@ -121,7 +122,7 @@ export default class TestJobController {
         let deliverable: string = pendingRequest.deliverable;
         let controller: CommitCommentController = new CommitCommentController();
         let resultRecord: ResultRecord = new ResultRecord(team, commit, deliverable, '');
-        await resultRecord.fetch();                
+        await resultRecord.fetch();
         msg = resultRecord.formatResult();
       }
       await controller.submit(msg);
