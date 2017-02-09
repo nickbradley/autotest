@@ -148,7 +148,8 @@ export default class TestJobController {
 
   public async addJob(job: TestJob): Promise<Job> {
     let opts: JobOpts = {
-      jobId: job.test.image + '|'  + job.team + '#' + job.commit
+      jobId: job.test.image + '|'  + job.team + '#' + job.commit,
+      delay: 1000*60*5
       //removeOnComplete: true
     }
     return this.testQueue.add(job, opts);
