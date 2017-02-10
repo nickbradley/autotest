@@ -100,6 +100,9 @@ export class JobQueue {
   }
 
   public async count() {
+    if (!this.initialized) {
+      await this.init();
+    }
     return this.queue.count();
   }
 

@@ -5,9 +5,25 @@ import {TestJob} from '../controller/TestJobController';
 import CommitCommentController from '../controller/github/CommitCommentController';
 import Log from "../Util";
 import Server from "./Server";
-
+import TestJobController from '../controller/TestJobController';
 
 export default class RouteHandler {
+
+  public static queueLength(req: restify.Request, res: restify.Response, next: restify.Next) {
+    try {
+      let controller: TestJobController = TestJobController.getInstance();
+      controller.count().then((length:number) => {
+        console.log('count is ' + length);
+        res.json(200, {length:length});
+      }).catch((err) => {
+        res.json(400, {error:err});
+      })
+    } catch(err) {
+      res.json(400, {error:err});
+    }
+    return next();
+  }
+
 
   /**
    * Handles GitHub POSTs, currently:

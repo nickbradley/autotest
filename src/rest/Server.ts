@@ -73,6 +73,8 @@ export default class Server {
               // that.rest.del('/api/manage/staff/:id', RouteHandler.deleteStaff);
 
 
+              // Return the length of the queue
+              that.rest.get('/queue', restify.bodyParser(), RouteHandler.queueLength);
 
               // GitHub Webhook endpoints
               that.rest.post('/submit', restify.bodyParser(), RouteHandler.postGithubHook);
