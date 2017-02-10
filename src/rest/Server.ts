@@ -51,6 +51,14 @@ export default class Server {
                   name: 'AutoTest'
               });
 
+              // support CORS
+              that.rest.use(
+                function crossOrigin(req,res,next){
+                  res.header("Access-Control-Allow-Origin", "*");
+                  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+                  return next();
+              });
+              
               // REST hooks
               // https://zapier.com/developer/documentation/v2/rest-hooks/
               // that.rest.get('/api/hooks/:id', RouteHandler.getHook);

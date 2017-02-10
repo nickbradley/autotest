@@ -13,12 +13,14 @@ export default class RouteHandler {
     try {
       let controller: TestJobController = TestJobController.getInstance();
       controller.count().then((length:number) => {
-        console.log('count is ' + length);
+        Log.info('RouteHandler::queueLength() - Number of waiting or paused jobs: ' + length + '.');
         res.json(200, {length:length});
       }).catch((err) => {
+        Log.error('RouteHandler::queueLength() - ERROR getting length: ' + err);
         res.json(400, {error:err});
       })
     } catch(err) {
+      Log.error('RouteHandler::queueLength() - ERROR getting length: ' + err);
       res.json(400, {error:err});
     }
     return next();
