@@ -51,6 +51,14 @@ export default class Server {
                   name: 'AutoTest'
               });
 
+              // support CORS
+              that.rest.use(
+                function crossOrigin(req,res,next){
+                  res.header("Access-Control-Allow-Origin", "*");
+                  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+                  return next();
+              });
+              
               // REST hooks
               // https://zapier.com/developer/documentation/v2/rest-hooks/
               // that.rest.get('/api/hooks/:id', RouteHandler.getHook);
@@ -73,6 +81,8 @@ export default class Server {
               // that.rest.del('/api/manage/staff/:id', RouteHandler.deleteStaff);
 
 
+              // Return the length of the queue
+              that.rest.get('/queue', restify.bodyParser(), RouteHandler.queueLength);
 
               // GitHub Webhook endpoints
               that.rest.post('/submit', restify.bodyParser(), RouteHandler.postGithubHook);

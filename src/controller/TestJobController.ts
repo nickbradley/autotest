@@ -160,6 +160,10 @@ export default class TestJobController {
   }
 
   public async count(): Promise<number> {
+    if (!TestJobController.instance) {
+      Log.warn('TestJobController::count() - Called before init.');
+      return Promise.resolve(0);
+    }
     return this.testQueue.count();
   }
 

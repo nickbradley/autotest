@@ -5,9 +5,30 @@ import {TestJob} from '../controller/TestJobController';
 import CommitCommentController from '../controller/github/CommitCommentController';
 import Log from "../Util";
 import Server from "./Server";
-
+import TestJobController from '../controller/TestJobController';
 
 export default class RouteHandler {
+
+  /**
+   *  Get the number of jobs currently waiting or paused in the queue.
+   */
+  public static queueLength(req: restify.Request, res: restify.Response, next: restify.Next) {
+    try {
+      let controller: TestJobController = TestJobController.getInstance();
+      controller.count().then((length:number) => {
+        Log.info('RouteHandler::queueLength() - Number of waiting or paused jobs: ' + length + '.');
+        res.json(200, {length:length});
+      }).catch((err) => {
+        Log.error('RouteHandler::queueLength() - ERROR getting length: ' + err);
+        res.json(400, {error:err});
+      })
+    } catch(err) {
+      Log.error('RouteHandler::queueLength() - ERROR getting length: ' + err);
+      res.json(400, {error:err});
+    }
+    return next();
+  }
+
 
   /**
    * Handles GitHub POSTs, currently:
