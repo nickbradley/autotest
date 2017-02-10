@@ -9,6 +9,9 @@ import TestJobController from '../controller/TestJobController';
 
 export default class RouteHandler {
 
+  /**
+   *  Get the number of jobs currently waiting or paused in the queue.
+   */
   public static queueLength(req: restify.Request, res: restify.Response, next: restify.Next) {
     try {
       let controller: TestJobController = TestJobController.getInstance();
