@@ -114,6 +114,9 @@ export class JobQueue {
   }
 
   public async getJob(id: string): Promise<Job> {
+    if (!this.initialized) {
+      await this.init();
+    }
     return <Promise<Job>>this.queue.getJob(id);
   }
 
@@ -126,6 +129,9 @@ export class JobQueue {
 
   // WARNING: using private methods from bull!
   public async stats() {
+    if (!this.initialized) {
+      await this.init();
+    }
     let promises: Promise<number>[] = [];
     return new Promise((fulfill, reject) => {
       promises.push(this.queue.getCompletedCount());
