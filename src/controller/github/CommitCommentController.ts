@@ -11,6 +11,7 @@ import {DeliverableRecord} from '../../model/settings/DeliverableRecord';
 import TestJobController from '../TestJobController';
 import * as redis from 'redis';
 import ResultRecord from '../../model/results/ResultRecord';
+import {Job} from '../../model/JobQueue';
 
 
 interface PendingRequest {
@@ -39,7 +40,6 @@ export default class CommitCommentContoller {
 
 
   async process(data: JSON): Promise<GithubResponse> {
-    Log.trace('CommitCommentContoller::process()');
     let that = this;
     return new Promise<GithubResponse>(async (fulfill, reject) => {
       try {
@@ -86,16 +86,16 @@ export default class CommitCommentContoller {
             Log.info('CommitCommentController::process() - ['+ reqId +'] User has pending request.');
             let body: string;
             if (pendingRequest.commit === commit) {
-              body = 'You have already requested a grade for this commit. Please wait for a response before making another request.';
+              body = 'You have already requested a grade for **'+deliverable+'** on this commit. Please wait for a response before making another request.';
             } else {
-              body = 'You have a pending grade request on commit ' + pendingRequest.commit + '. Please wait for a response before making another request.';
+              body = 'You have a pending grade request for **'+deliverable+'** on commit ' + pendingRequest.commit + '. Please wait for a response before making another request.';
             }
             response = {
               statusCode: 429,
               body: body
             }
           } else {
-            let lastRequest: Date = await that.latestRequest(record.user, record.deliverable);
+            let lastRequest: Date = await that.getLatestRequest(record.user, record.deliverable);
             let diff: number = +new Date() - +lastRequest;
             if (diff > record.deliverableRate || isAdmin) {
               try {
@@ -115,19 +115,19 @@ export default class CommitCommentContoller {
                   let body: string;
                   try {
                     await this.setRequest(req);
-                    body = 'This commit is still queued for processing (Queue length: '+ maxPos||1 +'). Your results will be posted here as soon as they are ready.\n_Note: ' + this.record.note + '_';// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
+                    body = 'This commit is still queued for processing against **'+deliverable+'**. Your results will be posted here as soon as they are ready.' + (this.record.note ? '\n_Note: ' + this.record.note + '_' : '');// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
                   } catch(err) {
-                    body = 'This commit is still queued for processing (Queue length: '+ maxPos||1 +'). Please try again in a few minutes.';
+                    body = 'This commit is still queued for processing against **'+deliverable+'**. Please try again in a few minutes.';
                   }
                   response = {
                     statusCode: 200,
                     body: body
                   }
                 } catch(err) {
-                  Log.error('CommitCommentContoller::process() - ERROR Unable to locate test results.')
+                  Log.error('CommitCommentContoller::process() - ERROR Unable to locate test results. ' + err);
                   response = {
                     statusCode: 404,
-                    body: 'We can\'t seem to find any results for this commit. Please make a new commit and try again.'
+                    body: 'We can\'t seem to find any results for **'+deliverable+'** on this commit. Please make a new commit and try again.' + (this.record.note ? '\n_Note: ' + this.record.note + '_' : '')
                   }
                 }
               }
@@ -137,7 +137,7 @@ export default class CommitCommentContoller {
               record.isProcessed = false;
               response = {
                 statusCode: 429,
-                body: 'Sorry, you must wait ' + Moment.duration(waitTime).humanize() + ' before you make another request.'
+                body: 'Sorry, you must wait ' + Moment.duration(waitTime).humanize() + ' before you make another request for '+deliverable+'.'
               }
             }
           }
@@ -147,7 +147,7 @@ export default class CommitCommentContoller {
             Log.error('CommitCommentContoller::process() - ERROR. Failed to post result. ' + err);
           }
         } else {
-          Log.info('CommitCommentContoller::process() - Not request.');
+          //Log.info('CommitCommentContoller::process() - Not request.');
           response = {
             statusCode: 204,
             body: ''
@@ -161,7 +161,7 @@ export default class CommitCommentContoller {
           Log.error('CommitCommentContoller::process() - ERROR. Failed to store result. ' + err);
         }
 
-        Log.info('CommitCommentContoller::process() - Request completed with status ' + response.statusCode + '.');
+        //Log.info('CommitCommentContoller::process() - Request completed with status ' + response.statusCode + '.');
 
         fulfill(response);
 
@@ -173,27 +173,31 @@ export default class CommitCommentContoller {
 
   private async setRequest(req: PendingRequest) {
     let key: string = req.user+'-'+req.deliverable;
+    let jobId: string = 'autotest/'+req.deliverable+'-testsuite:latest|'+req.team+'#'+req.commit;
     return new Promise((fulfill, reject) => {
       this.rclient.hmset(key, req, (err, reply) => {
         if (err) {
-          Log.warn('CommitCommentContoller::setRequest() - [] Failed to store request. ' + err);
+          Log.warn('CommitCommentContoller::setRequest() - ['+jobId+'] Failed to store request. ' + err);
           reject(err);
         } else {
-          Log.info('CommitCommentContoller::setRequest() - [] Set up auto post.');
+          Log.info('CommitCommentContoller::setRequest() - ['+jobId+'] Set up auto post.');
+          let queue: TestJobController = TestJobController.getInstance();
           this.rclient.expire(key, 60*60*2);
+          queue.promoteJob(jobId);
           fulfill();
         }
       });
     });
   }
   private async getPendingRequest(user: string, deliverable: string): Promise<PendingRequest> {
+    let id: string = user+'-'+deliverable;
     return new Promise<PendingRequest>((fulfill, reject) => {
-      this.rclient.hgetall(user+'-'+deliverable, (err, object) => {
+      this.rclient.hgetall(id, (err, object) => {
         if (err || !object) {
-          Log.warn('CommitCommentContoller::getPendingRequest - [] Failed to get pending request. ' + err);
+          Log.warn('CommitCommentContoller::getPendingRequest() - ['+id+'] Failed to get pending request. ' + err);
           reject(err || 'null value');
         } else {
-          Log.info('CommitCommentContoller::getPendingRequest - [] Found PendingRequest. ');
+          Log.info('CommitCommentContoller::getPendingRequest - ['+id+'] Found PendingRequest. ');
           fulfill(object);
         }
       });
@@ -242,27 +246,27 @@ export default class CommitCommentContoller {
    * Checks if the request is in the job queue.
    *
    */
-   private async isQueued(deliverable: string, team: string, commit: Commit): Promise<number> {
-     //  jobId: job.test.image + '|'  + job.team + '#' + job.commit,
-     return new Promise<number>((fulfill, reject) => {
-       let jobId: string = 'autotest/' + deliverable + '-testsuite:latest|' + team + '#' + commit.short;
-       let queue: TestJobController = TestJobController.getInstance();
+  private async isQueued(deliverable: string, team: string, commit: Commit): Promise<number> {
+    //  jobId: job.test.image + '|'  + job.team + '#' + job.commit,
+    return new Promise<number>((fulfill, reject) => {
+      let jobId: string = 'autotest/' + deliverable + '-testsuite:latest|' + team + '#' + commit.short;
+      let queue: TestJobController = TestJobController.getInstance();
 
-       queue.get(jobId).then(job => {         
-         if (!job.isCompleted() || !job.isFailed()) {
-           queue.count().then(count => {
-             fulfill(count);
-           }).catch(err => {
-             reject(err);
-           })
-         } else {
-           reject('Job has completed.');
-         }
-       }).catch(err => {
-         reject(err);
-       });
+      queue.getJob(jobId).then(job => {
+        if (!job)
+          return reject('Job not found');
+        job.getState().then(state => {
+          if (state == 'completed' || state == 'failed')
+            return reject('Job already completed');
+          fulfill(0);
+        }).catch(err => {
+          return reject(err);
+        })
+     }).catch(err => {
+       reject(err);
      });
-   }
+   });
+  }
 
 
   /**
@@ -272,7 +276,7 @@ export default class CommitCommentContoller {
    * @param user - GitHub username.
    * @param deliverable - Deliverable identifier (i.e. d1, d2, etc.).
    */
-  private async latestRequest(user: string, deliverable: string): Promise<Date> {
+  private async getLatestRequest(user: string, deliverable: string): Promise<Date> {
     let db: Database = new Database(this.config.getDBConnection(), 'requests');
     let designName: string = 'latest';
     let viewName: string = 'byUserDeliverable';
@@ -298,8 +302,11 @@ export default class CommitCommentContoller {
 
 
 
-
-
+  /**
+   * Insert the request into the database.
+   *
+   * @param record - the record to insert into the database.
+   */
   private async store(record: CommitCommentRecord) {
     let db: Database = new Database(this.config.getDBConnection(), 'requests');
     return db.createRecord(record);

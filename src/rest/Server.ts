@@ -58,31 +58,10 @@ export default class Server {
                   res.header("Access-Control-Allow-Headers", "X-Requested-With");
                   return next();
               });
-              
-              // REST hooks
-              // https://zapier.com/developer/documentation/v2/rest-hooks/
-              // that.rest.get('/api/hooks/:id', RouteHandler.getHook);
-              // that.rest.put('/api/hooks/:id', RouteHandler.putHook);
-              // that.rest.del('/api/hooks/:id', RouteHandler.deleteHook);
 
 
-
-              // Management endpoints
-              // that.rest.get('/api/manage/deliverable/:id', RouteHandler.getDeliverable);
-              // that.rest.put('/api/manage/deliverable/:id', RouteHandler.putDeliverable);
-              // that.rest.del('/api/manage/deliverable/:id', RouteHandler.deleteDeliverable);
-              //
-              // that.rest.get('/api/manage/team/:id', RouteHandler.getTeam);
-              // that.rest.put('/api/manage/team/:id', RouteHandler.putTeam);
-              // that.rest.del('/api/manage/team/:id', RouteHandler.deleteTeam);
-              //
-              // that.rest.get('/api/manage/staff/:id', RouteHandler.getStaff);
-              // that.rest.put('/api/manage/staff/:id', RouteHandler.putStaff);
-              // that.rest.del('/api/manage/staff/:id', RouteHandler.deleteStaff);
-
-
-              // Return the length of the queue
-              that.rest.get('/queue', restify.bodyParser(), RouteHandler.queueLength);
+              // Return the test queue stats
+              that.rest.get('/queue', restify.bodyParser(), RouteHandler.queueStats);
 
               // GitHub Webhook endpoints
               that.rest.post('/submit', restify.bodyParser(), RouteHandler.postGithubHook);

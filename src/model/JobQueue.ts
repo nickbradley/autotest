@@ -4,12 +4,28 @@ import {Url} from 'url';
 import {Commit} from './GithubUtil';
 import {Deliverable} from './settings/DeliverableRecord'
 
-export {Job, JobPromise} from 'bull';
+export {JobPromise} from 'bull';
 
 // Newest version supports more option then specified in type file
 export interface JobOpts extends bull.AddOptions {
   jobId?: number | string;
   removeOnComplete?: boolean;
+}
+
+// These are private methods within Bull
+interface Queue extends bull.Queue {
+  getCompletedCount(): Promise<number>;
+  getFailedCount(): Promise<number>;
+  getDelayedCount(): Promise<number>;
+  getActiveCount(): Promise<number>;
+  getWaitingCount(): Promise<number>;
+  getPausedCount(): Promise<number>;
+}
+
+// Not defined in type file
+export interface Job extends bull.Job {
+  getState(): Promise<string>;
+  opts: Object;
 }
 
 // export interface JobData {
@@ -22,14 +38,16 @@ export interface JobOpts extends bull.AddOptions {
 // interface ProcessJobCallback {
 //   (job: bull.Job) => void;
 // }
-
-export type ProcessJobCallback = (job: bull.Job) => Promise<any>;
-export type ActiveJobCallback = (job: bull.Job, jobPromise: bull.JobPromise) => void;
-export type CompletedJobCallback = (job: bull.Job, result: Object) => void;
-export type FailedJobCallback = (job: bull.Job, error: Error) => void;
+export interface CallbackOpts {
+  qname: string;
+}
+export type ProcessJobCallback = (job: bull.Job, opts: CallbackOpts) => Promise<any>;
+export type ActiveJobCallback = (job: bull.Job, jobPromise: bull.JobPromise, opts: CallbackOpts) => void;
+export type CompletedJobCallback = (job: bull.Job, result: Object, opts: CallbackOpts) => void;
+export type FailedJobCallback = (job: bull.Job, error: Error, opts: CallbackOpts) => void;
 
 export class JobQueue {
-  private queue: bull.Queue;
+  private queue: Queue;
   private redis: Url;
   private name: string;
   private concurrency: number;
@@ -50,20 +68,28 @@ export class JobQueue {
   }
 
   public async init() {
-    Log.trace('JobQueue::init() - Starting.');
+    Log.trace('JobQueue::init() - ['+this.name+'] Starting.');
     try {
       if (!this.initialized) {
         this.initialized = true;
-        this.queue = bull(this.name, +this.redis.port, this.redis.host);
-        this.queue.process(this.concurrency, this.processCallback);
-        this.queue.on('active', this.activeCallback);
-        this.queue.on('completed', this.completedCallback);
-        this.queue.on('failed', this.failedCallback);
+        this.queue = <Queue>bull(this.name, +this.redis.port, this.redis.host);
+        this.queue.process(this.concurrency, (job: bull.Job) => {
+          return this.processCallback(job, {qname: this.name});
+        });
+        this.queue.on('active', (job: bull.Job, jobPromise: bull.JobPromise) => {
+          return this.activeCallback(job, jobPromise, {qname: this.name});
+        });
+        this.queue.on('completed', (job: bull.Job, result: Object) => {
+          return this.completedCallback(job, result, {qname: this.name});
+        });
+        this.queue.on('failed', (job: bull.Job, error: Error) => {
+          return this.failedCallback(job, error, {qname: this.name});
+        });
         this.queue.on('error', err => {
-          Log.error('JobQueue::init() - ERROR with queue. ' + err);
+          Log.error('JobQueue::init() - ['+this.name+'] ERROR with queue. ' + err);
         });
         this.queue.on('stalled', job => {
-          Log.error('JobQueue::init() - ERROR Job ' + job.jobId + ' is stalled.');
+          Log.error('JobQueue::init() - ['+this.name+'] ERROR Job ' + job.jobId + ' is stalled.');
         });
 
         let that = this;
@@ -72,12 +98,13 @@ export class JobQueue {
             // that.queue.clean(1000, 'delayed').then(() => {
             //
             // })
-            Log.trace('JobQueue::init() - Ready.')
+            Log.trace('JobQueue::init() - ['+this.name+'] Ready.')
             fulfill();
           });
         });
       }
     } catch(err) {
+      console.log(err);
       throw 'Failed to start job queue "' + this.name + '". ' + err;
     }
   }
@@ -87,7 +114,7 @@ export class JobQueue {
     if (!this.initialized) {
       await this.init();
     }
-    Log.info('JobQueue::add() - Added job ' + opts.jobId + '.')
+    Log.info('JobQueue::add() - ['+this.name+'] Added job ' + opts.jobId + '.')
     return this.queue.add(job, opts);
   }
 
@@ -95,8 +122,8 @@ export class JobQueue {
 
   }
 
-  public async get(id: string) {
-    return this.queue.getJob(id);
+  public async getJob(id: string): Promise<Job> {
+    return <Promise<Job>>this.queue.getJob(id);
   }
 
   public async count() {
@@ -104,6 +131,33 @@ export class JobQueue {
       await this.init();
     }
     return this.queue.count();
+  }
+
+  // WARNING: using private methods from bull!
+  public async stats() {
+    let promises: Promise<number>[] = [];
+    return new Promise((fulfill, reject) => {
+      promises.push(this.queue.getCompletedCount());
+      promises.push(this.queue.getFailedCount());
+      promises.push(this.queue.getDelayedCount());
+      promises.push(this.queue.getActiveCount());
+      promises.push(this.queue.getWaitingCount());
+      promises.push(this.queue.getPausedCount());
+      Promise.all(promises).then((counts: number[]) => {
+        fulfill({
+          qname: this.name,
+          completed: counts[0],
+          failed: counts[1],
+          delayed: counts[2],
+          active: counts[3],
+          waiting: counts[4],
+          paused: counts[5]
+        })
+      }).catch((err) => {
+        Log.warn('Err' + err);
+        reject(err);
+      });
+    });
   }
 
   public async close() {

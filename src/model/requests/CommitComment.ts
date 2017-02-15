@@ -173,7 +173,6 @@ export default class CommitCommentRecord implements DatabaseRecord {
   }
 
   private async insert(db: CouchDatabase): Promise<InsertResponse> {
-    Log.trace('CommitCommentRecord::insert()');
     let that = this;
     let comment = JSON.stringify(this.payload);
     let doc = {isRequest: this._isRequest, isProcessed: this._isProcessed, deliverable: this._deliverable, team: this.team, user: this.user, commit: this.commit, body: this.message, type: 'commit_comment', timestamp: this.timestamp}

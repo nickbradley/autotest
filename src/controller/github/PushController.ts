@@ -15,7 +15,7 @@ export default class PushController {
   }
 
   async process(data: JSON) {
-    Log.trace('PushController::process()');
+    // Log.trace('PushController::process()');
     try {
       let record = new PushRecord(data);
 
@@ -46,7 +46,7 @@ export default class PushController {
                   deliverable: key
                 }
               }
-              Log.info('PushController::process() - ' + record.team +'#'+ record.commit.short + ' enqueued to run against ' + repo.name + '.');
+              // Log.info('PushController::process() - ' + record.team +'#'+ record.commit.short + ' enqueued to run against ' + repo.name + '.');
               promises.push(this.enqueue(testJob));
             }
           }

@@ -252,7 +252,7 @@ export class Database {
     let dbList: string[] = await this.conn.list();
     let that = this;
     return new Promise<boolean>((fulfill, reject) => {
-      if (dbList.includes(that.name)) {
+      if (dbList.indexOf(that.name) >= 0) {
         fulfill(true);
       }
       reject('Unable to connect to database ' + that.name + '.\
