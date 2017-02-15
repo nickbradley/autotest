@@ -28,16 +28,7 @@ export interface Job extends bull.Job {
   opts: Object;
 }
 
-// export interface JobData {
-//   dName: string,
-//   team: string,
-//   commit: Commit
-// }
 
-
-// interface ProcessJobCallback {
-//   (job: bull.Job) => void;
-// }
 export interface CallbackOpts {
   qname: string;
 }
