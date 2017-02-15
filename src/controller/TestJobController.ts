@@ -61,7 +61,7 @@ export default class TestJobController {
     this.redisAddress = config.getRedisAddress();
 
     let stdQName: string = 'autotest-testqueue-std';
-    let stdQPool: number = 1;
+    let stdQPool: number = 2;
 
     let expQName: string = 'autotest-testqueue-exp';
     let expQPool: number = 2;
