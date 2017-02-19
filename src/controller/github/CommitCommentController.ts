@@ -9,9 +9,10 @@ import {GithubResponse, Commit} from '../../model/GithubUtil';
 import PostbackController from './PostbackController'
 import {DeliverableRecord} from '../../model/settings/DeliverableRecord';
 import TestJobController from '../TestJobController';
-import * as redis from 'redis';
 import ResultRecord from '../../model/results/ResultRecord';
 import {Job} from '../../model/JobQueue';
+
+import RedisManager from '../RedisManager';
 
 
 interface PendingRequest {
@@ -26,16 +27,10 @@ interface PendingRequest {
 export default class CommitCommentContoller {
   private config: IConfig;
   private record: CommitCommentRecord;
-  private rclient: redis.RedisClient;
-  private ready: boolean;
+  
 
   constructor() {
     this.config = new AppConfig();
-    this.ready = false;
-    this.rclient = redis.createClient();
-    this.rclient.on('connect', () => {
-      this.ready = true;
-    });
   }
 
 
@@ -43,18 +38,14 @@ export default class CommitCommentContoller {
     let that = this;
     return new Promise<GithubResponse>(async (fulfill, reject) => {
       try {
+        let redis: RedisManager = new RedisManager();
+        let queue: TestJobController = TestJobController.getInstance();
         let record: CommitCommentRecord = new CommitCommentRecord();
         let response: GithubResponse;
 
-
+        await redis.client.connect();
         await record.process(data);
         this.record = record;
-
-
-
-
-
-
 
         let isAdmin: boolean = await that.isAdmin(record.user);
 
@@ -63,8 +54,7 @@ export default class CommitCommentContoller {
           let user: string = record.user;
           let commit: string = record.commit.short;
           let deliverable: string = record.deliverable;
-          let reqId: string = team + '-' + user + '#' + commit + ':' + deliverable;
-
+          let reqId: string = team + '-' + commit + '-' + deliverable;
 
           let req: PendingRequest = {
             commit: commit,
@@ -77,7 +67,7 @@ export default class CommitCommentContoller {
           let hasPending: boolean = true;
           let pendingRequest: PendingRequest
           try {
-            pendingRequest = await this.getPendingRequest(user, deliverable);
+            pendingRequest = await redis.client.get(reqId);
           } catch(err) {
             hasPending = false;
           }
@@ -114,7 +104,10 @@ export default class CommitCommentContoller {
                   let maxPos: number = await that.isQueued(record.deliverable, record.team, record.commit);
                   let body: string;
                   try {
-                    await this.setRequest(req);
+                    let jobId: string = 'autotest/'+req.deliverable+'-testsuite:latest|'+req.team+'#'+req.commit;
+                    await redis.client.set(reqId, req);
+                    await queue.promoteJob(jobId);
+
                     body = 'This commit is still queued for processing against **'+deliverable+'**. Your results will be posted here as soon as they are ready.' + (this.record.note ? '\n_Note: ' + this.record.note + '_' : '');// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
                   } catch(err) {
                     body = 'This commit is still queued for processing against **'+deliverable+'**. Please try again in a few minutes.';
@@ -171,38 +164,6 @@ export default class CommitCommentContoller {
     });
   }
 
-  private async setRequest(req: PendingRequest) {
-    let key: string = req.user+'-'+req.deliverable;
-    let jobId: string = 'autotest/'+req.deliverable+'-testsuite:latest|'+req.team+'#'+req.commit;
-    return new Promise((fulfill, reject) => {
-      this.rclient.hmset(key, req, (err, reply) => {
-        if (err) {
-          Log.warn('CommitCommentContoller::setRequest() - ['+jobId+'] Failed to store request. ' + err);
-          reject(err);
-        } else {
-          Log.info('CommitCommentContoller::setRequest() - ['+jobId+'] Set up auto post.');
-          let queue: TestJobController = TestJobController.getInstance();
-          this.rclient.expire(key, 60*60*2);
-          queue.promoteJob(jobId);
-          fulfill();
-        }
-      });
-    });
-  }
-  private async getPendingRequest(user: string, deliverable: string): Promise<PendingRequest> {
-    let id: string = user+'-'+deliverable;
-    return new Promise<PendingRequest>((fulfill, reject) => {
-      this.rclient.hgetall(id, (err, object) => {
-        if (err || !object) {
-          Log.warn('CommitCommentContoller::getPendingRequest() - ['+id+'] Failed to get pending request. ' + err);
-          reject(err || 'null value');
-        } else {
-          Log.info('CommitCommentContoller::getPendingRequest - ['+id+'] Found PendingRequest. ');
-          fulfill(object);
-        }
-      });
-    });
-  }
 
   /**
    * Extract the mention options which can be 'force' or the deliverable name.

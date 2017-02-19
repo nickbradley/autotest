@@ -7,9 +7,10 @@ import * as Url from 'url';
 import {GithubUsername, Commit} from '../model/GithubUtil';
 import {Visibility} from '../model/settings/DeliverableRecord';
 import PostbackController from './github/PostbackController';
-import * as redis from 'redis';
 import CommitCommentController from './github/CommitCommentController'
 import ResultRecord from '../model/results/ResultRecord';
+import RedisManager from './RedisManager';
+
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
@@ -94,31 +95,20 @@ export default class TestJobController {
       let controller: PostbackController = new PostbackController(jobData.hook);
       let msg: string;
 
-      let key: string = jobData.user+'-'+jobData.test.deliverable;
+
       let pendingRequest;
       let dl: string = jobData.test.deliverable;
 
-      try {
-        let rclient: redis.RedisClient = redis.createClient();
-        await new Promise((fulfill) => {
-          rclient.on('connect', () => {
-            fulfill();
-          });
-        });
-        pendingRequest = await new Promise((fulfill, reject) => {
-          rclient.hgetall(key, (err, object) => {
-            if (err) {
-              reject(err);
-            } else {
-              rclient.del(key, (err, reply) => {
-                //Log.info('JobQueue::completed() - ['+key+'] Found pending request.');
-                fulfill(object);
-              })
-            }
-          });
-        });
-      } catch(err) {
+      let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
 
+      try {
+        let redis: RedisManager = new RedisManager();
+        await redis.client.connect();
+        pendingRequest = await redis.client.get(reqId);
+        await redis.client.del(reqId);
+      }
+      catch(err) {
+        Log.error('JobQueue::completed() - ERROR ' + err);
       }
 
       if (result.buildFailed) {
