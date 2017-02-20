@@ -239,12 +239,12 @@ export default class TestRecord implements DatabaseRecord {
 
   public processInfoTag(stdout: string): any {
     try {
-      let infoTagRegex: RegExp = /^<INFO exitcode=(\d+), completed=(.+), duration=(\d+)s>\nscript version: (.+)\ntest suite version: (.+)\n<\/INFO>$/gm
+      let infoTagRegex: RegExp = /^<INFO>\nscript version: (.+)\ntest suite version: (.+)\n<\/INFO exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
       //let infoMsgRegex: RegExp = /^(npm.*)$/gm;
       let matches: string[] = infoTagRegex.exec(stdout);
       let processed: any = {
-        scriptVersion: matches[4].trim(),
-        suiteVersion: matches[5].trim()
+        scriptVersion: matches[1].trim(),
+        suiteVersion: matches[2].trim()
       };
       return processed;
     } catch (err) {
@@ -254,12 +254,12 @@ export default class TestRecord implements DatabaseRecord {
 
   public processProjectBuildTag(stdout: string): ProcessedTag {
     try {
-      let buildTagRegex: RegExp = /^<PROJECT_BUILD exitcode=(\d+), completed=(.+), duration=(\d+)s>((?!npm)[\s\S]*)<\/PROJECT_BUILD>$/gm
+      let buildTagRegex: RegExp = /^<PROJECT_BUILD>\n([\s\S]*)<\/PROJECT_BUILD exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
       let buildMsgRegex: RegExp = /^(npm.*)$/gm;
       let matches: string[] = buildTagRegex.exec(stdout);
       let processed: ProcessedTag = {
-        content: matches[4].replace(buildMsgRegex, '').trim(),
-        exitcode: +matches[1]
+        content: matches[1].replace(buildMsgRegex, '').trim(),
+        exitcode: +matches[2]
       };
       return processed;
     } catch (err) {
@@ -270,14 +270,14 @@ export default class TestRecord implements DatabaseRecord {
 
   public processCoverageTag(stdout: string): ProcessedTag {
     try {
-      let coverageTagRegex: RegExp = /^<PROJECT_COVERAGE exitcode=(\d+), completed=(.+), duration=(\d+)s>([\s\S]*)<\/PROJECT_COVERAGE>$/gm;
+      let coverageTagRegex: RegExp = /^<PROJECT_COVERAGE>([\s\S]*)<\/PROJECT_COVERAGE exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm;
       let matches: string[] = coverageTagRegex.exec(stdout);
-      let exitcode: number = +matches[1];
+      let exitcode: number = +matches[2];
       if (exitcode == 0)
         return {content:'', exitcode:0};
 
 
-      let content: string = matches[4];
+      let content: string = matches[1];
       let failedTestsRegex: RegExp = /^  \d+\) [\s\S]*\n\n$/gm;
       let failedTests: string[] = failedTestsRegex.exec(content);
 

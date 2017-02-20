@@ -23,7 +23,7 @@
 #  1) Expects the deliverable repo exist in deliverableDir with up to date packages (node_modules)
 # ##############################################################################
 
-version=0.0.4
+version=1.0.1
 
 
 projectDir="/cpsc310project"
@@ -38,18 +38,20 @@ testsCmd="yarn run autotest"
 
 date=$(date --utc +%FT%T.%3NZ)
 
-printf "<INFO exitcode=0, completed=%s, duration=0s>\n%s\n%s\n</INFO>\n\n\n" "${date}" "script version: ${version}" "test suite version: ${TESTSUITE_VERSION}"
+printf "<INFO>\n%s\n%s\n</INFO exitcode=0, completed=%s, duration=0s>\n\n\n" "script version: ${version}" "test suite version: ${TESTSUITE_VERSION}" "${date}"
 
 
 # Clone the specified student repo into the projectDir
 # Exit if unable to clone the student's repo
+printf "<PROJECT_PULL>\n"
+
 startTime=$(date +%s)
-out=$(./pull-repo.sh $@ "${projectDir}" 2>&1)
+./pull-repo.sh $@ "${projectDir}" 2>&1
 status=$?
 duration=$(($(date +%s) - $startTime))
 date=$(date --utc +%FT%T.%3NZ)
 
-printf "<PROJECT_PULL exitcode=%d, completed=%s, duration=%ds>\n%s\n</PROJECT_PULL>\n\n" "${status}" "${date}" "${duration}" "${out}"
+printf "\n</PROJECT_PULL exitcode=%d, completed=%s, duration=%ds>\n\n\n" "${status}" "${date}" "${duration}"
 
 if [ $status -ne 0 ]
 then
@@ -58,8 +60,10 @@ fi
 
 # Configure the firewall to block all connections except those explicitly allowed
 # Exit if problem configuring the firewall
+printf "<NETWORK>\n"
+
 startTime=$(date +%s)
-out=$({
+{
 IPT="iptables"
 dnsServers=$(grep -oP "(?<=nameserver ).*" /etc/resolv.conf | tr "\n" " ")
 
@@ -110,12 +114,12 @@ do
 	$IPT -A OUTPUT -p tcp -d "$host" --dport $port  -m state --state NEW,ESTABLISHED -j ACCEPT
 	$IPT -A INPUT  -p tcp -s "$host" --sport $port  -m state --state ESTABLISHED     -j ACCEPT
 done
-} 2>&1 )
+} 2>&1
 status=$?
 duration=$(($(date +%s) - $startTime))
 date=$(date --utc +%FT%T.%3NZ)
 
-printf "<NETWORK exitcode=%d, completed=%s, duration=%ds>\n%s\n</NETWORK>\n\n" "${status}" "${date}" "${duration}" "${out}"
+printf "</NETWORK exitcode=%d, completed=%s, duration=%ds>\n\n\n" "${status}" "${date}" "${duration}"
 
 if [ $status -ne 0 ]
 then
@@ -132,13 +136,15 @@ cp -f "${bootstrapDir}/package.json" "${projectDir}/package.json"
 
 # Build the student's project
 # Exit if the build fails
+printf "<PROJECT_BUILD>\n"
+
 startTime=$(date +%s)
-out=$(cd "${projectDir}" && ${buildCmd} 2>&1)
+cd "${projectDir}" && ${buildCmd} 2>&1
 status=$?
 duration=$(($(date +%s) - $startTime))
 date=$(date --utc +%FT%T.%3NZ)
 
-printf "<PROJECT_BUILD exitcode=%d, completed=%s, duration=%ds>\n%s\n</PROJECT_BUILD>\n\n" "${status}" "${date}" "${duration}" "${out}"
+printf "</PROJECT_BUILD exitcode=%d, completed=%s, duration=%ds>\n\n\n" "${status}" "${date}" "${duration}"
 
 if [ $status -ne 0 ]
 then
@@ -146,50 +152,56 @@ then
 fi
 
 # Build the deliverable's code (depends on the student's code)
+printf "<DELIVERABLE_BUILD>\n"
+
 startTime=$(date +%s)
-out=$(cd "${deliverableDir}" && ${buildCmd} 2>&1)
+cd "${deliverableDir}" && ${buildCmd} 2>&1
 status=$?
 duration=$(($(date +%s) - $startTime))
 date=$(date --utc +%FT%T.%3NZ)
 
-printf "<DELIVERABLE_BUILD exitcode=%d, completed=%s, duration=%ds>\n%s\n</DELIVERABLE_BUILD>\n\n" "${status}" "${date}" "${duration}" "${out}"
+printf "</DELIVERABLE_BUILD exitcode=%d, completed=%s, duration=%ds>\n\n\n" "${status}" "${date}" "${duration}"
 
 
 # Run the coverage tool
+printf "<PROJECT_COVERAGE>\n"
+
 startTime=$(date +%s)
-out=$(cd "${projectDir}" && ${coverCmd} 2>&1)
+cd "${projectDir}" && ${coverCmd} 2>&1
 status=$?
 duration=$(($(date +%s) - $startTime))
 date=$(date --utc +%FT%T.%3NZ)
 
-printf "<PROJECT_COVERAGE exitcode=%d, completed=%s, duration=%ds>\n%s\n</PROJECT_COVERAGE>\n\n" "${status}" "${date}" "${duration}" "${out}"
+printf "</PROJECT_COVERAGE exitcode=%d, completed=%s, duration=%ds>\n\n\n" "${status}" "${date}" "${duration}"
 
 
 # Run the tests
+printf "<DELIVERABLE_TESTS>\n"
+
 startTime=$(date +%s)
-out=$(cd "${deliverableDir}" && ${testsCmd} 2>&1)
+cd "${deliverableDir}" && ${testsCmd} 2>&1
 status=$?
 duration=$(($(date +%s) - $startTime))
 date=$(date --utc +%FT%T.%3NZ)
 
-printf "<DELIVERABLE_TESTS exitcode=%d, completed=%s, duration=%ds>\n%s\n</DELIVERABLE_TESTS>\n\n" "${status}" "${date}" "${duration}" "${out}"
+printf "</DELIVERABLE_TESTS exitcode=%d, completed=%s, duration=%ds>\n\n" "${status}" "${date}" "${duration}"
 
 
 # Zip the coverage directory and copy it and the mocha report to the output directory
 # http://stackoverflow.com/questions/18933975/zip-file-and-print-to-stdout
+printf "<FILE_OPERATIONS>\n"
 startTime=$(date +%s)
-out=$(
+
   echo "Copying ${projectDir}/mocha_output/mochawesome.json to ${outputDir}/mocha.json."
   cp "${projectDir}/mocha_output/mochawesome.json" "${outputDir}/mocha.json" 2>&1
   echo "Copying ${projectDir}/coverage/coverage-summary.json to ${outputDir}/coverage.json"
   cp "${projectDir}/coverage/coverage-summary.json" "${outputDir}/coverage.json"
   # echo "Archiving ${projectDir}/coverage as ${outputDir}/coverage.zip."
   # zip -r "${outputDir}/coverage.zip" "${projectDir}/coverage" 2>&1
-)
+
 status=$?
 duration=$(($(date +%s) - $startTime))
 date=$(date --utc +%FT%T.%3NZ)
 
-printf "<FILE_OPERATIONS exitcode=%d, completed=%s, duration=%ds>\n%s\n</FILE_OPERATIONS>\n\n" "${status}" "${date}" "${duration}" "${out}"
-
+printf "</FILE_OPERATIONS exitcode=%d, completed=%s, duration=%ds>\n\n\n" "${status}" "${date}" "${duration}"
 exit 0

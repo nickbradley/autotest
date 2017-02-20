@@ -44,7 +44,7 @@ deliverable=${4}
 if [[ ! -z "${@:5}" ]]
 then
   allowDNS=1
-  externalServers="${@:4}"
+  externalServers="${@:5}"
 else
   allowDNS=0
   externalServers=""
