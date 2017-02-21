@@ -1,4 +1,5 @@
 import RedisClient from "../model/RedisClient";
+import {IConfig, AppConfig} from '../Config';
 
 /**
  * Provides access to the redis client via the singleton.
@@ -18,7 +19,9 @@ class RedisSingleton {
 
 
   private constructor() {
-    this._client = new RedisClient(6389);
+    let config: IConfig = new AppConfig();
+    let redis = config.getRedisAddress();
+    this._client = new RedisClient({port:+redis.port});
   }
 
 
