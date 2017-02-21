@@ -278,7 +278,7 @@ export default class TestRecord implements DatabaseRecord {
 
 
       let content: string = matches[1];
-      let failedTestsRegex: RegExp = /^  \d+\) [\s\S]*\n\n$/gm;
+      let failedTestsRegex: RegExp = /^  (\d+\)|  throw) [\s\S]*$/gm;
       let failedTests: string[] = failedTestsRegex.exec(content);
 
       return {content: failedTests[0], exitcode: exitcode};
