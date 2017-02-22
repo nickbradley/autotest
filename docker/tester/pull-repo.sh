@@ -33,9 +33,13 @@ then
   rm -rf "${cloneDir}"
 fi
 
-printf "Cloning repo to ${cloneDir}.\n"
+printf "Cloning $( echo "${repoUrl}" | sed 's/\(.*:\/\/\).*@\(.*\)/\1\2/' ).\n"
 git clone "${repoUrl}" "${cloneDir}"
 cd "${cloneDir}"
+
+printf "Tracking branch:\n"
+git branch -vv
+
 
 # If a commit SHA is specified then detach the HEAD and point at the commit
 if [[ -n "${commit}" ]]
