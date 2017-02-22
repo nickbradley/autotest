@@ -82,6 +82,7 @@ export default class TestRecord implements DatabaseRecord {
   private suiteVersion: string;
   private failedCoverage: string;
   private stdioSize: number;
+  private ref: string;
 
   constructor(githubToken: string, testJob: TestJob) {
     this.githubToken = githubToken;
@@ -89,6 +90,7 @@ export default class TestRecord implements DatabaseRecord {
     this.deliverable = testJob.test;
     this.commit = testJob.commit;
     this.committer = testJob.user;
+    this.ref = testJob.ref;
     this.timestamp = +new Date();
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
   }
@@ -394,7 +396,8 @@ export default class TestRecord implements DatabaseRecord {
       'commit': this.commit,
       'committer': this.committer,
       'timestamp': this.timestamp,
-      'container': container
+      'container': container,
+      'ref': this.ref
 
     }
 

@@ -23,7 +23,8 @@ export interface TestJob {
   user: string;
   team: string;
   commit: string;
-  hook: Url.Url
+  hook: Url.Url;
+  ref: string;
   test: TestJobDeliverable;
 }
 

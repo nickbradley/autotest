@@ -9,6 +9,7 @@ export default class PushRecord implements DatabaseRecord {
   private _user: string;
   private _commit: Commit;
   private _commentHook: Url.Url;
+  private _ref: string;
   private timestamp: number;
 
   constructor(payload: any) {
@@ -18,6 +19,7 @@ export default class PushRecord implements DatabaseRecord {
       this._user = payload.pusher.name;
       this._commit = new Commit(payload.after);
       this._commentHook = Url.parse(payload.repository.commits_url.replace('{/sha}', '/' + this._commit) + '/comments');
+      this._ref = payload.ref;
       this.timestamp = +new Date();
     } catch(err) {
       throw 'Failed to create new PushRecord. ' + err;
@@ -38,6 +40,10 @@ export default class PushRecord implements DatabaseRecord {
   get commentHook(): Url.Url {
     return this._commentHook;
   }
+  get ref(): string {
+    return this._ref;
+  }
+
   public async create(db: CouchDatabase): Promise<InsertResponse> {
     return this.insert(db);
   }
