@@ -102,6 +102,7 @@ export default class TestRecord implements DatabaseRecord {
       this.githubToken,
       this.team,
       this.commit,
+      this.ref,
       this.deliverable.image,
       tempDir.path
     ];
@@ -241,12 +242,12 @@ export default class TestRecord implements DatabaseRecord {
 
   public processInfoTag(stdout: string): any {
     try {
-      let infoTagRegex: RegExp = /^<INFO>\nscript version: (.+)\ntest suite version: (.+)\n<\/INFO exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
+      let infoTagRegex: RegExp = /^<INFO>\nproject url: (.+)\nbranch: (.+)\ncommit: (.+)\nscript version: (.+)\ntest suite version: (.+)\n<\/INFO exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
       //let infoMsgRegex: RegExp = /^(npm.*)$/gm;
       let matches: string[] = infoTagRegex.exec(stdout);
       let processed: any = {
-        scriptVersion: matches[1].trim(),
-        suiteVersion: matches[2].trim()
+        scriptVersion: matches[4].trim(),
+        suiteVersion: matches[5].trim()
       };
       return processed;
     } catch (err) {

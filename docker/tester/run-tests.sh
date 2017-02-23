@@ -23,7 +23,7 @@
 #  1) Expects the deliverable repo exist in deliverableDir with up to date packages (node_modules)
 # ##############################################################################
 
-version=1.0.1
+version=1.0.2
 
 
 projectDir="/cpsc310project"
@@ -38,7 +38,13 @@ testsCmd="yarn run autotest"
 
 date=$(date --utc +%FT%T.%3NZ)
 
-printf "<INFO>\n%s\n%s\n</INFO exitcode=0, completed=%s, duration=0s>\n\n\n" "script version: ${version}" "test suite version: ${TESTSUITE_VERSION}" "${date}"
+printf "<INFO>\nproject url: %s\nbranch: %s\ncommit: %s\nscript version: %s\ntest suite version: %s\n</INFO exitcode=0, completed=%s, duration=0s>\n\n\n" \
+  "$( echo "${PROJECT_URL}" | sed 's/\(.*:\/\/\).*@\(.*\)/\1\2/' )" \
+  "${PROJECT_BRANCH}" \
+  "${PROJECT_COMMIT}" \
+  "${version}" \
+  "${TESTSUITE_VERSION}" \
+  "${date}"
 
 
 # Clone the specified student repo into the projectDir
@@ -46,7 +52,7 @@ printf "<INFO>\n%s\n%s\n</INFO exitcode=0, completed=%s, duration=0s>\n\n\n" "sc
 printf "<PROJECT_PULL>\n"
 
 startTime=$(date +%s)
-./pull-repo.sh $@ "${projectDir}" 2>&1
+./pull-repo.sh "${PROJECT_URL}" "${PROJECT_COMMIT}" "${projectDir}" 2>&1
 status=$?
 duration=$(($(date +%s) - $startTime))
 date=$(date --utc +%FT%T.%3NZ)

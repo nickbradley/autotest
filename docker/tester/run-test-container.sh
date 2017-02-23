@@ -29,12 +29,14 @@ set -o nounset  # exit if undeclared variable is used
 githubApiKey=${1}
 team=${2}
 projectCommit=${3}
-testImage=${4}
-tempDir=${5}
+projectBranch=${4}
+testImage=${5}
+tempDir=${6}
 
 docker run --cap-add=NET_ADMIN \
            --env PROJECT_URL=https://${githubApiKey}@github.com/CS310-2017Jan/cpsc310project_${team}.git \
            --env PROJECT_COMMIT=$projectCommit \
+           --env PROJECT_BRANCH=$projectBranch \
            --volume "${tempDir}":/output/ \
            --rm \
            ${testImage}
