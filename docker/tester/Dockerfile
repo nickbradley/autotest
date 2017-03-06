@@ -25,7 +25,7 @@ RUN chmod +x /pull-repo.sh
 RUN chmod +x /run-tests.sh
 
 
-RUN /pull-repo.sh "https://github.com/CS310-2017Jan/bootstrap" "8196a73" /bootstrap
+RUN /pull-repo.sh "https://github.com/CS310-2017Jan/bootstrap" "d8e5137" /bootstrap
 RUN cd /bootstrap && yarn run configure
 
 RUN /pull-repo.sh $testsuiteUrl $testsuiteCommit /testsuite
