@@ -40,4 +40,4 @@ ENV WHITELISTED_SERVERS=$externalServers
 ENV TESTSUITE_VERSION=$testsuiteCommit
 ENV TS=$deliverable
 
-CMD timeout 5m /run-tests.sh $PROJECT_URL $PROJECT_COMMIT >/output/stdio.txt 2>&1
+CMD timeout 10m /run-tests.sh $PROJECT_URL $PROJECT_COMMIT >/output/stdio.txt 2>&1
