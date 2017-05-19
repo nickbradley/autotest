@@ -1,5 +1,7 @@
 scriptDir=$(dirname $BASH_SOURCE)
 
+echo $BASH_SOURCE
+
 # Create Redis container
 docker create \
   --name autotest-redis \
@@ -12,8 +14,8 @@ docker create \
   --publish 11312:5984 \
   --env COUCHDB_USER="${DB_ADMIN_USERNAME}" \
   --env COUCHDB_PASSWORD="${DB_ADMIN_PASSWORD}" \
-  --volume "${scriptDir}/.data/dbdata":/usr/local/var/lib/couchdb \
-  --volume "${scriptDir}/.data/dbconfig":/usr/local/etc/couchdb/local.d \
+  --volume "/Users/Telus/Desktop/UBC/autotest/.data/dbdata":/usr/local/var/lib/couchdb \
+  --volume "/Users/Telus/Desktop/UBC/autotest/.data/dbconfig":/usr/local/etc/couchdb/local.d \
 couchdb
 
 
