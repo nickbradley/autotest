@@ -2,21 +2,17 @@ import cp = require('child_process');
 import tmp = require('tmp-promise');
 import fs = require('fs');
 import {IConfig, AppConfig} from '../../Config';
-
 import {Commit} from '../GithubUtil';
 import {CouchDatabase,Database, DatabaseRecord, InsertResponse} from '../Database';
 import {TestJob, TestJobDeliverable} from '../../controller/TestJobController';
+import {Report} from '../../model/results/ReportRecord';
 import Log from '../../Util';
 
-
-
 interface TestOutput {
-  mocha: JSON;
   testStats: TestStats;
 }
 
 interface CoverageOutput {
-  report: JSON;
   coverageStats: CoverageStats;
 }
 
@@ -49,30 +45,36 @@ export interface ProcessedTag {
 }
 
 export interface TestStatus {
-  buildFailed: boolean,
-  buildMsg: string,
+  studentBuildFailed: boolean,
+  studentBuildMsg: string,
+  deliverableBuildFailed: boolean,
+  deliverableBuildMsg: string,
   containerExitCode: number,
   processErrors: string[]
 }
 
-export default class TestRecord implements DatabaseRecord {
+export default class TestRecord{
   // private config: IConfig;
   private maxStdioSize: number = 5 * 1000000;  // 5 MB
-
-
+  private maxReportSize: number = 1/2 * 100000; // 500 KB
   private stdio: string;
+  private report: string;
+  private reportSize: number;
+  private stdioSize: number;
   private coverageZip: Buffer;
-
   private githubToken: string;
   private _id: string;
   private _rev: string;
   private team: string;
   private deliverable: TestJobDeliverable;
+  private courseNum: number;
   private testStats: TestStats;
   private coverageReport: any;
   private coverageStats: CoverageStats;
-  private buildFailed: boolean;
-  private buildMsg: string;
+  private studentBuildFailed: boolean;
+  private studentBuildMsg: string;
+  private deliverableBuildFailed: boolean;
+  private deliverableBuildMsg: string;
   private testReport: any;
   private commit: string;
   private committer: string;
@@ -81,29 +83,85 @@ export default class TestRecord implements DatabaseRecord {
   private scriptVersion: string;
   private suiteVersion: string;
   private failedCoverage: string;
-  private stdioSize: number;
+  private markDelivsByBatch: boolean;
   private ref: string;
 
   constructor(githubToken: string, testJob: TestJob) {
+    this.courseNum = testJob.courseNum;
     this.githubToken = githubToken;
     this.team = testJob.team;
     this.deliverable = testJob.test;
     this.commit = testJob.commit;
     this.committer = testJob.user;
     this.ref = testJob.ref;
+    this.markDelivsByBatch = testJob.markDelivsByBatch;
     this.timestamp = +new Date();
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
   }
 
+  public getTeam(): string {
+    return this.team;
+  }
+
+  public getCommit(): string {
+    return this.commit;
+  }
+
+  public getExitCode(): number {
+    return this.containerExitCode;
+  }
+
+  public getStudentBuildFailed(): boolean {
+    return this.studentBuildFailed;
+  }
+
+  public getStudentBuildMsg(): string {
+    return this.studentBuildMsg;
+  }
+
+  public getDeliverableBuildFailed(): boolean {
+    return this.deliverableBuildFailed;
+  }
+
+  public getDeliverableBuildMsg(): string {
+    return this.deliverableBuildMsg;
+  }
+
+  public getScriptVersion(): string {
+    return this.scriptVersion;
+  }
+
+  public getSuiteVersion(): string {
+    return this.suiteVersion;
+  }
+
+  public getDeliverable(): TestJobDeliverable {
+    return this.deliverable;
+  }
+
+  public getTestStats(): TestStats {
+    return this.testStats;
+  }
+
+  public getCoverageStats(): CoverageStats {
+    return this.coverageStats;
+  }
+
+  public getTestReport(): any {
+    return this.testReport;
+  }
+
   public async generate(): Promise<TestStatus> {
     let tempDir = await tmp.dir({ dir: '/tmp', unsafeCleanup: true });
-    let file: string = './docker/tester/run-test-container.sh';
+    let file: string = './docker/tester/run-test-container-' + this.courseNum + '.sh';
     let args: string[] = [
       this.githubToken,
       this.team,
       this.commit,
       this.ref,
+      this.deliverable.deliverable,
       this.deliverable.image,
+      this.markDelivsByBatch,
       tempDir.path
     ];
     let options = {
@@ -116,8 +174,6 @@ export default class TestRecord implements DatabaseRecord {
           console.log('Error', error);
           this.containerExitCode = error.code;
         }
-
-
 
         let promises: Promise<string>[] = [];
         let getTranscriptSize: Promise<string> = new Promise((fulfill, reject) => {
@@ -136,6 +192,13 @@ export default class TestRecord implements DatabaseRecord {
         });
         promises.push(getTranscriptSize);
 
+        let readReport: Promise<JSON> = new Promise((fulfill, reject) => {
+          fs.readFile(tempDir.path + '/report.json', 'utf8', (err, data) => {
+            if (err) {
+              Log.error('TestRecord::generate() - ERROR reading report.json. ' + err);
+            }
+          });
+        });
 
         let readTranscript: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.path + '/stdio.txt', 'utf8', (err, data) => {
@@ -143,6 +206,9 @@ export default class TestRecord implements DatabaseRecord {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
               if (this.containerExitCode == 0) this.containerExitCode = 30;
               return fulfill(err);
+            }
+            else {
+              Log.info('TestRecord::generate() - SUCCESS reading stdio.txt. ' + tempDir.path + '/stdio.txt');
             }
             try {
               this.stdio = data;
@@ -152,14 +218,18 @@ export default class TestRecord implements DatabaseRecord {
               this.scriptVersion = infoTag.scriptVersion;
               this.suiteVersion = infoTag.suiteVersion;
 
-              // Process the project build tag
-              let buildTag: ProcessedTag = this.processProjectBuildTag(data);
-              this.buildFailed = (buildTag.exitcode > 0 ? true : false);
-              this.buildMsg = buildTag.content;
+              // Process the project build tags for Student and Deliverable repos, respectively
+              let studentBuildTag: ProcessedTag = this.processStudentProjectBuildTag(data);
+              this.studentBuildFailed = (studentBuildTag.exitcode > 0 ? true : false);
+              this.studentBuildMsg = studentBuildTag.content;
+
+              let deliverableBuildTag: ProcessedTag = this.processDeliverableProjectBuildTag(data);
+              this.deliverableBuildFailed = (deliverableBuildTag.exitcode > 0 ? true: false);
+              this.deliverableBuildMsg = deliverableBuildTag.content;
 
               // Process the coverage tag
-              let coverageTag: ProcessedTag = this.processCoverageTag(data);
-              this.failedCoverage = coverageTag.content;
+              // let coverageTag: ProcessedTag = this.processCoverageTag(data);
+              // this.failedCoverage = coverageTag.content;
 
               fulfill();
             } catch(err) {
@@ -169,63 +239,47 @@ export default class TestRecord implements DatabaseRecord {
         });
         promises.push(readTranscript);
 
-
-        let readCoverage: Promise<string> = new Promise((fulfill, reject) => {
-          fs.readFile(tempDir.path + '/coverage.json', 'utf8', (err, data) => {
+        let getReportSize: Promise<string> = new Promise((fulfill, reject) => {
+          fs.stat(tempDir.path + '/report.json', (err, stats) => {
             if (err) {
-              Log.error('TestRecord::generate() - ERROR reading coverage.json. ' + err);
-              if (this.containerExitCode == 0) this.containerExitCode = 31;
-              fulfill(err);
+              Log.error('TestRecord::generate() - ERROR reading report.json ' + err);
+              if (this.containerExitCode == 0) this.containerExitCode = 30;
+              return fulfill(err);
             }
-            try {
-              let coverage: CoverageOutput = this.processCoverageJson(data);
-              this.coverageStats = coverage.coverageStats;
-              this.coverageReport = coverage.report;
-              fulfill();
-            } catch(err) {
-              fulfill(err);
-            }
+
+            this.reportSize = stats.size;
+            fulfill();
           });
         });
-        promises.push(readCoverage);
+        promises.push(getReportSize);
 
-        let readTests: Promise<string> = new Promise((fulfill, reject) => {
-          fs.readFile(tempDir.path + '/mocha.json', 'utf8', (err, data) => {
+        let readReports: Promise<string> = new Promise((fulfill, reject) => {
+          fs.readFile(tempDir.path + '/report.json', 'utf8', (err, data) => {
             if (err) {
-              Log.error('TestRecord::generate() - ERROR reading mocha.json. ' + err);
+              Log.error('TestRecord::generate() - ERROR reading report.json. ' + err);
               if (this.containerExitCode == 0) this.containerExitCode = 32;
               fulfill(err);
             }
+            else {
+              Log.info('TestRecord::generate() - SUCCESS reading report.json. ' + tempDir.path + '/report.json');
+            }
             try {
-              let tests: TestOutput = this.processMochaJson(data);
-              this.testStats = tests.testStats;
-              this.testReport = tests.mocha;
+              
+              this.report = data; // : ReportSchema
               fulfill();
             } catch(err) {
               fulfill(err);
             }
           });
         });
-        promises.push(readTests);
-
-
-        // let readCoverage: Promise<string> = new Promise((fulfill, reject) => {
-        //   fs.readFile(tempDir.name + '/coverage.zip', (err, data) => {
-        //     if (err) {
-        //       Log.error('TestRecord::generate() - ERROR reading coverage.zip. ' + err);
-        //       if (this.containerExitCode == 0) this.containerExitCode = 32;
-        //       fulfill(err);
-        //     }
-        //     this.coverageZip = data;
-        //     fulfill();
-        //   });
-        // });
-        // promises.push(readCoverage);
+        promises.push(readReports);
 
         Promise.all(promises).then((err) => {
           let testStatus: TestStatus = {
-            buildFailed: this.buildFailed,
-            buildMsg: this.buildMsg,
+            studentBuildFailed: this.studentBuildFailed,
+            studentBuildMsg: this.studentBuildMsg,
+            deliverableBuildFailed: this.deliverableBuildFailed,
+            deliverableBuildMsg: this.deliverableBuildMsg,
             containerExitCode: this.containerExitCode,
             processErrors: err
           }
@@ -255,9 +309,9 @@ export default class TestRecord implements DatabaseRecord {
     }
   }
 
-  public processProjectBuildTag(stdout: string): ProcessedTag {
+  public processStudentProjectBuildTag(stdout: string): ProcessedTag {
     try {
-      let buildTagRegex: RegExp = /^<PROJECT_BUILD>\n([\s\S]*)<\/PROJECT_BUILD exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
+      let buildTagRegex: RegExp = /^<BUILD_STUDENT_TESTS>\n([\s\S]*)<\/BUILD_STUDENT_TESTS exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
       let buildMsgRegex: RegExp = /^(npm.*)$/gm;
       let matches: string[] = buildTagRegex.exec(stdout);
       let processed: ProcessedTag = {
@@ -266,7 +320,22 @@ export default class TestRecord implements DatabaseRecord {
       };
       return processed;
     } catch (err) {
-      throw 'Failed to process <PROJECT_BUILD> tag. ' + err;
+      throw 'Failed to process <BUILD_STUDENT_TESTS> tag. ' + err;
+    }
+  }
+
+  public processDeliverableProjectBuildTag(stdout: string): ProcessedTag {
+    try {
+      let buildTagRegex: RegExp = /^<BUILD_DELIVERABLE_TESTS>\n([\s\S]*)<\/BUILD_DELIVERABLE_TESTS exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
+      let buildMsgRegex: RegExp = /^(npm.*)$/gm;
+      let matches: string[] = buildTagRegex.exec(stdout);
+      let processed: ProcessedTag = {
+        content: matches[1].replace(buildMsgRegex, '').trim(),
+        exitcode: +matches[2]
+      };
+      return processed;
+    } catch (err) {
+      throw 'Failed to process <BUILD_DELIVERABLE_TESTS> tag. ' + err;
     }
   }
 
@@ -290,92 +359,8 @@ export default class TestRecord implements DatabaseRecord {
     }
   }
 
-
-  public processCoverageJson(text: string): CoverageOutput {
-    try {
-      let report: any = JSON.parse(text);
-      let statements = report.total.statements;
-      let branches = report.total.branches;
-      let functions = report.total.functions;
-      let lines = report.total.lines;
-
-      let processed: CoverageOutput = {
-        report: report,
-        coverageStats: {
-          lines: {percentage: lines.pct, total: lines.total, covered: lines.covered, skipped: lines.skipped},
-          statements: {percentage: statements.pct, total: statements.total, covered: lines.covered, skipped: lines.skipped},
-          branches: {percentage: branches.pct, total: branches.total, covered: branches.covered, skipped: branches.skipped},
-          functions: {percentage: functions.pct, total: functions.total, covered: functions.covered, skipped: functions.skipped}
-        }
-      }
-
-      return processed;
-    } catch(err) {
-      throw 'Failed to process coverage report (JSON). ' + err;
-    }
-  }
-
-
-  public processMochaJson(text: string): TestOutput {
-    try {
-      let report: any = JSON.parse(text);
-      let passPercent: number = report.stats.passPercent;
-      let passCount: number = report.stats.passes;
-      let failCount: number = report.stats.failures;
-      let skipCount: number = report.stats.skipped;
-
-      let passNames: string[] = report.allTests.filter(test => {
-        return test.pass;
-      }).map(name => {
-        let fullName: string = name.fullTitle;
-        return fullName.substring(fullName.indexOf('~')+1, fullName.lastIndexOf('~'));
-      });
-      let failNames: string[] = report.allTests.filter(test => {
-        return test.fail;
-      }).map(name => {
-        let fullName: string = name.fullTitle;
-        return fullName.substring(fullName.indexOf('~')+1, fullName.lastIndexOf('~'));
-      });
-      let skipNames: string[] = [].concat.apply([], report.suites.suites.filter(suite => {
-        return suite.hasSkipped;
-      }).map(suite => {
-        return suite.skipped.map(skippedTest => {
-          let fullName: string = skippedTest.fullTitle;
-          return fullName.substring(fullName.indexOf('~')+1, fullName.lastIndexOf('~'));
-        });
-      }));
-
-      let processed: TestOutput = {
-        mocha: report,
-        testStats: {
-          passPercent: passPercent,
-          passCount: passCount,
-          failCount: failCount,
-          skipCount: skipCount,
-          passNames: passNames,
-          failNames: failNames,
-          skipNames: skipNames
-        }
-      }
-
-      return processed;
-    } catch(err) {
-      throw 'Failed to process mocha test report (JSON). ' + err;
-    }
-  }
-
-
-  public async create(db: CouchDatabase): Promise<InsertResponse> {
-    return this.insert(db);
-  }
-
-  public async update(db: CouchDatabase): Promise<InsertResponse> {
-    return new Promise<InsertResponse>((fulfill, reject) => {
-      reject('Not allowed.');
-    })
-  }
-
-  private async insert(db: CouchDatabase): Promise<InsertResponse> {
+public getTestRecord(): object {
+  let that = this;
     this._id += this.suiteVersion;
     let container = {
       scriptVersion: this.scriptVersion,
@@ -384,42 +369,52 @@ export default class TestRecord implements DatabaseRecord {
       exitcode: this.containerExitCode
     }
 
-    let doc = {
-      'team': this.team,
-      'deliverable': this.deliverable.deliverable,
-      'testStats': this.testStats,
-      'coverStats': this.coverageStats,
-      'coverReport': this.coverageReport,
-      'coverStderr': this.failedCoverage,
-      'buildFailed': this.buildFailed,
-      'buildMsg': this.buildMsg,
-      'testReport': this.testReport,
-      'commit': this.commit,
-      'committer': this.committer,
-      'timestamp': this.timestamp,
-      'container': container,
-      'ref': this.ref
-
+    function getStdio() {
+      if (that.stdio && that.stdioSize <= that.maxStdioSize) {
+        let attachments = {name: 'stdio.txt', data: that.stdio, content_type: 'application/plain'};
+        return attachments;
+      }
     }
 
-    let attachments = [];
-    if (this.stdio && this.stdioSize <= this.maxStdioSize) {
-      attachments.push({name: 'stdio.txt', data: this.stdio, content_type: 'application/plain'});
+    function getReport() {
+      let attachments = [];
+      if (that.report && that.reportSize <= that.maxReportSize) {
+        let attachments = {name: 'report.json', data: that.report, content_type: 'application/json'};
+        return attachments;
+      }
     }
-    // if (this.coverageZip) {
-    //   attachments.push({name: 'coverage.zip', data: this.coverageZip, content_type: 'application/zip'});
-    // }
-
-
-    let that = this;
-    return new Promise<InsertResponse>((fulfill, reject) => {
-      db.multipart.insert(doc, attachments, this._id, (err, body) => {
-        if (err) {
-          console.log('Failed to insert record!.', err)
-          reject(err);
+    function parseReport() {
+        if(typeof that.report !== 'undefined') {
+          return JSON.parse(that.report);
         }
-        fulfill(body);
-      });
-    });
+        return 'REPORT_FAILED';
+    }
+    try {
+       let doc = {
+        'team': this.team,
+        'report': parseReport(),
+        'deliverable': this.deliverable.deliverable,
+        'testStats': this.testStats,
+        'coverStats': this.coverageStats,
+        'coverReport': this.coverageReport,
+        'coverStderr': this.failedCoverage,
+        'studentBuildFailed': this.studentBuildFailed,
+        'studentBuildMsg': this.studentBuildMsg,
+        'deliverableBuildFailed': this.deliverableBuildFailed,
+        'deliverableBuildMsg': this.deliverableBuildMsg,
+        'testReport': this.testReport,
+        'commit': this.commit,
+        'committer': this.committer,
+        'timestamp': this.timestamp,
+        'container': container,
+        'ref': this.ref,
+        'attachments': [getStdio(), getReport()],
+        'idStamp': this._id + this.suiteVersion
+      }
+      return doc;
+    }
+    catch(err) {
+      Log.error(`TestRecord::getTestRecord() - ERROR ${err}`)
+    }
   }
 }

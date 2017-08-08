@@ -3,7 +3,7 @@ import TestJobController from '../src/controller/TestJobController';
 import fs = require('fs');
 
 let data = JSON.parse(fs.readFileSync('./test/github/push.json').toString());
-
+let EXAMPLE_PORT = 1310;
 let jobQueueController: TestJobController = TestJobController.getInstance();
 
 function timeout(ms) {
@@ -14,7 +14,7 @@ function timeout(ms) {
 describe('Push Controller', function() {
   let controller: PushController;
   before(function() {
-    controller = new PushController();
+    controller = new PushController(EXAMPLE_PORT);
   });
   after(async function() {
 

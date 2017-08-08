@@ -27,16 +27,27 @@ set -o pipefail # exit if any command in pipeline fails
 set -o nounset  # exit if undeclared variable is used
 
 githubApiKey=${1}
-team=${2}
+projectName=${2}
 projectCommit=${3}
 projectBranch=${4}
-testImage=${5}
-tempDir=${6}
+delivToMark=${5}
+testImage=${6}
+markByBatch=${7}
+tempDir=${8}
+
+if [ "${7}" -eq "1" ]; then
+  projectUrl="https://${githubApiKey}@github.com/stecler/cpsc999project_${projectName}.git"
+else
+  projectUrl="https://${githubApiKey}@github.com/stecler/cpsc999project_${delivToMark}_${projectName}.git"
+fi
 
 docker run --cap-add=NET_ADMIN \
-           --env PROJECT_URL=https://${githubApiKey}@github.com/CS310-2017Jan/cpsc310project_${team}.git \
+           --env PROJECT_URL=$projectUrl \
            --env PROJECT_COMMIT=$projectCommit \
            --env PROJECT_BRANCH=$projectBranch \
+           --env DELIVERABLE_URL=https://${githubApiKey}@github.com/stecler/cpsc310__deliverables.git \
+           --env DELIVERABLE_COMMIT=master \
+           --env DELIVERABLE_TO_MARK=$delivToMark \
            --volume "${tempDir}":/output/ \
            --rm \
            ${testImage}

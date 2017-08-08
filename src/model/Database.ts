@@ -11,7 +11,7 @@ export interface CouchDatabase {
   list(callback: (error, result) => void): void;
   insert(doc: Object, params: string | Object, callback: (error, result) => void): void;
   view(designDocumentId: string, viewName: string, params: Object, callback: (error, results) => void): void;
-  view(designDocumentId: string, viewName: string, callback: (error, results) => void): void;
+view(designDocumentId: string, viewName: string, callback: (error, results) => void): void;
   head(documentId: string, callback: (error, result, headers) => void): void;
   multipart: NanoMultipart;
   attachment: NanoAttachment;
@@ -156,7 +156,7 @@ export class Database {
       this.name = name;
     } catch(err) {
       throw 'Unable to connect to database ' + name + '.\
-       Make sure the database exists and is accessible using the credentials\
+       Make ure the database exists and is accessible using the credentials\
        provided in the server connection.';
     }
 
@@ -182,6 +182,7 @@ export class Database {
       throw 'Failed to create record in database. ' + err;
     }
   }
+  
   public async updateRecord(id: string, record: DatabaseRecord): Promise<UpdateResponse> {
     try {
       await this.conn.authenticate();

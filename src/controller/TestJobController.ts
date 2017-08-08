@@ -10,7 +10,7 @@ import PostbackController from './github/PostbackController';
 import CommitCommentController from './github/CommitCommentController'
 import ResultRecord from '../model/results/ResultRecord';
 import RedisManager from './RedisManager';
-
+import Server from '../../src/rest/Server'
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
@@ -26,6 +26,8 @@ export interface TestJob {
   hook: Url.Url;
   ref: string;
   test: TestJobDeliverable;
+  markDelivsByBatch: boolean;
+  courseNum: number;
 }
 
 export interface TestQueueStats {
@@ -112,9 +114,12 @@ export default class TestJobController {
         Log.error('JobQueue::completed() - ERROR ' + err);
       }
 
-      if (result.buildFailed) {
+      if (result.studentBuildFailed) {
         Log.info('JobQueue::completed() - ['+opts.qname+'] build failed for ' + job.jobId + '.');
-        msg = ':warning:**AutoTest Warning**: Unable to build project for **' +dl + '**.\n\n```' + result.buildMsg + '\n```';
+        msg = ':warning:**AutoTest Warning**: Unable to build project for **' +dl + '**.\n\n```' + result.studentBuildMsg + '\n```';
+      } else if (result.deliverableBuildFailed) {
+        Log.info('JobQueue::completed() - ['+opts.qname+'] build failed for deliverable tests againt student work for' + job.jobId + '.');
+        msg = ':warning:**AutoTest Warning**: Unable to build project for **' +dl + '**.\n\n```' + result.deliverableBuildMsg + '\n```';
       } else if (result.containerExitCode > 0) {
         Log.info('JobQueue::completed() - ['+opts.qname+'] container exited with code ' + result.containerExitCode + ' for ' + job.jobId + '.');
         msg = ':warning:**AutoTest Warning**: Unable to run tests for **' +dl+ '**. Exit ' + result.containerExitCode +'.';
@@ -139,7 +144,7 @@ export default class TestJobController {
         let team: string = pendingRequest.team;
         let commit: string = pendingRequest.commit;
         let deliverable: string = pendingRequest.deliverable;
-        let controller: CommitCommentController = new CommitCommentController();
+        let controller: CommitCommentController = new CommitCommentController(1310);
         let resultRecord: ResultRecord = new ResultRecord(team, commit, deliverable, '');
         await resultRecord.fetch();
         msg = resultRecord.formatResult();

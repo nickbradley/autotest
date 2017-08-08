@@ -19,22 +19,24 @@
     "startf": "docker start autotest-redis && docker start autotest-db && forever --minUptime 1000 --spinSleepTime 1000 src/App.js  2>&1 | tee output.log"
   },
   "devDependencies": {
+    "@types/bull": "^1.0.31",
     "@types/mocha": "^2.2.36",
     "@types/node": "^6.0.52",
-    "@types/bull": "^1.0.31",
-    "istanbul": "^0.4.5",
-    "mocha": "^3.2.0",
     "chai": "^3.5.0",
     "icedfrisby": "^0.3.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.2.0",
     "tslint": "^4.0.0",
     "typescript": "^2.0.0"
   },
   "dependencies": {
-    "restify": "^4.3.0",
-    "node-env-file": "^0.1.8",
+    "@types/mongodb": "^2.2.7",
     "bull": "^2.0.0",
-    "redis": "^2.6.0",
+    "mongodb": "^2.2.30",
     "nano": "^6.2.0",
+    "node-env-file": "^0.1.8",
+    "redis": "^2.6.0",
+    "restify": "^4.3.0",
     "tmp-promise": "^1.0.3"
   }
 }

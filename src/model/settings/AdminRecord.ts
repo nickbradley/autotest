@@ -4,47 +4,50 @@ import {GithubUsername, GithubAccount} from '../GithubUtil';
 export enum Role {
   Instructor,
   GTA,
-  UTA
+  UTA,
+  HARDWIRED_DEFAULT
 }
 
 export interface Admin {
-  firstname: string;
-  lastname: string;
-  role: Role;
+  firstname: string; // deprecated. Should remove after MongoDB replaces couchdb.
+  lastname: string; // deprecated. Should remove after MongoDB replaces couchdb.
+  role: Role; // reprecated. Should remove, but add role value later if needed.
+  fname: string;
+  lname: string;
+  username: string;
 }
 
-export class AdminRecord implements DatabaseRecord {
-  private admins: { [id: string]: Admin };
+export class AdminRecord {
+  private admin: Admin ;
+  private firstname: string;
+  private lastname: string; // deprecated. Should remove after MongoDB replaces couchdb.
+  private role: Role; // reprecated. Should remove, but add role value later if needed.
+  private fname: string;
+  private lname: string;
+  private username: string;
 
-  constructor(admins: { [id: string]: Admin }) {
-    this.admins = admins;
+  constructor(admin: Admin) {
+    this.firstname = admin.fname;
+    this.lastname = admin.lname;
+    this.role = Role.HARDWIRED_DEFAULT;
+    this.fname = admin.fname;
+    this.lname = admin.lname;
+    this.username = admin.username;
   }
 
-  public add(username: GithubUsername, admin: Admin) {
-    this.admins[username] = admin;
-  }
-  public remove(username: GithubUsername) {
-    this.admins[username] = null;
+  public getUsername(): string {
+    return this.username;
   }
 
-  public async create(db: CouchDatabase): Promise<InsertResponse> {
-    return this.insert(db);
+  public getFirstName(): string {
+    return this.fname;
   }
 
-  public async update(db: CouchDatabase, rev: string): Promise<InsertResponse> {
-    return this.insert(db, rev);
+  public getLastName(): string {
+    return this.lname;
   }
 
-  private async insert(db: CouchDatabase, rev?: string) {
-    let doc: { [id: string]: Admin } = this.admins;
-    let params = {'_id': 'admins'};
-    if (rev) params['_rev'] = rev;
-
-    return new Promise<InsertResponse>((fulfill, reject) => {
-      db.insert(doc, params, (err, result) => {
-        if (err) reject(err);
-        fulfill(result);
-      });
-    });
+  public getRole(): Role {
+    return this.role;
   }
 }

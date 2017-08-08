@@ -1,0 +1,3 @@
+[submodule "classportal-backend"]
+	path = classportal-backend
+	url = https://github.com/ubccpsc/classportal-backend

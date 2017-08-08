@@ -1,20 +1,19 @@
 import restify = require('restify');
-
 import Log from "../Util";
 import RouteHandler from "../rest/RouteHandler";
 import {IConfig, AppConfig} from '../Config';
 import TestJobController from '../controller/TestJobController';
+
 /**
  * This configures the REST endpoints for the server.
  */
 export default class Server {
   private rest: restify.Server;
   private port: number;
+  private config: IConfig;
 
   constructor() {
-    let config: IConfig = new AppConfig();
-    this.port = config.getAppPort();
-    Log.info("Server::<init>( " + this.port + " )");
+    this.config = new AppConfig();
   }
 
   /**
@@ -34,6 +33,22 @@ export default class Server {
     });
   }
 
+  /**
+   * Sets the port on this instance of a server
+   * @returns {void}
+   */
+  public setPort(portNum: number) {
+      Log.info('Server::setPort()');
+      this.port = portNum;
+  }
+
+  /**
+   * Gets the port that was set on this instance of a server
+   * @returns {number}
+   */
+  public getPort() {
+      return this.port;
+  }
   /**
    * Starts the server. Returns a promise with a boolean value. Promises are used
    * here because starting the server takes some time and we want to know when it
@@ -99,6 +114,7 @@ export default class Server {
                   Log.info('Server::start() - restify ERROR: ' + err);
                   reject(err);
               });
+
           } catch (err) {
               Log.error('Server::start() - ERROR: ' + err);
               reject(err);

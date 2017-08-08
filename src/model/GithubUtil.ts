@@ -9,7 +9,6 @@ export class GithubUtil {
   public static getTeam(repositoryName: string): string {
     // NOTE assume repository name is of the form: CS310-2016Fall/cpsc310project_team10
     let idx = repositoryName.lastIndexOf('_')+1;
-
     return repositoryName.slice(idx);
   }
 }

@@ -50,21 +50,22 @@ else
   externalServers=""
 fi
 
-docker build --tag autotest/${deliverable}-${repoName}:${commit} \
- --build-arg testsuiteUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
+docker build -f Dockerfile-310 --tag autotest/${repoName}:${commit} \
+ --build-arg testsuiteUrl=https://${githubApiKey}@github.com/stecler/${repoName}.git \
  --build-arg testsuiteCommit=${commit} \
  --build-arg allowDNS=${allowDNS} \
  --build-arg externalServers="${externalServers}" \
+ --build-arg isContainerLive=1 \
  --build-arg deliverable="${deliverable}" \
  --no-cache \
  "${dockerDir}"
 
-
- docker build --tag autotest/${deliverable}-${repoName}:latest \
- --build-arg testsuiteUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
+ docker build -f Dockerfile-310 --tag autotest/${repoName}:latest \
+ --build-arg testsuiteUrl=https://${githubApiKey}@github.com/stecler/${repoName}.git \
  --build-arg testsuiteCommit=${commit} \
  --build-arg allowDNS=${allowDNS:0} \
  --build-arg externalServers="${externalServers}" \
+ --build-arg isContainerLive=1 \
  --build-arg deliverable="${deliverable}" \
  --no-cache \
  "${dockerDir}"

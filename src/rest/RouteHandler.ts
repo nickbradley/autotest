@@ -6,6 +6,7 @@ import CommitCommentController from '../controller/github/CommitCommentControlle
 import Log from "../Util";
 import Server from "./Server";
 import TestJobController from '../controller/TestJobController';
+import RequestHelper from '../../src/rest/helpers/RequestHelper'
 
 export default class RouteHandler {
 
@@ -41,6 +42,10 @@ export default class RouteHandler {
     let githubEvent: string = req.header('X-GitHub-Event');
     let body = req.body;
     let team: string = '';
+    let serverPort = RequestHelper.parseServerPort(req);
+    let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
+
+
     try {
       let name: string = body.repository.name;
       team = name.substring(name.indexOf('_')+1);
@@ -56,9 +61,9 @@ export default class RouteHandler {
 
       case 'commit_comment':
         try {
-          let controller: CommitCommentController = new CommitCommentController();
+          let controller: CommitCommentController = new CommitCommentController(currentCourseNum);
           controller.process(body).then(result => {
-            Log.info('RouteHandler::commitComment() - <' + result.statusCode + '> ['+ team +'] ' + (result.body.substring(0, 40) || 'NO_BODY'));
+            Log.info('RouteHandler::commitComment() - <' + result.statusCode + '> ['+ team +'] ' + (result.body || 'NO_BODY'));
             res.json(result.statusCode, result.body);
           }).catch(err => {
             Log.error('RouteHandler::commitComment() - <404> ['+ team +'] ERROR processing commit comment. ' + err);
@@ -72,7 +77,7 @@ export default class RouteHandler {
 
       case 'push':
         try {
-          let controller: PushController = new PushController();
+          let controller: PushController = new PushController(currentCourseNum);
           controller.process(body).then(result => {
             let tests: string[] = result.map(job => {
               let testJob: TestJob = job.data as TestJob;

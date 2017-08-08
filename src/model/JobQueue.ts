@@ -28,7 +28,6 @@ export interface Job extends bull.Job {
   opts: Object;
 }
 
-
 export interface CallbackOpts {
   qname: string;
 }

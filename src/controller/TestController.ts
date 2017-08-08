@@ -6,6 +6,7 @@ import {Database} from '../model/Database';
 import TestRecord from '../model/results/TestRecord';
 import * as test from '../model/results/TestRecord';
 import {TestJob} from './TestJobController';
+import TestRecordRepo from '../repos/TestRecordRepo';
 
 
 
@@ -18,7 +19,6 @@ export default class TestController {
 
   constructor(testJob: TestJob) {
     this.config = new AppConfig();
-    this.resultsDB = new Database(this.config.getDBConnection(), 'results');
     this.result = new TestRecord(this.config.getGithubToken(), testJob);
     this.testJob = testJob;
   }
@@ -28,7 +28,9 @@ export default class TestController {
     return this.result.generate();
   }
   public async store() {
-    return this.resultsDB.createRecord(this.result);
+    let testRecordRepo: TestRecordRepo = new TestRecordRepo();
+    let result = await this.result.getTestRecord();
+    return testRecordRepo.insertTestRecord(result);
   }
 
 }
