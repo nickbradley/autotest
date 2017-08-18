@@ -27,6 +27,8 @@ function enterGithubKey {
   fi
 }
 
+enterGithubKey
+##END GITHUB_KEY_FUNCTION
 
 #### BRINGS UP REDIS and COUCHDB Databases
 # printf "./../../deploy.sh"
