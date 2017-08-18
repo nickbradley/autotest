@@ -51,7 +51,7 @@ else
 fi
 
 docker build -f Dockerfile-310 --tag autotest/${repoName}:${commit} \
- --build-arg testsuiteUrl=https://${githubApiKey}@github.com/stecler/${repoName}.git \
+ --build-arg testsuiteUrl=https://${githubApiKey}@github.ubc.ca/steca/${repoName}.git \
  --build-arg testsuiteCommit=${commit} \
  --build-arg allowDNS=${allowDNS} \
  --build-arg externalServers="${externalServers}" \
@@ -61,7 +61,7 @@ docker build -f Dockerfile-310 --tag autotest/${repoName}:${commit} \
  "${dockerDir}"
 
  docker build -f Dockerfile-310 --tag autotest/${repoName}:latest \
- --build-arg testsuiteUrl=https://${githubApiKey}@github.com/stecler/${repoName}.git \
+ --build-arg testsuiteUrl=https://${githubApiKey}@github.ubc.ca/steca/${repoName}.git \
  --build-arg testsuiteCommit=${commit} \
  --build-arg allowDNS=${allowDNS:0} \
  --build-arg externalServers="${externalServers}" \

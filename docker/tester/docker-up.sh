@@ -14,17 +14,31 @@
 #   ./docker-up.sh
 # ##############################################################################
 
+## START SET GITHUB_KEY
+function enterGithubKey {
+  read -p "**Necessary** Enter your Github personal access token: " github_key
+
+  if [ -e $github_key ]
+  then
+    enterGithubKey
+  else
+    export GITHUB_KEY=$github_key
+    printf "export GITHUB_KEY=$github_key \n\n"
+  fi
+}
+
+
 #### BRINGS UP REDIS and COUCHDB Databases
 # printf "./../../deploy.sh"
 # ./../../deploy.sh
 
 #### BUILDING Course #210 Containers
-printf "./build-210-container.sh 4e8fb5ef855b2ce0e06aa052e1f5f0e41512bb58 cpsc210__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315""
-./build-210-container.sh 4e8fb5ef855b2ce0e06aa052e1f5f0e41512bb58 cpsc210__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315"
+printf "./build-210-container.sh ${GITHUB_KEY} cpsc210__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315""
+./build-210-container.sh $GITHUB_KEY cpsc210__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315"
 
 #### BUILDING Course #310 Containers
-printf "./build-310-container.sh 4e8fb5ef855b2ce0e06aa052e1f5f0e41512bb58 cpsc310__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315" "portal.cs.ubc.ca:8525" "http://www.google.com/""
-./build-310-container.sh 4e8fb5ef855b2ce0e06aa052e1f5f0e41512bb58 cpsc310__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315" "portal.cs.ubc.ca:8525" "http://www.google.com/"
+printf "./build-310-container.sh ${GITHUB_KEY} cpsc310__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315" "portal.cs.ubc.ca:8525" "http://www.google.com/""
+./build-310-container.sh $GITHUB_KEY cpsc310__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315" "portal.cs.ubc.ca:8525" "http://www.google.com/"
 
 ## Tag based on Deliverables that exist for each course to run when markByBatch flag is true.
 docker tag $(docker images -q autotest/cpsc310__bootstrap:latest) autotest/d1-cpsc310__bootstrap
