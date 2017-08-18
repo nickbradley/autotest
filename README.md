@@ -4,7 +4,7 @@ CPSC 310 submission service.
 Requirements
 -------------
 
-- Docker version 17.03.1-ce, build c6d412e (any version will likely do)
+- Docker version 17.03.1-ce, build c6d412e (any close version will do)
 - 'autotest.env' file in `./autotest/` directory: 
 
 	DB_INSTANCE=http://localhost:11312 (old couchDB address)

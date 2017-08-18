@@ -118,7 +118,7 @@ export default class TestJobController {
         Log.info('JobQueue::completed() - ['+opts.qname+'] build failed for ' + job.jobId + '.');
         msg = ':warning:**AutoTest Warning**: Unable to build project for **' +dl + '**.\n\n```' + result.studentBuildMsg + '\n```';
       } else if (result.deliverableBuildFailed) {
-        Log.info('JobQueue::completed() - ['+opts.qname+'] build failed for deliverable tests againt student work for' + job.jobId + '.');
+        Log.info('JobQueue::completed() - ['+opts.qname+'] build failed for deliverable tests againt student work for ' + job.jobId + '.');
         msg = ':warning:**AutoTest Warning**: Unable to build project for **' +dl + '**.\n\n```' + result.deliverableBuildMsg + '\n```';
       } else if (result.containerExitCode > 0) {
         Log.info('JobQueue::completed() - ['+opts.qname+'] container exited with code ' + result.containerExitCode + ' for ' + job.jobId + '.');

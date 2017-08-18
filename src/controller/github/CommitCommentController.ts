@@ -340,7 +340,6 @@ export default class CommitCommentContoller {
    */
   private async isAdmin(user: string): Promise<boolean> {
     
-    // let db = new Database(this.config.getDBConnection(), 'settings');
     let that = this;
     return new Promise<boolean>(async (fulfill, reject) => {
       try {
@@ -361,6 +360,8 @@ export default class CommitCommentContoller {
           }
           fulfill(false);
         });
+        // if no admin course records are found
+        fulfill(false);
       } catch(err) {
         Log.error(`CommitCommentController::isAdmin() Failed to retrieve admin list. ${err}`)
         reject('Failed to retrieve admin list. ' + err);
