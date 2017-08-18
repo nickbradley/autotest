@@ -40,10 +40,16 @@ export default class TestRecordRepo {
       let query: any = { commit: _commit, deliverable: _deliverable , team: _team};
 
       db.getLatestRecord(RESULTS_COLLECTION, query).then((testRecord: TestRecord) => {
-        if (!testRecord) {
-          throw `TestRecordRepo::getLatestTestRecord() Could not find ${_team}, ${_commit}, and ${_deliverable}`;
+        try {
+          if (!testRecord) {
+            throw `Could not find ${_team}, ${_commit}, and ${_deliverable}`;
+          }
+          fulfill(testRecord);
         }
-        fulfill(testRecord);
+        catch (err) {
+          Log.error(`TestRecordRepo::getLatestTestRecord() ${err}`);
+          reject(err);
+        }
       })
     });
   }
