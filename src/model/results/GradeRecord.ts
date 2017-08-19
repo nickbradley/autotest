@@ -97,7 +97,7 @@ export default class GradeRecord {
           let testName: string;
           if (test.state === "failure") {
             let testName = "Remember to enable substring for 310... " + test.testName;
-            failedTests.push(name);
+            failedTests.push(testName);
             // let code = name.substring(name.indexOf('~')+1, name.lastIndexOf('~')); // legacy substring for 310
           }
           return failedTests;
