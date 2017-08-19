@@ -26,6 +26,8 @@ set -o errexit  # exit on command failure
 set -o pipefail # exit if any command in pipeline fails
 set -o nounset  # exit if undeclared variable is used
 
+CPSC310_ORG_NAME="CPSC310-2017W-T2"
+
 githubApiKey=${1}
 projectName=${2}
 projectCommit=${3}
@@ -36,16 +38,16 @@ markByBatch=${7}
 tempDir=${8}
 
 if [ "${7}" -eq "1" ]; then
-  projectUrl="https://${githubApiKey}@github.com/stecler/cpsc999project_${projectName}.git"
+  projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${projectName}.git"
 else
-  projectUrl="https://${githubApiKey}@github.com/stecler/cpsc999project_${delivToMark}_${projectName}.git"
+  projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${delivToMark}_${projectName}.git"
 fi
 
 docker run --cap-add=NET_ADMIN \
            --env PROJECT_URL=$projectUrl \
            --env PROJECT_COMMIT=$projectCommit \
            --env PROJECT_BRANCH=$projectBranch \
-           --env DELIVERABLE_URL=https://${githubApiKey}@github.com/stecler/cpsc310__deliverables.git \
+           --env DELIVERABLE_URL=https://${githubApiKey}@github.ubc.ca/steca/cpsc310__deliverables.git \
            --env DELIVERABLE_COMMIT=master \
            --env DELIVERABLE_TO_MARK=$delivToMark \
            --volume "${tempDir}":/output/ \
