@@ -41,7 +41,7 @@ COPY run-tests-210.sh /run-tests-210.sh
 RUN chmod +x /run-tests-210.sh
 RUN mkdir /output
 
-RUN /pull-repo.sh "https://github.com/stecler/cpsc210__bootstrap" "master" /cpsc210__bootstrap
+RUN /pull-repo.sh "https://github.ubc.ca/steca/cpsc210__bootstrap" "master" /cpsc210__bootstrap
 RUN cd /cpsc210__bootstrap/bootstrap/scripts && ./2_setup_gradle_for_tests.sh
 RUN cd /cpsc210__bootstrap/bootstrap/studentTests && ./gradlew clean build
 

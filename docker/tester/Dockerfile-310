@@ -27,7 +27,7 @@ RUN mkdir /output
 RUN yarn config set yarn-offline-mirror ./npm-packages-offline-cache
 RUN yarn config set yarn-offline-mirror-pruning true
 
-RUN /pull-repo.sh "https://github.com/stecler/cpsc310__bootstrap" "master" /cpsc310__bootstrap
+RUN /pull-repo.sh "https://github.ubc.ca/steca/cpsc310__bootstrap" "master" /cpsc310__bootstrap
 RUN cd /cpsc310__bootstrap/cpsc310deliverablerepo/ && yarn install
 RUN cd /cpsc310__bootstrap/cpsc310studentrepo/ && yarn install
 
