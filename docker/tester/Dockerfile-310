@@ -6,6 +6,14 @@ ARG testsuiteUrl
 ARG testsuiteCommit
 ARG allowDNS
 ARG externalServers
+ARG githubKey
+
+ENV GITHUB_KEY=$githubKey
+ENV MOCHAWESOME_REPORTDIR=../output
+ENV ALLOW_DNS=$allowDNS
+ENV WHITELISTED_SERVERS=$externalServers
+ENV TESTSUITE_VERSION=$testsuiteCommit
+ENV TS=$deliverable
 
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
@@ -27,14 +35,8 @@ RUN mkdir /output
 RUN yarn config set yarn-offline-mirror ./npm-packages-offline-cache
 RUN yarn config set yarn-offline-mirror-pruning true
 
-RUN /pull-repo.sh "https://github.ubc.ca/steca/cpsc310__bootstrap" "master" /cpsc310__bootstrap
+RUN /pull-repo.sh https://${GITHUB_KEY}@github.ubc.ca/steca/cpsc310__bootstrap "master" /cpsc310__bootstrap
 RUN cd /cpsc310__bootstrap/cpsc310deliverablerepo/ && yarn install
 RUN cd /cpsc310__bootstrap/cpsc310studentrepo/ && yarn install
-
-ENV MOCHAWESOME_REPORTDIR=../output
-ENV ALLOW_DNS=$allowDNS
-ENV WHITELISTED_SERVERS=$externalServers
-ENV TESTSUITE_VERSION=$testsuiteCommit
-ENV TS=$deliverable
 
 CMD timeout 10m /run-tests-310.sh >/output/stdio.txt 2>&1

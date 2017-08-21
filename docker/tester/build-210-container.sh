@@ -57,6 +57,7 @@ docker build -f Dockerfile-210 --tag autotest/${repoName}:${testsuiteCommit} \
  --build-arg externalServers="${externalServers}" \
  --build-arg isContainerLive=1 \
  --build-arg deliverable="${deliverable}" \
+ --build-arg githubKey="${githubApiKey}" \
  --no-cache \
  "${dockerDir}"
 
@@ -67,5 +68,6 @@ docker build -f Dockerfile-210 --tag autotest/${repoName}:latest \
  --build-arg externalServers="${externalServers}" \
  --build-arg isContainerLive=1 \
  --build-arg deliverable="${deliverable}" \
+ --build-arg githubKey="${githubApiKey}" \
  --no-cache \
  "${dockerDir}"

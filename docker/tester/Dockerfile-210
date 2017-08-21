@@ -4,6 +4,14 @@ MAINTAINER Andrew Stec <steca@cs.ubc.ca>
 ARG allowDNS
 ARG testsuiteCommit
 ARG externalServers
+ARG githubKey
+
+ENV GITHUB_KEY=$githubKey
+ENV ALLOW_DNS=$allowDNS
+ENV WHITELISTED_SERVERS=$externalServers
+ENV TESTSUITE_VERSION=$testsuiteCommit
+ENV TS=$deliverable
+ENV IS_CONTAINER_LIVE=1
 
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
@@ -44,12 +52,6 @@ RUN mkdir /output
 RUN /pull-repo.sh "https://github.ubc.ca/steca/cpsc210__bootstrap" "master" /cpsc210__bootstrap
 RUN cd /cpsc210__bootstrap/bootstrap/scripts && ./2_setup_gradle_for_tests.sh
 RUN cd /cpsc210__bootstrap/bootstrap/studentTests && ./gradlew clean build
-
-ENV ALLOW_DNS=$allowDNS
-ENV WHITELISTED_SERVERS=$externalServers
-ENV TESTSUITE_VERSION=$testsuiteCommit
-ENV TS=$deliverable
-ENV IS_CONTAINER_LIVE=1
 
 CMD timeout 1m /run-tests-210.sh $PROJECT_URL $PROJECT_COMMIT >/output/stdio.txt 2>&1
 

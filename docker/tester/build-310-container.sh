@@ -57,6 +57,7 @@ docker build -f Dockerfile-310 --tag autotest/${repoName}:${commit} \
  --build-arg externalServers="${externalServers}" \
  --build-arg isContainerLive=1 \
  --build-arg deliverable="${deliverable}" \
+ --build-arg githubKey="${githubApiKey}" \
  --no-cache \
  "${dockerDir}"
 
@@ -67,5 +68,6 @@ docker build -f Dockerfile-310 --tag autotest/${repoName}:${commit} \
  --build-arg externalServers="${externalServers}" \
  --build-arg isContainerLive=1 \
  --build-arg deliverable="${deliverable}" \
+ --build-arg githubKey="${githubApiKey}" \
  --no-cache \
  "${dockerDir}"
