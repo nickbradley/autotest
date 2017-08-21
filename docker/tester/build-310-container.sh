@@ -64,7 +64,7 @@ docker build -f Dockerfile-310 --tag autotest/${repoName}:${commit} \
  docker build -f Dockerfile-310 --tag autotest/${repoName}:latest \
  --build-arg testsuiteUrl=https://${githubApiKey}@github.ubc.ca/steca/${repoName}.git \
  --build-arg testsuiteCommit=${commit} \
- --build-arg allowDNS=${allowDNS:0} \
+ --build-arg allowDNS=${allowDNS} \
  --build-arg externalServers="${externalServers}" \
  --build-arg isContainerLive=1 \
  --build-arg deliverable="${deliverable}" \

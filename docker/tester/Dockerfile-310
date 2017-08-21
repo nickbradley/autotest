@@ -14,6 +14,7 @@ ENV ALLOW_DNS=$allowDNS
 ENV WHITELISTED_SERVERS=$externalServers
 ENV TESTSUITE_VERSION=$testsuiteCommit
 ENV TS=$deliverable
+ENV IS_CONTAINER_LIVE=1
 
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
