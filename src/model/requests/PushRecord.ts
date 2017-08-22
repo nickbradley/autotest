@@ -19,6 +19,7 @@ export default class PushRecord {
   private _deliverable: string;
   private _commentHook: Url.Url;
   private _ref: string;
+  private _orgName: string;
   private timestamp: number;
 
   constructor(payload: any) {
@@ -28,6 +29,7 @@ export default class PushRecord {
       this._user = payload.pusher.name;
       this._deliverable = this.parseDeliverable(payload.repository.name);
       this._commit = new Commit(payload.after);
+      this._orgName = payload.repository.owner.name;
       this._commentHook = Url.parse(payload.repository.commits_url.replace('{/sha}', '/' + this._commit) + '/comments');
       this._ref = payload.ref;
       this.timestamp = +new Date();
@@ -56,6 +58,10 @@ export default class PushRecord {
   }
   get ref(): string {
     return this._ref;
+  }
+
+  get orgName(): string {
+    return this._orgName;
   }
 
   public convertToJSON(): Push {

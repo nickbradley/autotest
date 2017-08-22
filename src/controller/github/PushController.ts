@@ -71,15 +71,16 @@ export default class PushController {
   private markDeliverablesByBatch(): Promise<Job>[] {
     let promises: Promise<Job>[] = [];
     let currentDate: Date = new Date();
-    let deliverableRecord = this.courseSettings.deliverables;
+    let deliverablesRecord = this.courseSettings.deliverables;
 
-    for (const key of Object.keys(deliverableRecord)) {
+    for (const key of Object.keys(deliverablesRecord)) {
       if (key.match(/d\d+/)) {
-        let deliverable = deliverableRecord[key];
+        let deliverable = deliverablesRecord[key];
         let rDate: Date = new Date(deliverable.releaseDate);
         if (rDate <= currentDate) {
           for (let repo of deliverable.repos) {
             let testJob: TestJob = {
+              orgName: this.record.orgName,
               courseNum: this.courseNum,
               user: this.record.user,
               team: this.record.team,
@@ -107,13 +108,14 @@ export default class PushController {
     let promises: Promise<Job>[] = [];
     let currentDate: Date = new Date();
     let record: PushRecord = this.record;
-    let deliverableRecord = this.courseSettings.deliverables;
+    let deliverablesRecord = this.courseSettings.deliverables;
 
-        let deliverable = deliverableRecord[record.deliverable];
+        let deliverable = deliverablesRecord[record.deliverable];
         let rDate: Date = new Date(deliverable.releaseDate);
         if (rDate <= currentDate) {
           for (let repo of deliverable.repos) {
             let testJob: TestJob = {
+              orgName: record.orgName,
               courseNum: this.courseNum,
               user: record.user,
               team: record.team,

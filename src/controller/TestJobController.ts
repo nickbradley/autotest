@@ -28,6 +28,7 @@ export interface TestJob {
   test: TestJobDeliverable;
   markDelivsByBatch: boolean;
   courseNum: number;
+  orgName: string;
 }
 
 export interface TestQueueStats {
@@ -69,9 +70,6 @@ export default class TestJobController {
 
     let expQName: string = 'autotest-testqueue-exp';
     let expQPool: number = 2;
-
-
-
 
 
     this.process = function(job: Job, opts: CallbackOpts) {

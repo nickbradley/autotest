@@ -85,6 +85,8 @@ export default class TestRecord{
   private failedCoverage: string;
   private markDelivsByBatch: boolean;
   private ref: string;
+  private orgName: string;
+  private user: string;
 
   constructor(githubToken: string, testJob: TestJob) {
     this.courseNum = testJob.courseNum;
@@ -97,6 +99,8 @@ export default class TestRecord{
     this.markDelivsByBatch = testJob.markDelivsByBatch;
     this.timestamp = +new Date();
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
+    this.orgName = testJob.orgName;
+    this.user = testJob.user;
   }
 
   public getTeam(): string {
@@ -392,6 +396,8 @@ public getTestRecord(): object {
     try {
        let doc = {
         'team': this.team,
+        'orgName': this.orgName,
+        'user': this.user,
         'report': parseReport(),
         'deliverable': this.deliverable.deliverable,
         'testStats': this.testStats,
