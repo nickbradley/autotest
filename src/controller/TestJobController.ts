@@ -20,7 +20,7 @@ export interface TestJobDeliverable {
   deliverable: string;
 }
 export interface TestJob {
-  user: string;
+  username: string;
   team: string;
   commit: string;
   hook: Url.Url;
@@ -28,7 +28,7 @@ export interface TestJob {
   test: TestJobDeliverable;
   markDelivsByBatch: boolean;
   courseNum: number;
-  orgName: string;
+  githubOrg: string;
 }
 
 export interface TestQueueStats {

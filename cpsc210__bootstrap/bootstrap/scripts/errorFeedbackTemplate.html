@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="feedback.css">
+    <title>Title</title>
+</head>
+
+<body class="center" style="max-width: 100%;">
+    <img src="autotest.svg" width="500px" style="padding-top: 20px; padding-bottom: 10px;"/>
+    <div class="indent">
+        <h1>Oops!</h1>
+        <p>We're dreadfully sorry, but something went wrong.  Please report the following error to
+        your instructor:</p>
+        <p><code>
+            % for line in error:
+                ${line}<br/>
+            % endfor
+        </code></p>
+    </div>
+</body>
+</html>

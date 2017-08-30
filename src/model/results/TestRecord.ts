@@ -85,8 +85,8 @@ export default class TestRecord{
   private failedCoverage: string;
   private markDelivsByBatch: boolean;
   private ref: string;
-  private orgName: string;
-  private user: string;
+  private githubOrg: string;
+  private username: string;
 
   constructor(githubToken: string, testJob: TestJob) {
     this.courseNum = testJob.courseNum;
@@ -94,13 +94,13 @@ export default class TestRecord{
     this.team = testJob.team;
     this.deliverable = testJob.test;
     this.commit = testJob.commit;
-    this.committer = testJob.user;
+    this.committer = testJob.username;
     this.ref = testJob.ref;
     this.markDelivsByBatch = testJob.markDelivsByBatch;
     this.timestamp = +new Date();
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
-    this.orgName = testJob.orgName;
-    this.user = testJob.user;
+    this.githubOrg = testJob.githubOrg;
+    this.username = testJob.username;
   }
 
   public getTeam(): string {
@@ -396,8 +396,8 @@ public getTestRecord(): object {
     try {
        let doc = {
         'team': this.team,
-        'orgName': this.orgName,
-        'user': this.user,
+        'orgName': this.githubOrg,
+        'user': this.username,
         'report': parseReport(),
         'deliverable': this.deliverable.deliverable,
         'testStats': this.testStats,

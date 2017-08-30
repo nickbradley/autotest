@@ -1,0 +1,156 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-RC2'
+	}
+}
+
+repositories {
+	mavenCentral()
+	
+	flatDir {
+		dirs '../libs'  
+	}
+}
+
+ext.junit4Version        = '4.12'
+ext.junitVintageVersion  = '4.12.0-RC2'
+ext.junitPlatformVersion = '1.0.0-RC2'
+ext.junitJupiterVersion  = '5.0.0-RC2'
+ext.log4jVersion         = '2.6.2'
+ext.jacocoVersion        = '0.7.5.201505241946'
+ext.jacocoOutputDir      = './outputs/'
+ext.librariesDir	 	 = System.getProperty("user.dir") + '/lib'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'org.junit.platform.gradle.plugin'
+apply plugin: 'jacoco'
+
+sourceSets {
+	main {
+		java {
+			srcDirs = ["./src/main"]
+		}
+		resources {
+			srcDirs = ['../../lib']
+		}
+	}
+	test {
+		java {
+			srcDirs = ["./src/test"]
+		}
+	}
+}
+
+println sourceSets.main.output.classesDir
+
+// sourceSets.main.java.classesDir = ['./src/main']
+// sourceSets.test.java.classesDir = ['./src/test']
+// sourceSets.main.output.classesDir = ['./build/classes/main']
+
+sourceSets.all {
+	println name
+}
+
+jar {
+	baseName = 'junit5-gradle-consumer'
+	version = '1.0.0-SNAPSHOT'
+}
+
+compileTestJava {
+	sourceCompatibility = 1.8
+	targetCompatibility = 1.8
+	options.compilerArgs += '-parameters'
+}
+
+junitPlatform {
+	filters {
+		engines {
+			include 'junit-jupiter', 'junit-vintage'
+			exclude 'custom-engine'
+		}
+		tags {
+				// include 'fast'
+				// include 'slow'
+				// exclude 'slow'
+			}
+		includeClassNamePattern '.*'
+	}
+	// enableStandardTestTask true
+	reportsDir file('./output/junitTests')
+	logManager 'org.apache.logging.log4j.jul.LogManager'
+}
+
+test {
+    //ignoreFailures = true
+	jacoco {
+		if (project.hasProperty('excludePatterns')) {
+			excludes = project.excludePatterns.split(',')
+		}
+	}
+}
+
+project.afterEvaluate {
+    def junitPlatformTestTask = project.tasks.getByName('junitPlatformTest')
+    System.out.println("After evaluate..." + junitPlatformTestTask.getName())
+
+    // configure jacoco to analyze the junitPlatformTest task
+    jacoco {
+        // this tool version is compatible with
+        toolVersion = "0.7.6.201602180812"
+        applyTo junitPlatformTestTask
+    }
+
+    // create junit platform jacoco task
+    project.task(type: JacocoReport, "junitPlatformJacocoReport",
+		{   
+			sourceDirectories = files(sourceSets.main.allSource.srcDirs)
+			classDirectories = files(sourceSets.main.output)
+			executionData junitPlatformTestTask
+
+			reports {
+				html.enabled = true
+				xml.enabled = true
+				csv.enabled = true
+				html.destination './output/jacoco/html'
+				xml.destination './output/jacoco/coverage.xml'
+				csv.destination './output/jacoco/coverage.csv'
+			}
+
+			if (project.hasProperty('excludePatterns')) {
+				println "Excluding: $project.excludePatterns"
+				doFirst {
+					classDirectories = files(classDirectories.files.collect {
+						fileTree(dir: it, exclude: project.excludePatterns.split(','))
+					})
+				}
+			}
+		})
+}
+
+dependencies {
+	// jar file containing AutoGrader jUnit extension and associated annotations
+	//compile name: 'auto-grader'
+	
+	// JUnit Jupiter API and TestEngine implementation
+	testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
+	testRuntime("org.junit.jupiter:junit-jupiter-engine:${junitJupiterVersion}")
+
+	// If you also want to support JUnit 3 and JUnit 4 tests
+	testCompile("junit:junit:${junit4Version}")
+	testRuntime("org.junit.vintage:junit-vintage-engine:${junitVintageVersion}")
+
+	testRuntime("org.apache.logging.log4j:log4j-core:${log4jVersion}")
+	testRuntime("org.apache.logging.log4j:log4j-jul:${log4jVersion}")
+
+	compile fileTree(dir: librariesDir, include: '*.jar')
+}	
+
+task wrapper(type: Wrapper) {
+	description = 'Generates gradlew[.bat] scripts'
+	gradleVersion = '3.0'
+}

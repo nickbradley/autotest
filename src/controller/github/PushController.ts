@@ -80,9 +80,9 @@ export default class PushController {
         if (rDate <= currentDate) {
           for (let repo of deliverable.repos) {
             let testJob: TestJob = {
-              orgName: this.record.orgName,
+              githubOrg: this.record.githubOrg,
               courseNum: this.courseNum,
-              user: this.record.user,
+              username: this.record.user,
               team: this.record.team,
               commit: this.record.commit.short,
               hook: this.record.commentHook,
@@ -115,9 +115,9 @@ export default class PushController {
         if (rDate <= currentDate) {
           for (let repo of deliverable.repos) {
             let testJob: TestJob = {
-              orgName: record.orgName,
+              githubOrg: record.githubOrg,
               courseNum: this.courseNum,
-              user: record.user,
+              username: record.user,
               team: record.team,
               commit: record.commit.short,
               hook: record.commentHook,

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" type="text/css" href="feedback.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script>
+            $(document).ready(function(){
+                $(".grading-info").hover(function(){
+                    $(".grading-detail").toggle();
+                });
+             });
+
+             $(document).ready(function(){
+                $(".coverage-info").hover(function(){
+                    $(".coverage-detail").toggle();
+                });
+             });
+        </script>
+
+        <%
+            ## extract report components
+            time_stamp = report.time_stamp
+            test_score = report.scores.test_score
+            coverage_score = report.scores.coverage_score
+            num_failures = report.test_results.num_failures
+            num_errors = report.test_results.num_errors
+        %>
+
+        <style>
+            div.testfeedback {
+                height: 10px;
+                border: 1px solid grey;
+                border-radius: 7px;
+                box-shadow: 2px 2px 5px grey;
+                background-color: #9f9f9f;  /* Old browsers */
+                background-image: -moz-linear-gradient(left, #32fc32 ${test_score}%, #f72916 ${test_score}%); /* FF3.6-15 */
+                background-image: -webkit-linear-gradient(left, #32fc32 ${test_score}%, #f72916 ${test_score}%); /* Chrome10-25,Safari5.1-6 */
+                background-image: linear-gradient(to right, #32fc32 ${test_score}%, #f72916 ${test_score}%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            }
+
+            div.coveragefeedback {
+                height: 10px;
+                border: 1px solid grey;
+                border-radius: 7px;
+                box-shadow: 2px 2px 5px grey;
+                background-color: #9f9f9f;  /* Old browsers */
+                background-image: -moz-linear-gradient(left, #32fc32 ${coverage_score}%, #f72916 ${coverage_score}%); /* FF3.6-15 */
+                background-image: -webkit-linear-gradient(left, #32fc32 ${coverage_score}%, #f72916 ${coverage_score}%); /* Chrome10-25,Safari5.1-6 */
+                background-image: linear-gradient(to right, #32fc32 ${coverage_score}%, #f72916 ${coverage_score}%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            }
+        </style>
+
+
+    </head>
+
+    <body class="center">
+        <img src="autotest.svg" width="500px" style="padding-top: 20px; padding-bottom: 10px;"/>
+        <div class="indent">
+            <h1>${deliverable} Feedback</h1>
+            <p><b>User:</b> ${userid}</p>
+            <div align="right">${time_stamp[time_stamp.find('T')+1:]}</div>
+            <div align="right">${time_stamp[:time_stamp.find('T')]}</div>
+        </div>
+
+        <p/>
+        <div class="indent">
+            <h1>Your Score</h1>
+            <table class="scoretable" border="1" border-collapse="collapse" padding="5">
+                <tr><th align="left">Component</th><th align="left">Score</th><th class="noborder"></th><th class="grading-detail"></th></tr>
+                <tr><td>Reference tests</td><td>${test_score}%</td><td class="noborder"></td><td class="grading-detail">...contributes ${report.score_weights.test_weight}% to overall score</td></tr>
+
+                % if gradecoverage:
+                    <tr><td>Code coverage</td><td>${coverage_score}%</td><td class="noborder"></td><td class="grading-detail">...contributes ${report.score_weights.coverage_weight}% to overall score</td></tr>
+                % endif
+
+                <tr><td><b>Overall</b></td><td><b>${report.scores.combined_score}%</b></td><td class="noborder"><img class="grading-info" src="info_icon.svg" width="18px"/></td><td class="grading-detail"></td></tr>
+            </table>
+        </div>
+
+        <p/>
+        <div class="indent">
+            <h1>Reference Test Results</h1>
+                <p>Reference test score: ${test_score}%</p>
+
+                % if num_failures == 0 and num_errors == 0:
+                    <div class="testfeedback">&nbsp;</div>
+                    <p>Congratulations.  All reference tests have passed!</p>
+
+                % else:
+                    <div class="testfeedback">&nbsp;</div>
+                    <ul class="test-result">
+                        % if num_failures > 0:
+                            <li class="test-result"><img class="testicon" src="./fail_icon.svg/" width="20px"> # of tests that failed: ${num_failures}</li>
+                        % endif
+
+                        % if num_errors > 0:
+                            <li class="test-result"><img class="testicon" src="./error_icon.svg" width="20px"/> # of tests that resulted in an error: ${num_errors}</li>
+                        % endif
+                    </ul>
+
+                    <p><b>Hints:</b> Here are some hints to help you get closer to the specified behaviour.  Each
+                        hint describes a test that was run against your code that <em>failed</em> or led to
+                        an <em>error</em>:</p>
+                    <ul>
+                    % for next in report.report_hints:
+                        <li>${next.hint}</li>
+                        % if next.excep_type != None:
+                            <ul>
+                                <li>Error: <code>${next.excep_type}</code></li>
+                            </ul>
+                        %endif
+                    % endfor
+                    </ul>
+
+                %endif
+        </div>
+        <p/>
+
+        % if gradecoverage:
+        <div class="indent">
+            <h1>Code Coverage Report</h1>
+            <div class="coveragefeedback">&nbsp;</div>
+            <p/>
+
+            <table class="coverage-feedback">
+                <tr><td>Code coverage score: ${coverage_score}%</td><td><img class="coverage-info" src="info_icon.svg" width="18px"/></td></td>
+                    <td>
+                        <table>
+
+                            % if coveragebreakdown.method_weight > 0:
+                                <tr><td> &nbsp;</td><td class="coverage-detail">...method coverage contributes ${coveragebreakdown.method_weight * 100}% to this score</td></tr>
+                            % endif
+
+                            % if coveragebreakdown.line_weight > 0:
+                                <tr><td> &nbsp;</td><td class="coverage-detail">...line coverage contributes ${coveragebreakdown.line_weight * 100}% to this score</td></tr>
+                            % endif
+
+                            % if coveragebreakdown.branch_weight > 0:
+                                <tr><td> &nbsp;</td><td class="coverage-detail">...branch coverage contributes ${coveragebreakdown.branch_weight * 100}% to this score</td></tr>
+                            % endif
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <p>Details: <a href="../studentTests/jacoco/html/index.html">code coverage report</a></p>
+        </div>
+        % endif
+
+    </body>
+</html>

@@ -1,0 +1,82 @@
+
+.center {
+    margin: auto;
+    width: 70%;
+    padding: 10px;
+}
+
+.indent {
+	width: 95%;
+	margin: auto;
+    border: 3px solid grey;
+    padding: 10px;
+    box-shadow: 2px 2px 5px grey;
+}
+
+html {
+	min-height: 100%;
+	background: rgb(219,255,216); /* Old browsers */
+    background: -moz-linear-gradient(top, rgba(220,235,220,1) 0%, rgba(220,220,220,1) 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, rgba(220,235,220,1) 0%,rgba(220,220,220,1) 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, rgba(220,235,220,1) 0%,rgba(220,220,220,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+
+body {
+	max-width: 800px;
+	height: 100%;
+
+}
+
+h1 {
+    margin-top: 5px;
+}
+
+table {
+	border: none;
+}
+
+table.scoretable th, table.scoretable td {
+	border-spacing: 10px 0;
+    border-left: solid 10px transparent;
+    border-right: solid 10px transparent;
+    border-top: none;
+    border-bottom: solid 1px gray;
+}
+
+table.scoretable th.grading-detail, table.scoretable td.grading-detail {
+    border: none;
+}
+
+.scoretable .noborder {
+	border: none;
+}
+
+.grading-detail {
+    display: none;
+    color: gray;
+}
+
+.coverage-detail {
+	display: none;
+	color: gray;
+}
+
+table.coverage-feedback tr {
+	vertical-align: baseline;
+}
+
+img {
+	padding-bottom: 2px;
+	vertical-align: sub;
+}
+
+img.testicon {
+	padding-right: 2px;
+}
+
+ul.test-result, li.test-result {
+	list-style: none;
+	list-style-position: outside;
+	padding-left: 0.5em;
+}
+
