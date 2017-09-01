@@ -42,7 +42,7 @@ class Config {
     let dbAppUser = process.env.DB_APP_USERNAME;
     let dbAppPass = process.env.DB_APP_PASSWORD;
     let redisAddress = process.env.REDIS_ADDRESS || 'http://localhost:6379';
-    let mentionTag = process.env.MENTION_TAG || '@cpsc310bot';
+    let mentionTag = process.env.MENTION_TAG || '@autobot';
     let githubToken = process.env.GITHUB_API_KEY;
 
     this.courses = courses;
