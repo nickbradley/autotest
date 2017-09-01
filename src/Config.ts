@@ -12,6 +12,9 @@ export interface IConfig {
   getMentionTag(): string;
   getGithubToken(): string;
   getNodeEnv(): string;
+  getSSLKeyPath(): string;
+  getSSLCertPath(): string;
+  getSSLIntCertPath(): string;
   getMongoAddress(): string;
   getCourseNums(): [number];
   getDebugMode(): boolean;
@@ -29,6 +32,9 @@ class Config {
   private githubToken: string;
   private courses: [number];
   private nodeEnv: string;
+  private sslKeyPath: string;
+  private sslCertPath: string;
+  private sslIntCertPath: string;
   private mongoDB: string;
   private debugMode: boolean;
 
@@ -44,12 +50,19 @@ class Config {
     let redisAddress = process.env.REDIS_ADDRESS || 'http://localhost:6379';
     let mentionTag = process.env.MENTION_TAG || '@cpsc310bot';
     let githubToken = process.env.GITHUB_API_KEY;
+    let sslKeyPath = process.env.SSL_KEY_PATH;
+    let sslCertPath = process.env.SSL_CERT_PATH;
+    let sslIntCertPath = process.env.SSL_INT_CERT_PATH;
 
     this.courses = courses;
     this.DBConn = new DBConn(dbInstance, dbAppUser, dbAppPass);
     this.redisAddress = Url.parse(redisAddress);
     this.mentionTag = mentionTag;
     this.githubToken = githubToken;
+    this.sslKeyPath = sslKeyPath;
+    this.sslCertPath = sslCertPath;
+    this.sslIntCertPath = sslIntCertPath;
+
     this.debugMode = true;
     this.mongoDB = process.env.DEV_MONGO_DB_INSTANCE;
 
@@ -80,6 +93,18 @@ class Config {
 
   public getCourseNums(): [number] {
     return this.courses;
+  }
+
+  public getSSLKeyPath(): string {
+    return this.sslKeyPath;
+  }
+
+  public getSSLCertPath(): string {
+    return this.sslCertPath;
+  }
+
+  public getSSLIntCertPath(): string {
+    return this.sslIntCertPath;
   }
 
   public getAppPort(): number {
@@ -143,4 +168,13 @@ export class AppConfig implements IConfig {
   public getCourseNums(): [number] {
     return Config.getInstance().getCourseNums();
   }
+  public getSSLKeyPath(): string {
+    return Config.getInstance().getSSLKeyPath();
+  }
+  public getSSLCertPath(): string {
+    return Config.getInstance().getSSLCertPath();
+  }
+  public getSSLIntCertPath(): string {
+    return Config.getInstance().getSSLIntCertPath();
+  }  
 }
