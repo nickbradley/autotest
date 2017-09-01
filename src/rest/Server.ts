@@ -1,5 +1,6 @@
 import restify = require('restify');
 import Log from "../Util";
+import * as fs from 'fs';
 import RouteHandler from "../rest/RouteHandler";
 import {IConfig, AppConfig} from '../Config';
 import TestJobController from '../controller/TestJobController';
@@ -60,10 +61,14 @@ export default class Server {
       let that = this;
       return new Promise(function (fulfill, reject) {
           try {
+
               Log.info('Server::start() - start');
 
               that.rest = restify.createServer({
-                  name: 'AutoTest'
+                  name: 'AutoTest',
+                  // key: fs.readFileSync(that.config.getSSLKeyPath()),
+                  // certificate: fs.readFileSync(that.config.getSSLCertPath()),
+                  // ca: fs.readFileSync(that.config.getSSLIntCertPath()).toString(),
               });
 
               // support CORS
