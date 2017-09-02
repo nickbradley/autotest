@@ -25,7 +25,7 @@ export default class PushRecord {
   constructor(payload: any) {
     try {
       this.payload = payload;
-      this._team = GithubUtil.getTeam(payload.repository.name);
+      this._team = GithubUtil.getTeamOrProject(payload.repository.name);
       this._user = payload.pusher.name;
       this._deliverable = this.parseDeliverable(payload.repository.name);
       this._commit = new Commit(payload.after);
