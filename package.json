@@ -16,7 +16,7 @@
     "test": "mocha --recursive",
     "deploy": "env $(cat autotest.env | xargs) ./deploy.sh",
     "start": "docker start autotest-redis && docker start autotest-db && node src/App.js",
-    "startf": "docker start autotest-redis && docker start autotest-db && forever --minUptime 1000 --spinSleepTime 1000 src/App.js  2>&1 | tee output.log"
+    "startf": "yarn run build && docker start autotest-redis && docker start autotest-db && forever --minUptime 1000 --spinSleepTime 1000 src/App.js  2>&1 | tee output.log"
   },
   "devDependencies": {
     "@types/bull": "^1.0.31",
