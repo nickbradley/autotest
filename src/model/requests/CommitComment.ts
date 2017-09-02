@@ -63,7 +63,7 @@ export default class CommitCommentRecord {
       try {
         that.payload = JSON.parse(JSON.stringify(payload));
         that.commit = new Commit(payload.comment.commit_id);
-        that.team = GithubUtil.getTeam(payload.repository.name);
+        that.team = GithubUtil.getTeamOrProject(payload.repository.name);
         that.user = payload.comment.user.login;
         that.hook = Url.parse(payload.repository.commits_url.replace('{/sha}', '/' + this.commit) + '/comments');
         that.message = payload.comment.body;
