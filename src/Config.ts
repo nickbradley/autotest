@@ -72,6 +72,7 @@ class Config {
     if (nodeEnv == "production") {
       this.mongoDB = process.env.PROD_MONGO_DB_INSTANCE;
       this.debugMode = false;
+      this.mentionTag = process.env.MENTION_TAG || '@autobot';
     }
 
     // console.log('dbInstance: ', dbInstance);
