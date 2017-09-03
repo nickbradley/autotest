@@ -396,10 +396,11 @@ public getTestRecord(): object {
     try {
        let doc = {
         'team': this.team,
+        'courseNum': this.courseNum,
         'orgName': this.githubOrg,
+        'deliverable': this.deliverable.deliverable,
         'user': this.username,
         'report': parseReport(),
-        'deliverable': this.deliverable.deliverable,
         'testStats': this.testStats,
         'coverStats': this.coverageStats,
         'coverReport': this.coverageReport,
