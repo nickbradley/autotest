@@ -38,8 +38,12 @@ export default class PushController {
     courseSettings = course.settings;
 
     if (this.record.user.toString().indexOf(BOT_USERNAME) > -1) {
-      Log.info(`PushController::process() Recieved ${BOT_USERNAME} push from batch cloning repo. Ignoring`);
-      return Promise.all([]);
+      try { 
+        throw `PushController::process() Recieved ${BOT_USERNAME} push from batch cloning repo. Ignoring`;
+      }
+      catch (err) {
+        Log.info(err);
+      }
     }
     else if (courseSettings.markDelivsByBatch == true && course.batchDeliverables.length < 1) {
       return Promise.all(this.markDeliverablesByBatch());
