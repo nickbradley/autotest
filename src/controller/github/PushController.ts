@@ -14,6 +14,7 @@ import CourseRepo from '../../repos/CourseRepo';
 export default class PushController {
   private config: IConfig;
   private runningPort: number;
+  private course: Course;
   private courseNum: number;
   private courseRecord: CourseRecord;
   private courseSettings: CourseSettings;
@@ -30,9 +31,11 @@ export default class PushController {
     await this.store(this.record);
 
     let courseSettings: CourseSettings;
-    courseSettings = await this.getCourseLogic();
+    let course: Course;
+    course = await this.getCourseLogic();
+    courseSettings = course.settings;
 
-    if (courseSettings.markDelivsByBatch == true) {
+    if (courseSettings.markDelivsByBatch == true && course.batchDeliverables.length < 1) {
       return Promise.all(this.markDeliverablesByBatch());
     } 
     else {
@@ -46,17 +49,24 @@ export default class PushController {
       let promises = [];
       let courseRepo: CourseRepo = new CourseRepo();
 
-      let courseQuery = courseRepo.getCourseSettings(this.courseNum)
+      let courseSettingsQuery = courseRepo.getCourseSettings(this.courseNum)
         .then((courseSettings: CourseSettings) => {
           this.courseSettings = courseSettings;
+          return courseSettings;
         });
-
+      let courseQuery = courseRepo.getCourse(this.courseNum)
+        .then((course: Course) => {
+          this.course = course;
+          return course;
+        });
+      
+      promises.push(courseSettingsQuery);
       promises.push(courseQuery);
 
       return await Promise.all(promises)
         .then(() => {
-          if (this.courseSettings) {
-            return this.courseSettings;
+          if (this.course) {
+            return this.course;
           }
           else {
             throw `Could not find deliverables for ${this.courseNum} course logic.`;

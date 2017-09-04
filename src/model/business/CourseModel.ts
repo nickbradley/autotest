@@ -18,8 +18,16 @@ export class Course {
   modules: string[];
   customData: any;
   classList: Object[];
+  batchDeliverables: Object[];
   deliverables: Object[];
-  grades: [Object];
+  labSections: Object[];
+  urlWebhook: string;
+  githubOrgs: Object[];
+  grades: Object[];
+  batchSourceUrl: string;
+  studentsSetTeams: boolean;
+  teamsEnabled: boolean;
+  description: string;
   settings: CourseSettings;
   admins: [string];
   teamMustBeInSameLab: Boolean;
