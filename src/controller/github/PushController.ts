@@ -36,10 +36,10 @@ export default class PushController {
     let course: Course;
     course = await this.getCourseLogic();
     courseSettings = course.settings;
-    console.log('LOGGER INFO BOT', this.record.user);
-    console.log('BOT_USERNAME', BOT_USERNAME);
+
     if (this.record.user.toString().indexOf(BOT_USERNAME) > -1) {
       Log.info(`PushController::process() Recieved ${BOT_USERNAME} push from batch cloning repo. Ignoring`);
+      return Promise.all([]);
     }
     else if (courseSettings.markDelivsByBatch == true && course.batchDeliverables.length < 1) {
       return Promise.all(this.markDeliverablesByBatch());
