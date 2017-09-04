@@ -11,6 +11,8 @@ import {TestJob} from '../TestJobController';
 import PushRepo from '../../repos/PushRepo';
 import CourseRepo from '../../repos/CourseRepo';
 
+const BOT_USERNAME = 'autobot';
+
 export default class PushController {
   private config: IConfig;
   private runningPort: number;
@@ -34,8 +36,12 @@ export default class PushController {
     let course: Course;
     course = await this.getCourseLogic();
     courseSettings = course.settings;
-
-    if (courseSettings.markDelivsByBatch == true && course.batchDeliverables.length < 1) {
+    console.log('LOGGER INFO BOT', this.record.user);
+    console.log('BOT_USERNAME', BOT_USERNAME);
+    if (this.record.user.toString().indexOf(BOT_USERNAME) > -1) {
+      Log.info(`PushController::process() Recieved ${BOT_USERNAME} push from batch cloning repo. Ignoring`);
+    }
+    else if (courseSettings.markDelivsByBatch == true && course.batchDeliverables.length < 1) {
       return Promise.all(this.markDeliverablesByBatch());
     } 
     else {
