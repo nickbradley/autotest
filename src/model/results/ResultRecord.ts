@@ -98,14 +98,14 @@ export default class ResultRecord {
         output = output.replace(
           '<GRADE>', gradeSummary.grade.toString()
         ).replace(
-          '<TEST_GRADE>', gradeSummary.testGrade.toString()
+          '<TEST_GRADE>', (+gradeSummary.coverageSummary).toString()
         ).replace(
-          '<TEST_SUMMARY>', gradeSummary.testSummary
+          '<TEST_SUMMARY>', gradeSummary.testSummary 
         ).replace(
-          '<COVERAGE_SUMMARY>', (+gradeSummary.coverageSummary).toString()
+          '<COVERAGE_SUMMARY>', gradeSummary.lineCoverage.toString()
         );
 
-        if (gradeSummary.coverageFailed) {
+        if (gradeSummary.coverageFailed.length > 0) {
           output += '\n\nSome of your tests failed when run on AutoTest:\n ```\n';
           if (gradeSummary.coverageFailed.length > 1024)
             output += gradeSummary.coverageFailed.substring(0, 1024)+'\n...';

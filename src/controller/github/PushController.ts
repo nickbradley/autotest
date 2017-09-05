@@ -38,7 +38,7 @@ export default class PushController {
     courseSettings = course.settings;
 
     if (this.record.user.toString().indexOf(BOT_USERNAME) > -1) {
-      try { 
+      try {
         throw `PushController::process() Recieved ${BOT_USERNAME} push from batch cloning repo. Ignoring`;
       }
       catch (err) {

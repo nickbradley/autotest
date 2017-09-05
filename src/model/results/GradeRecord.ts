@@ -8,12 +8,14 @@ export interface GradeSummary {
   deliverable: string;
   exitCode: number;
   studentBuildFailed: boolean;
+  courseNum: number;
   studentBuildMsg: string;
   deliverableBuildFailed: boolean;
   deliverableBuildMsg: string;
   grade: number;
   testGrade: number;
   testSummary: string;
+  lineCoverage: string;
   coverageSummary: string;
   coverageFailed: string;
   scriptVersion: string;
@@ -56,6 +58,7 @@ export default class GradeRecord {
         gradeSummary = { 
           deliverable: doc.deliverable,
           exitCode: doc.container.exitcode, 
+          courseNum: doc.courseNum,
           studentBuildFailed: doc.studentBuildFailed,
           studentBuildMsg: doc.studentBuildMsg,
           deliverableBuildFailed: doc.deliverableBuildFailed,
@@ -84,23 +87,27 @@ export default class GradeRecord {
         'exitCode': doc.container.exitcode,
         'studentBuildFailed': doc.studentBuildFailed,
         'studentBuildMsg': doc.studentBuildMsg,
+        'courseNum': doc.courseNum,
         'deliverableBuildFailed': doc.deliverableBuildFailed,
         'deliverableBuildMsg': doc.deliverableBuildMsg,
         'grade': tests.grade.finalGrade, //+(0.8*tStats.passPercent + 0.2*Math.min(coverage+5, 100)).toFixed(2),
         'testGrade': tests.overviewResults.passPercent,
         'testSummary': tests.overviewResults.passes + ' passing, ' + tests.overviewResults.failures + ' failing, ' + tests.overviewResults.skipped + ' skipped',
-        'coverageGrade': tests.grade.finalGrade,
+        'coverageGrade': coverage,
         'coverStderr': doc.coverStderr,
         'scriptVersion': doc.container.scriptVersion,
         'suiteVersion': doc.container.suiteVersion,
         'failedTests': tests.detailedResults.reduce(function(failedTests, test) {
-          let testName: string;
-          if (test.state === "failure") {
-            let testName = "Remember to enable substring for 310... " + test.testName;
+          let testName: string = test.testName;
+          let courseNum = doc.courseNum.toString();
+          if (test.state === "failure" && courseNum.indexOf('210') > -1) {
             failedTests.push(testName);
-            // let code = name.substring(name.indexOf('~')+1, name.lastIndexOf('~')); // legacy substring for 310
           }
-          return failedTests;
+          else if (test.state === "failure" && courseNum.indexOf('310') > -1) {
+            let code = testName.substring(testName.indexOf('~')+1, testName.lastIndexOf('~')); 
+            failedTests.push(testName)// legacy substring for 310
+          }
+            return failedTests;
             //return code + ': ' + name.substring(name.lastIndexOf('~')+1, name.indexOf('.')+1);\n              })\n            })\n          }\n        }\n      }"
         }, [])
       }
@@ -118,12 +125,14 @@ export default class GradeRecord {
         exitCode: result.exitCode,
         studentBuildFailed: result.studentBuildFailed,
         studentBuildMsg: result.studentBuildMsg,
+        courseNum: result.courseNum,
         deliverableBuildFailed: result.deliverableBuildFailed,
         deliverableBuildMsg: result.deliverableBuildMsg,
         grade: result.grade,
         testGrade: result.testGrade,
+        lineCoverage: result.coverageGrade,
         testSummary: result.testSummary,
-        coverageSummary: result.coverageGrade,
+        coverageSummary: result.testGrade,
         coverageFailed: result.coverStderr || [],
         scriptVersion: result.scriptVersion,
         suiteVersion: result.suiteVersion,

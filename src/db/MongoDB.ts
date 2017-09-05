@@ -34,6 +34,9 @@ export class MongoDB {
     return new Promise<mongodb.Db>(function (fulfill, reject) {
       try {
         MongoClient.connect(that.config.getMongoAddress(), OPTIONS, function(err, db) {
+          if (err) {
+            throw err;
+          }
           Log.info(`MongoDB::getDB() Returning DB Connection: ${that.config.getMongoAddress()}`)
           fulfill(db);
         })
