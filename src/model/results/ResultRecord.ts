@@ -125,7 +125,7 @@ export default class ResultRecord {
       else {
         // if 210 class, then run 210 logic
         console.log('210 hit');
-        output += `- Test summary: <TEST_GRADE>% (<TEST_SUMMARY>)\n- Line coverage: <COVERAGE_SUMMARY>%
+        output += `- Test summary: <TEST_GRADE>% (<TEST_SUMMARY>)
           \n- Code coverage: <CODE_COVERAGE>%`;
 
         output = output.replace(
@@ -134,8 +134,6 @@ export default class ResultRecord {
           '<TEST_GRADE>', gradeSummary.testingGrade.toString()
         ).replace(
           '<TEST_SUMMARY>', gradeSummary.testSummary 
-        ).replace(
-          '<COVERAGE_SUMMARY>', gradeSummary.lineCoverage.toString()
         ).replace(
           '<CODE_COVERAGE>', gradeSummary.coverageGrade
         );

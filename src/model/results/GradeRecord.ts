@@ -104,7 +104,9 @@ export default class GradeRecord {
         'failedTests': tests.detailedResults.reduce(function(failedTests, test) {
           let testName: string = test.testName;
           if (test.state === "failure" && courseNum.indexOf('210') > -1) {
-            failedTests.push(testName);
+            if (test.hintGiven) {
+              failedTests.push(test.hint);
+            }
           }
           else if (test.state === "failure" && courseNum.indexOf('310') > -1) {
             let code = testName.substring(testName.indexOf('~')+1, testName.lastIndexOf('~')); 
