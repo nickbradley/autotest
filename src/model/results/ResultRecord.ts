@@ -92,7 +92,10 @@ export default class ResultRecord {
         ).replace(
           '<EXIT_CODE>', gradeSummary.exitCode.toString()
         );
-      } else {
+      } 
+      else if ('310'.indexOf(gradeSummary.courseNum.toString()) > -1) {
+        // if 310 class, then run 310 logic
+        console.log('310 hit');
         output += '- Test summary: <TEST_GRADE>% (<TEST_SUMMARY>)\n- Line coverage: <COVERAGE_SUMMARY>%';
 
         output = output.replace(
@@ -119,7 +122,38 @@ export default class ResultRecord {
           output += gradeSummary.failedTests.join('\n - ');
         }
       }
+      else {
+        // if 210 class, then run 210 logic
+        console.log('210 hit');
+        output += `- Test summary: <TEST_GRADE>% (<TEST_SUMMARY>)\n- Line coverage: <COVERAGE_SUMMARY>%
+          \n- Code coverage: <CODE_COVERAGE>%`;
 
+        output = output.replace(
+          '<GRADE>', gradeSummary.grade.toString()
+        ).replace(
+          '<TEST_GRADE>', gradeSummary.testingGrade.toString()
+        ).replace(
+          '<TEST_SUMMARY>', gradeSummary.testSummary 
+        ).replace(
+          '<COVERAGE_SUMMARY>', gradeSummary.lineCoverage.toString()
+        ).replace(
+          '<CODE_COVERAGE>', gradeSummary.coverageGrade
+        );
+
+        if (gradeSummary.coverageFailed.length > 0) {
+          output += '\n\nSome of your tests failed when run on AutoTest:\n ```\n';
+          if (gradeSummary.coverageFailed.length > 1024)
+            output += gradeSummary.coverageFailed.substring(0, 1024)+'\n...';
+          else
+            output += gradeSummary.coverageFailed
+          output += '\n```\n';
+        }
+
+        if (gradeSummary.failedTests.length > 0) {
+          output += '\n\nYour code failed the tests:\n - ';
+          output += gradeSummary.failedTests.join('\n - ');
+        }
+      }
       output += '\n\n<sub>suite: ' + gradeSummary.suiteVersion + '  |  script: ' + gradeSummary.scriptVersion + '.</sub>';
 
       return output;

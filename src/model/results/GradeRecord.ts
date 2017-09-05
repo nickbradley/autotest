@@ -15,6 +15,8 @@ export interface GradeSummary {
   grade: number;
   testGrade: number;
   testSummary: string;
+  coverageGrade: string;
+  testingGrade: string;
   lineCoverage: string;
   coverageSummary: string;
   coverageFailed: string;
@@ -81,6 +83,7 @@ export default class GradeRecord {
       let failedTests = new Array();
 
       let tStats = doc.testStats;
+      let courseNum = doc.courseNum.toString();
       let coverage = newCoverage.lines.percentage === "unknown" ? 0 : newCoverage.lines.percentage
       gradeSummary = {
         'deliverable': doc.deliverable,
@@ -93,13 +96,13 @@ export default class GradeRecord {
         'grade': tests.grade.finalGrade, //+(0.8*tStats.passPercent + 0.2*Math.min(coverage+5, 100)).toFixed(2),
         'testGrade': tests.overviewResults.passPercent,
         'testSummary': tests.overviewResults.passes + ' passing, ' + tests.overviewResults.failures + ' failing, ' + tests.overviewResults.skipped + ' skipped',
-        'coverageGrade': coverage,
+        'coverageGrade': '310'.indexOf(doc.courseNum) > -1 ? coverage : tests.custom.coverageGrade,
+        'testingGrade': '310'.indexOf(doc.courseNum) > -1 ? null : tests.custom.testingGrade,
         'coverStderr': doc.coverStderr,
         'scriptVersion': doc.container.scriptVersion,
         'suiteVersion': doc.container.suiteVersion,
         'failedTests': tests.detailedResults.reduce(function(failedTests, test) {
           let testName: string = test.testName;
-          let courseNum = doc.courseNum.toString();
           if (test.state === "failure" && courseNum.indexOf('210') > -1) {
             failedTests.push(testName);
           }
@@ -132,6 +135,8 @@ export default class GradeRecord {
         testGrade: result.testGrade,
         lineCoverage: result.coverageGrade,
         testSummary: result.testSummary,
+        coverageGrade: result.coverageGrade,
+        testingGrade: result.testingGrade,
         coverageSummary: result.testGrade,
         coverageFailed: result.coverStderr || [],
         scriptVersion: result.scriptVersion,
