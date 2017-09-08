@@ -43,6 +43,7 @@ printf "./build-310-container.sh ${GITHUB_KEY} cpsc310__bootstrap master d1 "ska
 ./build-310-container.sh $GITHUB_KEY cpsc310__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315" "portal.cs.ubc.ca:8525" "localhost:4321"
 
 ## Tag based on Deliverables that exist for each course to run when markByBatch flag is true.
+docker tag $(docker images -q autotest/cpsc310__bootstrap:latest) autotest/d0-cpsc310__bootstrap
 docker tag $(docker images -q autotest/cpsc310__bootstrap:latest) autotest/d1-cpsc310__bootstrap
 docker tag $(docker images -q autotest/cpsc310__bootstrap:latest) autotest/d2-cpsc310__bootstrap
 docker tag $(docker images -q autotest/cpsc310__bootstrap:latest) autotest/d3-cpsc310__bootstrap

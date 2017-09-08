@@ -9,7 +9,7 @@ ARG externalServers
 ARG githubKey
 
 ENV GITHUB_KEY=$githubKey
-ENV MOCHAWESOME_REPORTDIR=../output
+ENV MOCHAWESOME_REPORTDIR="/cpsc310__bootstrap/cpsc310deliverablerepo/mochawesome-reports"
 ENV ALLOW_DNS=$allowDNS
 ENV WHITELISTED_SERVERS=$externalServers
 ENV TESTSUITE_VERSION=$testsuiteCommit
