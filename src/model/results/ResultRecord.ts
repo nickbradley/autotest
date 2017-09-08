@@ -11,12 +11,14 @@ export default class ResultRecord {
   private commit: string;
   private deliverable: string;
   private note: string;
+  private orgName: string;
   private gradeSummary: GradeSummary;
 
-  constructor(team: string, shortCommit: string, deliverable: string, note: string) {
+  constructor(team: string, shortCommit: string, deliverable: string, orgName: string, note: string) {
     this.config = new AppConfig();
     this.team = team;
     this.commit = shortCommit;
+    this.orgName = orgName;
     this.deliverable = deliverable;
     this.note = note;
   }
@@ -45,7 +47,7 @@ export default class ResultRecord {
     let that = this;
     return new Promise<GradeSummary>(async (fulfill, reject) => {
       try {
-        let testRecord = await testRecordRepo.getLatestTestRecord(this.team, this.commit, this.deliverable);
+        let testRecord = await testRecordRepo.getLatestTestRecord(this.team, this.commit, this.deliverable, this.orgName);
         let gradeSummary: GradeSummary = new GradeRecord(testRecord, this.deliverable).getGradeSummary();
 
         fulfill(gradeSummary)

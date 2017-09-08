@@ -83,7 +83,7 @@ export default class TestRecord{
   private scriptVersion: string;
   private suiteVersion: string;
   private failedCoverage: string;
-  private markDelivsByBatch: boolean;
+  private overrideBatchMarking: boolean;
   private ref: string;
   private githubOrg: string;
   private username: string;
@@ -96,7 +96,7 @@ export default class TestRecord{
     this.commit = testJob.commit;
     this.committer = testJob.username;
     this.ref = testJob.ref;
-    this.markDelivsByBatch = testJob.markDelivsByBatch;
+    this.overrideBatchMarking = testJob.overrideBatchMarking;
     this.timestamp = +new Date();
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
     this.githubOrg = testJob.githubOrg;
@@ -165,7 +165,7 @@ export default class TestRecord{
       this.ref,
       this.deliverable.deliverable,
       this.deliverable.image,
-      this.markDelivsByBatch,
+      this.overrideBatchMarking,
       tempDir.path
     ];
     let options = {

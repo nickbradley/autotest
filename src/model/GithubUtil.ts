@@ -11,7 +11,15 @@ export class GithubUtil {
     let idx = repositoryName.lastIndexOf('_')+1;
     return repositoryName.slice(idx);
   }
+
+  public static parseDeliverable(fullRepoName: string): string {
+    let deliverable = fullRepoName.match(/\_(.*)\_/);
+    if (deliverable) {
+      return deliverable.pop();
+    }
+  }
 }
+
 
 
 export class Commit {

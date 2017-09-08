@@ -26,7 +26,7 @@ export interface TestJob {
   hook: Url.Url;
   ref: string;
   test: TestJobDeliverable;
-  markDelivsByBatch: boolean;
+  overrideBatchMarking: boolean;
   courseNum: number;
   githubOrg: string;
 }
@@ -139,11 +139,14 @@ export default class TestJobController {
           break;
         }
       } else if (pendingRequest) {
+        console.log('pendingRequest', pendingRequest);
+        console.log('pendingRequest.orgName', pendingRequest.orgName);
         let team: string = pendingRequest.team;
+        let orgName: string = pendingRequest.orgName;
         let commit: string = pendingRequest.commit;
         let deliverable: string = pendingRequest.deliverable;
-        let controller: CommitCommentController = new CommitCommentController(1310);
-        let resultRecord: ResultRecord = new ResultRecord(team, commit, deliverable, '');
+        let controller: CommitCommentController = new CommitCommentController(this.courseNum);
+        let resultRecord: ResultRecord = new ResultRecord(team, commit, deliverable, orgName, '');
         await resultRecord.fetch();
         msg = resultRecord.formatResult();
       }

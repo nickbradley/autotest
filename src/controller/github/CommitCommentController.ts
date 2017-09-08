@@ -27,6 +27,7 @@ interface PendingRequest {
   commit: string;
   team: string;
   user: string;
+  orgName: string;
   deliverable: string;
   hook: string;
 }
@@ -78,6 +79,7 @@ export default class CommitCommentContoller {
         if (record.getIsRequest()) {
           let team: string = record.getTeam();
           let user: string = record.getUser();
+          let orgName: string = record.getOrgName();
           let commit: string = record.getCommit().short;
           let deliverable: string = record.getDeliverable();
           let reqId: string = team + '-' + commit + '-' + deliverable;
@@ -86,6 +88,7 @@ export default class CommitCommentContoller {
             commit: commit,
             team: team,
             user: user,
+            orgName: orgName,
             deliverable: deliverable,
             hook: record.getHook().toString()
           }
@@ -115,7 +118,7 @@ export default class CommitCommentContoller {
             let diff: number = +new Date() - +lastRequest;
             if (diff > record.getDeliverableRate() || isAdmin) {
               try {
-                let resultRecord: ResultRecord = new ResultRecord(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getNote());
+                let resultRecord: ResultRecord = new ResultRecord(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getOrgName(), this.record.getNote());
                 await resultRecord.fetch();
                 let body: string = resultRecord.formatResult();
                 response = {
@@ -209,6 +212,7 @@ export default class CommitCommentContoller {
         if (record.getIsRequest()) {
           let team: string = record.getTeam();
           let user: string = record.getUser();
+          let orgName: string = record.getOrgName();
           let commit: string = record.getCommit().short;
           let deliverable: string = record.getDeliverable();
           let reqId: string = team + '-' + commit + '-' + deliverable;
@@ -217,6 +221,7 @@ export default class CommitCommentContoller {
             commit: commit,
             team: team,
             user: user,
+            orgName: orgName,
             deliverable: deliverable,
             hook: record.getHook().toString()
           }
@@ -246,7 +251,7 @@ export default class CommitCommentContoller {
             let diff: number = +new Date() - +lastRequest;
             if (diff > record.getDeliverableRate() || isAdmin) {
               try {
-                let resultRecord: ResultRecord = new ResultRecord(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getNote());
+                let resultRecord: ResultRecord = new ResultRecord(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getOrgName(), this.record.getNote());
                 await resultRecord.fetch();
                 let body: string = await resultRecord.formatResult();
                 response = {

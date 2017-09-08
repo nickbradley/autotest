@@ -20,6 +20,7 @@ export interface CommitComment {
   team: string;
   user: string;
   commit: Commit;
+  orgName: string;
   body: string;
   type: string;
   timestamp: number;
@@ -44,6 +45,7 @@ export default class CommitCommentRecord {
   private isRequest: boolean;
   private isProcessed: boolean;
   private options: string[] = [];
+  private orgName: string;
   private note: string;
 
   constructor(courseNum: number) {
@@ -65,6 +67,7 @@ export default class CommitCommentRecord {
         that.commit = new Commit(payload.comment.commit_id);
         that.team = GithubUtil.getTeamOrProject(payload.repository.name);
         that.user = payload.comment.user.login;
+        that.orgName = payload.organization.login;
         that.hook = Url.parse(payload.repository.commits_url.replace('{/sha}', '/' + this.commit) + '/comments');
         that.message = payload.comment.body;
 
@@ -172,6 +175,11 @@ export default class CommitCommentRecord {
   public getIsProcessed(): boolean {
     return this.isProcessed;
   }
+
+  public getOrgName(): string {
+    return this.orgName;
+  }
+
   public setIsProcessed(value: boolean) {
     this.isProcessed = value;
   }
@@ -186,6 +194,7 @@ export default class CommitCommentRecord {
       deliverable: this.deliverable,
       team: this.team, 
       user: this.user, 
+      orgName: this.orgName,
       commit: this.commit, 
       body: this.message, 
       type: 'commit_comment', 
