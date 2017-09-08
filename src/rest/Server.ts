@@ -66,8 +66,8 @@ export default class Server {
 
               that.rest = restify.createServer({
                   name: 'AutoTest',
-                  key: fs.readFileSync(that.config.getSSLKeyPath()),
-                  certificate: fs.readFileSync(that.config.getSSLCertPath()),
+                  key: fs.readFileSync(that.config.getSSLKeyPath()).toString(),
+                  certificate: fs.readFileSync(that.config.getSSLCertPath()).toString(),
                   ca: fs.readFileSync(that.config.getSSLIntCertPath()).toString(),
               });
 
