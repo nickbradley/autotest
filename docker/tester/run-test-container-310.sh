@@ -34,13 +34,13 @@ projectCommit=${3}
 projectBranch=${4}
 delivToMark=${5}
 testImage=${6}
-markByBatch=${7}
+overrideBatchMarking=${7}
 tempDir=${8}
 
 if [ "${7}" -eq "1" ]; then
-  projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${projectName}.git"
-else
   projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${delivToMark}_${projectName}.git"
+else
+  projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${projectName}.git"
 fi
 
 docker run --cap-add=NET_ADMIN \
