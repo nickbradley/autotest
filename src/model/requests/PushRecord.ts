@@ -7,6 +7,7 @@ export interface Push {
   commit: string;
   type: string;
   timestamp: number;
+  orgName: string;
   attachments: object;
   idStamp: string;
 }
@@ -50,6 +51,9 @@ export default class PushRecord {
     return this._user;
   }
 
+  get orgName(): string {
+    return this._githubOrg;
+  }
   get commit(): Commit {
     return this._commit;
   }
@@ -72,6 +76,7 @@ export default class PushRecord {
     let doc: Push = {
       team: this.team,
       user: this.user,
+      orgName: this.orgName,
       commit: this.commit.toString(),
       type: 'push',
       timestamp: this.timestamp,
