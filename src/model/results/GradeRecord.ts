@@ -103,9 +103,11 @@ export default class GradeRecord {
         'suiteVersion': doc.container.suiteVersion,
         'failedTests': tests.detailedResults.reduce(function(failedTests, test) {
           let testName: string = test.testName;
-          if (test.state === "failure" && courseNum.indexOf('210') > -1) {
+          if (test.state === "failure" || test.state === "error" && courseNum.indexOf('210') > -1) {
+            let testInfo: string;
             if (test.hintGiven) {
-              failedTests.push(test.hint);
+              testInfo = test.exception === null ? test.hint : test.hint + ' : ' + test.exception;
+              failedTests.push(testInfo);
             }
           }
           else if (test.state === "failure" && courseNum.indexOf('310') > -1) {
