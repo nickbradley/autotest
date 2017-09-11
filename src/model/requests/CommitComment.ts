@@ -1,4 +1,5 @@
 import * as Url from 'url';
+import * as Moment from 'moment';
 
 import Log from '../../Util';
 import {IConfig, AppConfig} from '../../Config';
@@ -10,7 +11,7 @@ import DeliverableRepo from '../../repos/DeliverableRepo';
 
 interface FetchedDeliverable {
   key: string;
-  deliverable: Deliverable
+  deliverable: Deliverable;
 }
 
 export interface CommitComment {
@@ -111,7 +112,8 @@ export default class CommitCommentRecord {
           // The key refers to a vaild deliverable that hasn't been released
           // Get all deliverables that have been released
           } else {
-            this.note = 'The specified deliverable has not been released yet; using latest released.';
+            let date = Moment(deliverable.releaseDate).format('MMMM Do YYYY, h:mm:ss a');
+            this.note = `The specified deliverable has not been released yet; Please wait until ${date}.`;
             for (const key of deliverableRecord.keys()) {
               let deliverable: Deliverable = deliverableRecord.item(key);
               if (new Date(deliverable.releaseDate) <= now) {
@@ -138,7 +140,7 @@ export default class CommitCommentRecord {
 
         fulfill(latestDeliverable);
       } catch(err) {
-          reject(err);
+          Log.error(`CommitComment::fulfill(latestDeliverable) ${err}`);
       }
     });
   }

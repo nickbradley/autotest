@@ -283,7 +283,7 @@ export default class CommitCommentContoller {
                   Log.error('CommitCommentContoller::process() - ERROR Unable to locate test results. ' + err);
                   response = {
                     statusCode: 404,
-                    body: 'We can\'t seem to find any results for **'+deliverable+'** on this commit. Please make a new commit and try again.' + (this.record.getNote() ? '\n_Note: ' + this.record.getNote() + '_' : '')
+                    body: 'We can\'t seem to find any results for this commit. We even tried the latest **' + deliverable +'** on this commit. Please make a new commit and try again.' + (this.record.getNote() ? '\n_Note: ' + this.record.getNote() + '_' : '')
                   }
                 }
               }
