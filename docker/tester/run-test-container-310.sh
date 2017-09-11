@@ -37,7 +37,7 @@ testImage=${6}
 overrideBatchMarking=${7}
 tempDir=${8}
 
-if [ "${7}" -eq "1" ]; then
+if [ overrideBatchMarking -eq 1 ]; then
   projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${delivToMark}_${projectName}.git"
 else
   projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${projectName}.git"
