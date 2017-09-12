@@ -99,15 +99,17 @@ export default class ResultRecord {
         // if 310 class, then run 310 logic
         console.log('310 hit');
         output += '- Test summary: <TEST_GRADE>% (<TEST_SUMMARY>)\n- Line coverage: <COVERAGE_SUMMARY>%';
-
+        let deliv = gradeSummary.deliverable;
+        let coverageGrade = String(gradeSummary.coverageGrade).indexOf(deliv) > -1 ? gradeSummary.coverageGrade : 0;
+        
         output = output.replace(
-          '<GRADE>', gradeSummary.grade.toString()
+          '<GRADE>', String(gradeSummary.grade)
         ).replace(
-          '<TEST_GRADE>', (+gradeSummary.coverageSummary).toString()
+          '<TEST_GRADE>', String(+gradeSummary.coverageSummary)
         ).replace(
-          '<TEST_SUMMARY>', gradeSummary.testSummary 
+          '<TEST_SUMMARY>', String(gradeSummary.testSummary)
         ).replace(
-          '<COVERAGE_SUMMARY>', gradeSummary.lineCoverage.toString()
+          '<COVERAGE_SUMMARY>', String(coverageGrade)
         );
 
         if (gradeSummary.coverageFailed.length > 0) {
