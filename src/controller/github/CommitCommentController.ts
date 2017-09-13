@@ -362,13 +362,11 @@ export default class CommitCommentContoller {
         let adminRecords = await db.getObjectIds('users', '_id', adminRecordsIds)
 
         adminRecords.map((adminObject: Admin) => {
-
           let adminRecord = new AdminRecord(adminObject);
           
-          if (adminRecord.getUsername().toLowerCase() == user) {
+          if (adminRecord.getUsername().toLowerCase().indexOf(user) > -1) {
             fulfill(true);
           }
-          fulfill(false);
         });
         // if no admin course records are found
         fulfill(false);
