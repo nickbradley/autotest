@@ -26,7 +26,7 @@ set -o errexit  # exit on command failure
 set -o pipefail # exit if any command in pipeline fails
 set -o nounset  # exit if undeclared variable is used
 
-CPSC310_ORG_NAME="CPSC310-2017W-T2"
+CPSC310_ORG_NAME="CPSC310-2017W-T1"
 
 githubApiKey=${1}
 projectName=${2}
