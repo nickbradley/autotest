@@ -83,6 +83,7 @@ export default class CommitCommentContoller {
           let commit: string = record.getCommit().short;
           let deliverable: string = record.getDeliverable();
           let reqId: string = team + '-' + commit + '-' + deliverable;
+          console.log('reqId inside top-level run310Logic()', reqId);
 
           let req: PendingRequest = {
             commit: commit,
@@ -97,6 +98,7 @@ export default class CommitCommentContoller {
           let pendingRequest: PendingRequest
           try {
             pendingRequest = await redis.client.get(reqId);
+            console.log('pendingRequest in top-level run310Logic()', pendingRequest);
           } catch(err) {
             hasPending = false;
           }
@@ -130,11 +132,14 @@ export default class CommitCommentContoller {
                 record.setIsProcessed(false);
                 try {
                   Log.info('CommitCommentController::process() - Checking if commit is queued.')
+                  console.log('record.getDeliverable()', record.getDeliverable());
+                  console.log('record.getTeam()', record.getTeam());
+                  console.log('record.getCommit()', record.getCommit());
                   let maxPos: number = await that.isQueued(record.getDeliverable(), record.getTeam(), record.getCommit());
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = 'autotest/' + req.deliverable + '-' + imageName + ':latest|' + req.team+ '#' + req.commit;
+                    let jobId: string = 'autotest/' + imageName + ':latest|' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -387,7 +392,8 @@ export default class CommitCommentContoller {
     //  jobId: job.test.image + '|'  + job.team + '#' + job.commit,
     return new Promise<number>((fulfill, reject) => {
       let imageName = this.getImageName();
-      let jobId: string = 'autotest/' + deliverable + '-' + imageName + ':latest|' + team + '#' + commit.short;
+      console.log()
+      let jobId: string = 'autotest/' + imageName + ':latest|' + team + '#' + commit.short;
       let queue: TestJobController = TestJobController.getInstance();
 
       queue.getJob(jobId).then(job => {
