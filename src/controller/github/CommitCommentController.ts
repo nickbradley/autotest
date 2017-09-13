@@ -139,7 +139,7 @@ export default class CommitCommentContoller {
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = 'autotest/' + imageName + ':latest|' + req.team+ '#' + req.commit;
+                    let jobId: string = 'autotest/' + imageName + ':latest|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -272,7 +272,7 @@ export default class CommitCommentContoller {
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = 'autotest/' + req.deliverable + '-' + imageName + ':latest|' + req.team+ '#' + req.commit;
+                    let jobId: string = 'autotest/' + imageName + ':latest|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -391,7 +391,7 @@ export default class CommitCommentContoller {
     return new Promise<number>((fulfill, reject) => {
       let imageName = this.getImageName();
       console.log()
-      let jobId: string = 'autotest/' + imageName + ':latest|' + team + '#' + commit.short;
+      let jobId: string = 'autotest/' + imageName + ':latest|' + deliverable + '-' + team + '#' + commit.short;
       let queue: TestJobController = TestJobController.getInstance();
 
       queue.getJob(jobId).then(job => {

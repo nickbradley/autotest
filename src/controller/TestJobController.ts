@@ -190,10 +190,10 @@ export default class TestJobController {
    */
   public async addJob(job: TestJob): Promise<Job> {
     let opts: JobOpts = {
-      jobId: job.test.image + '|'  + job.team + '#' + job.commit,
+      jobId: job.test.image + '|' + job.test.deliverable + '-'  + job.team + '#' + job.commit,
       removeOnComplete: true
     }
-
+    
     return <Promise<Job>>this.stdManager.queue.add(job, opts);
   }
 

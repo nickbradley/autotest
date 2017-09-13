@@ -134,7 +134,6 @@ export default class PushController {
     let currentDate: Date = new Date();
     let record: PushRecord = this.record;
     let deliverablesRecord = this.courseSettings.deliverables;
-    console.log('markdeliverablebyrepo');
 
         let deliverable = deliverablesRecord[record.deliverable];
         let rDate: Date = new Date(deliverable.releaseDate);
