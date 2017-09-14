@@ -100,7 +100,6 @@ export default class ResultRecord {
         console.log('310 hit');
         output += '- Test summary: <TEST_GRADE>% (<TEST_SUMMARY>)\n- Line coverage: <COVERAGE_SUMMARY>%';
         let deliv = gradeSummary.deliverable;
-        let coverageGrade = String(gradeSummary.coverageGrade).indexOf(deliv) > -1 ? gradeSummary.coverageGrade : 0;
         
         output = output.replace(
           '<GRADE>', String(gradeSummary.grade)
@@ -109,7 +108,7 @@ export default class ResultRecord {
         ).replace(
           '<TEST_SUMMARY>', String(gradeSummary.testSummary)
         ).replace(
-          '<COVERAGE_SUMMARY>', String(coverageGrade)
+          '<COVERAGE_SUMMARY>', String(gradeSummary.coverageGrade)
         );
 
         if (gradeSummary.coverageFailed.length > 0) {
