@@ -110,12 +110,11 @@ export default class GradeRecord {
               failedTests.push(testInfo);
             }
           }
-          else if (test.state === "failure" && courseNum.indexOf('310') > -1) {
+          else if (test.state === "failed" && courseNum.indexOf('310') > -1) {
             let code = testName.substring(testName.indexOf('~')+1, testName.lastIndexOf('~')); 
-            failedTests.push(testName)// legacy substring for 310
+            failedTests.push(code) // legacy substring for 310
           }
             return failedTests;
-            //return code + ': ' + name.substring(name.lastIndexOf('~')+1, name.indexOf('.')+1);\n              })\n            })\n          }\n        }\n      }"
         }, [])
       }
     }
