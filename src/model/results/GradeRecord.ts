@@ -112,6 +112,7 @@ export default class GradeRecord {
           }
           else if (test.state === "failed" && courseNum.indexOf('310') > -1) {
             let code = testName.substring(testName.indexOf('~')+1, testName.lastIndexOf('~')); 
+            code = code + ': ' + testName.substring(testName.lastIndexOf('~') + 1);
             failedTests.push(code) // legacy substring for 310
           }
             return failedTests;
