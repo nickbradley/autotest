@@ -120,9 +120,9 @@ export default class TestJobController {
         msg = ':warning:**AutoTest Warning**: Unable to build project **' +dl + '**.\n\n```' + result.deliverableBuildMsg + '\n```';
       } else if (result.deliverableRuntimeError) {
         Log.info('JobQueue::completed() - ['+opts.qname+'] runtime error for deliverable tests againt student work for ' + job.jobId + '.');
-        let runtime210ErrMsg = 'The tests failed to terminate or encountered a runtime exception. Please ensure you have not installed any new library and ensure your code has been effectively tested.';
+        let runtime210ErrMsg = 'The tests failed to terminate or encountered a runtime exception. Please ensure you have not installed any new libraries and ensure your code has been effectively tested.';
         let runtime310ErrMsg = 'The tests failed to terminate or encountered a runtime exception. Please ensure you have not installed any new npm package and ensure your code has been effectively tested.';
-        let runtimeErrMsg = String(this.courseNum).indexOf('310') > -1 ? runtime310ErrMsg : runtime210ErrMsg;
+        let runtimeErrMsg = String(jobData.courseNum).indexOf('310') > -1 ? runtime310ErrMsg : runtime210ErrMsg;
         msg = ':warning:**AutoTest Warning**: Unable to run project **' +dl + '**.\n\n`' + runtimeErrMsg + '\n`';  
         }
         else if (result.containerExitCode > 0) {
