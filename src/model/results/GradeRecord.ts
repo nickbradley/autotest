@@ -55,8 +55,8 @@ export default class GradeRecord {
     let doc = this.originalTestRecord;
     let gradeSummary;
 
-    if (doc.team && doc.deliverable && doc.commit && doc.deliverable.deliverable !== 'd0') {
-      if (doc.studentBuildFailed || doc.deliverableBuildFailed || doc.containerExitCode > 0) {
+    if (doc.team && doc.deliverable && doc.commit) {
+      if (doc.studentBuildFailed || doc.deliverableBuildFailed || doc.deliverableRuntimeError || doc.containerExitCode > 0) {
         gradeSummary = { 
           deliverable: doc.deliverable,
           exitCode: doc.container.exitcode, 

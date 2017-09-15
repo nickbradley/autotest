@@ -88,7 +88,7 @@ export default class ResultRecord {
           '<EXIT_CODE>', gradeSummary.exitCode.toString()
         );
       } else if (gradeSummary.exitCode != 0) {
-        output += ' - Autotest encountered an error during testing (Exit <EXIT_CODE>).';
+        output += ' - AutoTest was unable to grade your assignment. (Exit <EXIT_CODE>).';
         output = output.replace(
           '<GRADE>', '0'
         ).replace(
