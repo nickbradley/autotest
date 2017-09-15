@@ -196,6 +196,7 @@ export default class TestRecord{
           fs.stat(tempDir.path + '/stdio.txt', (err, stats) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
+              console.log('ERROR getTrasncriptSize' + this.maxStdioSize);
               if (this.containerExitCode == 0) this.containerExitCode = 30;
               return fulfill(err);
             }
@@ -220,7 +221,8 @@ export default class TestRecord{
           fs.readFile(tempDir.path + '/stdio.txt', 'utf8', (err, data) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
-              if (this.containerExitCode == 0) this.containerExitCode = 30;
+              if (this.containerExitCode == 0) this.containerExitCode = 31;
+              console.log('ERROR read transcript')
               return fulfill(err);
             }
             else {
@@ -245,9 +247,7 @@ export default class TestRecord{
 
               let deliverableRuntimeTag: ProcessedTag = this.processDeliverableRuntimeTestTag(data);
               this.deliverableRuntimeError = (deliverableRuntimeTag.exitcode > 0 ? true: false);
-              this.deliverableRuntimeMsg = `The tests failed to terminate or encountered a runtime 
-                exception. Please ensure you have not installed any new npm packages and ensure your 
-                code has been effectively tested.`
+              this.deliverableRuntimeMsg = deliverableRuntimeTag.content;
 
               // Process the coverage tag
               // let coverageTag: ProcessedTag = this.processCoverageTag(data);
@@ -265,7 +265,7 @@ export default class TestRecord{
           fs.stat(tempDir.path + '/report.json', (err, stats) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading report.json ' + err);
-              if (this.containerExitCode == 0) this.containerExitCode = 30;
+              if (this.containerExitCode == 0) this.containerExitCode = 31;
               return fulfill(err);
             }
 
@@ -350,7 +350,7 @@ export default class TestRecord{
 
   public processDeliverableRuntimeTestTag(stdout: string): ProcessedTag {
     try {
-      let delivRuntimeTagRegex: RegExp = /^<RUN_TESTS_AGAINST_DELIVERABLE>\n([\s\S]*)<\/RUN_TESTS_AGAINST_DELIVERABLE exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
+      let delivRuntimeTagRegex: RegExp = /^<RUN_DELIVERABLE_AGAINST_STUDENT_WORK>\n([\s\S]*)<\/RUN_DELIVERABLE_AGAINST_STUDENT_WORK exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
       let delivRuntimeMsgRegex: RegExp = /^(npm.*)$/gm;
       let matches: string[] = delivRuntimeTagRegex.exec(stdout);
       let processed: ProcessedTag = {
@@ -359,7 +359,7 @@ export default class TestRecord{
       };
       return processed;
     } catch (err) {
-      throw 'Failed to process <RUN_TESTS_AGAINST_DELIVERABLE> tag. ' + err;
+      throw 'Failed to process <RUN_DELIVERABLE_AGAINST_STUDENT_WORK> tag. ' + err;
     }
   }
 

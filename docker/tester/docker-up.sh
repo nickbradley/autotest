@@ -36,7 +36,7 @@ enterGithubKey
 
 #### BUILDING Course #210 Containers
 printf "./build-210-container.sh ${GITHUB_KEY} cpsc210__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315""
-./build-210-container.sh $GITHUB_KEY cpsc210__bootstrap master d1 "repo1.maven.org:8080" "repo1.maven.org:80" "repo1.maven.org:443"
+#./build-210-container.sh $GITHUB_KEY cpsc210__bootstrap master d1 "repo1.maven.org:8080" "repo1.maven.org:80" "repo1.maven.org:443"
 
 #### BUILDING Course #310 Containers
 printf "./build-310-container.sh ${GITHUB_KEY} cpsc310__bootstrap master d1 "skaha.cs.ubc.ca:8525" "skaha.cs.ubc.ca:11315" "portal.cs.ubc.ca:11315" "portal.cs.ubc.ca:8525" "http://www.google.com/""
