@@ -49,6 +49,8 @@ export interface TestStatus {
   studentBuildMsg: string,
   deliverableBuildFailed: boolean,
   deliverableBuildMsg: string,
+  deliverableRuntimeError: boolean,
+  deliverableRuntimeMsg: string,
   containerExitCode: number,
   processErrors: string[]
 }
@@ -75,6 +77,8 @@ export default class TestRecord{
   private studentBuildMsg: string;
   private deliverableBuildFailed: boolean;
   private deliverableBuildMsg: string;
+  private deliverableRuntimeError: boolean;
+  private deliverableRuntimeMsg: string;
   private testReport: any;
   private commit: string;
   private committer: string;
@@ -129,6 +133,14 @@ export default class TestRecord{
 
   public getDeliverableBuildMsg(): string {
     return this.deliverableBuildMsg;
+  }
+
+  public getDeliverableRuntimeMsg(): string {
+    return this.deliverableRuntimeMsg;
+  }
+
+  public getDeliverableRuntimeError(): boolean {
+    return this.deliverableRuntimeError;
   }
 
   public getScriptVersion(): string {
@@ -231,6 +243,12 @@ export default class TestRecord{
               this.deliverableBuildFailed = (deliverableBuildTag.exitcode > 0 ? true: false);
               this.deliverableBuildMsg = deliverableBuildTag.content;
 
+              let deliverableRuntimeTag: ProcessedTag = this.processDeliverableRuntimeTestTag(data);
+              this.deliverableRuntimeError = (deliverableRuntimeTag.exitcode > 0 ? true: false);
+              this.deliverableRuntimeMsg = `The tests failed to terminate or encountered a runtime 
+                exception. Please ensure you have not installed any new npm packages and ensure your 
+                code has been effectively tested.`
+
               // Process the coverage tag
               // let coverageTag: ProcessedTag = this.processCoverageTag(data);
               // this.failedCoverage = coverageTag.content;
@@ -284,6 +302,8 @@ export default class TestRecord{
             studentBuildMsg: this.studentBuildMsg,
             deliverableBuildFailed: this.deliverableBuildFailed,
             deliverableBuildMsg: this.deliverableBuildMsg,
+            deliverableRuntimeError: this.deliverableRuntimeError,
+            deliverableRuntimeMsg: this.deliverableRuntimeMsg,
             containerExitCode: this.containerExitCode,
             processErrors: err
           }
@@ -327,6 +347,22 @@ export default class TestRecord{
       throw 'Failed to process <BUILD_STUDENT_TESTS> tag. ' + err;
     }
   }
+
+  public processDeliverableRuntimeTestTag(stdout: string): ProcessedTag {
+    try {
+      let delivRuntimeTagRegex: RegExp = /^<RUN_TESTS_AGAINST_DELIVERABLE>\n([\s\S]*)<\/RUN_TESTS_AGAINST_DELIVERABLE exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
+      let delivRuntimeMsgRegex: RegExp = /^(npm.*)$/gm;
+      let matches: string[] = delivRuntimeTagRegex.exec(stdout);
+      let processed: ProcessedTag = {
+        content: matches[1].replace(delivRuntimeMsgRegex, '').trim(),
+        exitcode: +matches[2]
+      };
+      return processed;
+    } catch (err) {
+      throw 'Failed to process <RUN_TESTS_AGAINST_DELIVERABLE> tag. ' + err;
+    }
+  }
+
 
   public processDeliverableProjectBuildTag(stdout: string): ProcessedTag {
     try {
@@ -409,6 +445,8 @@ public getTestRecord(): object {
         'studentBuildMsg': this.studentBuildMsg,
         'deliverableBuildFailed': this.deliverableBuildFailed,
         'deliverableBuildMsg': this.deliverableBuildMsg,
+        'deliverableRuntimeMsg': this.deliverableRuntimeMsg,
+        'deliverableRuntimeError': this.deliverableRuntimeError,
         'testReport': this.testReport,
         'commit': this.commit,
         'committer': this.committer,
