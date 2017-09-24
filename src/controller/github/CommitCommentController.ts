@@ -83,7 +83,6 @@ export default class CommitCommentContoller {
           let commit: string = record.getCommit().short;
           let deliverable: string = record.getDeliverable();
           let reqId: string = team + '-' + commit + '-' + deliverable;
-          console.log('reqId inside top-level run310Logic()', reqId);
 
           let req: PendingRequest = {
             commit: commit,
@@ -98,7 +97,6 @@ export default class CommitCommentContoller {
           let pendingRequest: PendingRequest
           try {
             pendingRequest = await redis.client.get(reqId);
-            console.log('pendingRequest in top-level run310Logic()', pendingRequest);
           } catch(err) {
             hasPending = false;
           }
@@ -132,9 +130,6 @@ export default class CommitCommentContoller {
                 record.setIsProcessed(false);
                 try {
                   Log.info('CommitCommentController::process() - Checking if commit is queued.')
-                  console.log('record.getDeliverable()', record.getDeliverable());
-                  console.log('record.getTeam()', record.getTeam());
-                  console.log('record.getCommit()', record.getCommit());
                   let maxPos: number = await that.isQueued(record.getDeliverable(), record.getTeam(), record.getCommit());
                   let body: string;
                   try {
