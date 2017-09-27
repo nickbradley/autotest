@@ -55,8 +55,8 @@ export default class GradeRecord {
     let doc = this.originalTestRecord;
     let gradeSummary;
 
-    if (doc.team && doc.deliverable && doc.commit && doc.deliverable.deliverable !== 'd0') {
-      if (doc.studentBuildFailed || doc.deliverableBuildFailed || doc.containerExitCode > 0) {
+    if (doc.team && doc.deliverable && doc.commit) {
+      if (doc.studentBuildFailed || doc.deliverableBuildFailed || doc.deliverableRuntimeError || doc.containerExitCode > 0) {
         gradeSummary = { 
           deliverable: doc.deliverable,
           exitCode: doc.container.exitcode, 
@@ -103,17 +103,19 @@ export default class GradeRecord {
         'suiteVersion': doc.container.suiteVersion,
         'failedTests': tests.detailedResults.reduce(function(failedTests, test) {
           let testName: string = test.testName;
-          if (test.state === "failure" && courseNum.indexOf('210') > -1) {
+          if (test.state === "failure" || test.state === "error" && courseNum.indexOf('210') > -1) {
+            let testInfo: string;
             if (test.hintGiven) {
-              failedTests.push(test.hint);
+              testInfo = test.exception === null ? test.hint : test.hint + ' : ' + test.exception;
+              failedTests.push(testInfo);
             }
           }
-          else if (test.state === "failure" && courseNum.indexOf('310') > -1) {
+          else if (test.state === "failed" && courseNum.indexOf('310') > -1) {
             let code = testName.substring(testName.indexOf('~')+1, testName.lastIndexOf('~')); 
-            failedTests.push(testName)// legacy substring for 310
+            code = code + ': ' + testName.substring(testName.lastIndexOf('~') + 1);
+            failedTests.push(code) // legacy substring for 310
           }
             return failedTests;
-            //return code + ': ' + name.substring(name.lastIndexOf('~')+1, name.indexOf('.')+1);\n              })\n            })\n          }\n        }\n      }"
         }, [])
       }
     }

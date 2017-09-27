@@ -35,14 +35,14 @@ export default class TestRecordRepo {
     });
   }
 
-  public async getLatestTestRecord(_team: string, _commit: string, _deliverable: string): Promise<TestRecord> {
+  public async getLatestTestRecord(_team: string, _commit: string, _deliverable: string, _orgName: string): Promise<TestRecord> {
     return new Promise<TestRecord>((fulfill, reject) => {
-      let query: any = { commit: _commit, deliverable: _deliverable , team: _team};
+      let query: any = { commit: _commit, deliverable: _deliverable , team: _team, orgName: _orgName};
 
       db.getLatestRecord(RESULTS_COLLECTION, query).then((testRecord: TestRecord) => {
         try {
           if (!testRecord) {
-            throw `Could not find ${_team}, ${_commit}, and ${_deliverable}`;
+            throw `Could not find ${_orgName}, ${_team}, ${_commit}, and ${_deliverable}`;
           }
           fulfill(testRecord);
         }

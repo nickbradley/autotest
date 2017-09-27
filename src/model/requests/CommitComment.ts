@@ -1,4 +1,5 @@
 import * as Url from 'url';
+import * as Moment from 'moment';
 
 import Log from '../../Util';
 import {IConfig, AppConfig} from '../../Config';
@@ -10,7 +11,7 @@ import DeliverableRepo from '../../repos/DeliverableRepo';
 
 interface FetchedDeliverable {
   key: string;
-  deliverable: Deliverable
+  deliverable: Deliverable;
 }
 
 export interface CommitComment {
@@ -20,6 +21,7 @@ export interface CommitComment {
   team: string;
   user: string;
   commit: Commit;
+  orgName: string;
   body: string;
   type: string;
   timestamp: number;
@@ -44,6 +46,7 @@ export default class CommitCommentRecord {
   private isRequest: boolean;
   private isProcessed: boolean;
   private options: string[] = [];
+  private orgName: string;
   private note: string;
 
   constructor(courseNum: number) {
@@ -65,6 +68,7 @@ export default class CommitCommentRecord {
         that.commit = new Commit(payload.comment.commit_id);
         that.team = GithubUtil.getTeamOrProject(payload.repository.name);
         that.user = payload.comment.user.login;
+        that.orgName = payload.organization.login;
         that.hook = Url.parse(payload.repository.commits_url.replace('{/sha}', '/' + this.commit) + '/comments');
         that.message = payload.comment.body;
 
@@ -108,7 +112,8 @@ export default class CommitCommentRecord {
           // The key refers to a vaild deliverable that hasn't been released
           // Get all deliverables that have been released
           } else {
-            this.note = 'The specified deliverable has not been released yet; using latest released.';
+            let date = Moment(deliverable.releaseDate).format('MMMM Do YYYY, h:mm:ss a');
+            this.note = `The specified deliverable has not been released yet; Please wait until ${date}.`;
             for (const key of deliverableRecord.keys()) {
               let deliverable: Deliverable = deliverableRecord.item(key);
               if (new Date(deliverable.releaseDate) <= now) {
@@ -135,7 +140,7 @@ export default class CommitCommentRecord {
 
         fulfill(latestDeliverable);
       } catch(err) {
-          reject(err);
+          Log.error(`CommitComment::fulfill(latestDeliverable) ${err}`);
       }
     });
   }
@@ -172,6 +177,11 @@ export default class CommitCommentRecord {
   public getIsProcessed(): boolean {
     return this.isProcessed;
   }
+
+  public getOrgName(): string {
+    return this.orgName;
+  }
+
   public setIsProcessed(value: boolean) {
     this.isProcessed = value;
   }
@@ -186,6 +196,7 @@ export default class CommitCommentRecord {
       deliverable: this.deliverable,
       team: this.team, 
       user: this.user, 
+      orgName: this.orgName,
       commit: this.commit, 
       body: this.message, 
       type: 'commit_comment', 

@@ -27,6 +27,7 @@ interface PendingRequest {
   commit: string;
   team: string;
   user: string;
+  orgName: string;
   deliverable: string;
   hook: string;
 }
@@ -78,6 +79,7 @@ export default class CommitCommentContoller {
         if (record.getIsRequest()) {
           let team: string = record.getTeam();
           let user: string = record.getUser();
+          let orgName: string = record.getOrgName();
           let commit: string = record.getCommit().short;
           let deliverable: string = record.getDeliverable();
           let reqId: string = team + '-' + commit + '-' + deliverable;
@@ -86,6 +88,7 @@ export default class CommitCommentContoller {
             commit: commit,
             team: team,
             user: user,
+            orgName: orgName,
             deliverable: deliverable,
             hook: record.getHook().toString()
           }
@@ -115,7 +118,7 @@ export default class CommitCommentContoller {
             let diff: number = +new Date() - +lastRequest;
             if (diff > record.getDeliverableRate() || isAdmin) {
               try {
-                let resultRecord: ResultRecord = new ResultRecord(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getNote());
+                let resultRecord: ResultRecord = new ResultRecord(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getOrgName(), this.record.getNote());
                 await resultRecord.fetch();
                 let body: string = resultRecord.formatResult();
                 response = {
@@ -131,7 +134,7 @@ export default class CommitCommentContoller {
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = 'autotest/' + req.deliverable + '-' + imageName + ':latest|' + req.team+ '#' + req.commit;
+                    let jobId: string = 'autotest/' + imageName + ':latest|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -209,6 +212,7 @@ export default class CommitCommentContoller {
         if (record.getIsRequest()) {
           let team: string = record.getTeam();
           let user: string = record.getUser();
+          let orgName: string = record.getOrgName();
           let commit: string = record.getCommit().short;
           let deliverable: string = record.getDeliverable();
           let reqId: string = team + '-' + commit + '-' + deliverable;
@@ -217,6 +221,7 @@ export default class CommitCommentContoller {
             commit: commit,
             team: team,
             user: user,
+            orgName: orgName,
             deliverable: deliverable,
             hook: record.getHook().toString()
           }
@@ -246,7 +251,7 @@ export default class CommitCommentContoller {
             let diff: number = +new Date() - +lastRequest;
             if (diff > record.getDeliverableRate() || isAdmin) {
               try {
-                let resultRecord: ResultRecord = new ResultRecord(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getNote());
+                let resultRecord: ResultRecord = new ResultRecord(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getOrgName(), this.record.getNote());
                 await resultRecord.fetch();
                 let body: string = await resultRecord.formatResult();
                 response = {
@@ -262,7 +267,7 @@ export default class CommitCommentContoller {
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = 'autotest/' + req.deliverable + '-' + imageName + ':latest|' + req.team+ '#' + req.commit;
+                    let jobId: string = 'autotest/' + imageName + ':latest|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -278,7 +283,7 @@ export default class CommitCommentContoller {
                   Log.error('CommitCommentContoller::process() - ERROR Unable to locate test results. ' + err);
                   response = {
                     statusCode: 404,
-                    body: 'We can\'t seem to find any results for **'+deliverable+'** on this commit. Please make a new commit and try again.' + (this.record.getNote() ? '\n_Note: ' + this.record.getNote() + '_' : '')
+                    body: 'We can\'t seem to find any results for this commit. We even tried the latest **' + deliverable +'** on this commit. Please make a new commit and try again.' + (this.record.getNote() ? '\n_Note: ' + this.record.getNote() + '_' : '')
                   }
                 }
               }
@@ -352,13 +357,11 @@ export default class CommitCommentContoller {
         let adminRecords = await db.getObjectIds('users', '_id', adminRecordsIds)
 
         adminRecords.map((adminObject: Admin) => {
-
           let adminRecord = new AdminRecord(adminObject);
           
-          if (adminRecord.getUsername().toLowerCase() == user) {
+          if (adminRecord.getUsername().toLowerCase().indexOf(user) > -1) {
             fulfill(true);
           }
-          fulfill(false);
         });
         // if no admin course records are found
         fulfill(false);
@@ -382,7 +385,8 @@ export default class CommitCommentContoller {
     //  jobId: job.test.image + '|'  + job.team + '#' + job.commit,
     return new Promise<number>((fulfill, reject) => {
       let imageName = this.getImageName();
-      let jobId: string = 'autotest/' + deliverable + '-' + imageName + ':latest|' + team + '#' + commit.short;
+      console.log()
+      let jobId: string = 'autotest/' + imageName + ':latest|' + deliverable + '-' + team + '#' + commit.short;
       let queue: TestJobController = TestJobController.getInstance();
 
       queue.getJob(jobId).then(job => {
