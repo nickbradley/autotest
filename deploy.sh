@@ -8,6 +8,12 @@ docker create \
   --publish 6379:6379 \
 redis
 
+# Create Redis container
+docker create \
+  --name autotest-redis \
+  --publish 6380:6380 \
+redis
+
 # Create CouchDB container
 docker create \
   --name autotest-db \

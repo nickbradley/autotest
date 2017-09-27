@@ -7,6 +7,7 @@ export interface Push {
   commit: string;
   type: string;
   timestamp: number;
+  orgName: string;
   attachments: object;
   idStamp: string;
 }
@@ -16,7 +17,7 @@ export default class PushRecord {
   private _team: string;
   private _user: string;
   private _commit: Commit;
-  private _deliverable: string;
+  private _deliverable?: string;
   private _commentHook: Url.Url;
   private _ref: string;
   private _githubOrg: string;
@@ -27,7 +28,7 @@ export default class PushRecord {
       this.payload = payload;
       this._team = GithubUtil.getTeamOrProject(payload.repository.name);
       this._user = payload.pusher.name;
-      this._deliverable = this.parseDeliverable(payload.repository.name);
+      this._deliverable = GithubUtil.parseDeliverable(payload.repository.name);
       this._commit = new Commit(payload.after);
       this._githubOrg = payload.repository.owner.name;
       this._commentHook = Url.parse(payload.repository.commits_url.replace('{/sha}', '/' + this._commit) + '/comments');
@@ -50,6 +51,9 @@ export default class PushRecord {
     return this._user;
   }
 
+  get orgName(): string {
+    return this._githubOrg;
+  }
   get commit(): Commit {
     return this._commit;
   }
@@ -72,6 +76,7 @@ export default class PushRecord {
     let doc: Push = {
       team: this.team,
       user: this.user,
+      orgName: this.orgName,
       commit: this.commit.toString(),
       type: 'push',
       timestamp: this.timestamp,
@@ -80,12 +85,5 @@ export default class PushRecord {
     }
 
     return doc;
-  }
-
-  private parseDeliverable(fullRepoName: string): string {
-    let deliverable = fullRepoName.match(/\_(.*)\_/);
-    if (deliverable) {
-      return deliverable.pop();
-    }
   }
 }

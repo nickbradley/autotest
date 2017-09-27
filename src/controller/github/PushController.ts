@@ -21,6 +21,7 @@ export default class PushController {
   private courseRecord: CourseRecord;
   private courseSettings: CourseSettings;
   private record: PushRecord;
+  private overrideBatchMarking: boolean;
   
   constructor(courseNum: number) {
     this.config = new AppConfig();
@@ -34,8 +35,11 @@ export default class PushController {
 
     let courseSettings: CourseSettings;
     let course: Course;
+    let deliverableKeys: any;
+
     course = await this.getCourseLogic();
     courseSettings = course.settings;
+    this.overrideBatchMarking = this.checkOverrideBatchMarking(this.record.deliverable);
 
     if (this.record.user.toString().indexOf(BOT_USERNAME) > -1) {
       try {
@@ -45,11 +49,11 @@ export default class PushController {
         Log.info(err);
       }
     }
-    else if (courseSettings.markDelivsByBatch == true && course.batchDeliverables.length < 1) {
+    else if (courseSettings.markDelivsByBatch == true && !this.overrideBatchMarking) {
       return Promise.all(this.markDeliverablesByBatch());
     } 
     else {
-      return Promise.all(this.markDeliverableByRepo())
+      return Promise.all(this.markDeliverableByRepo());
     }
   }
 
@@ -92,12 +96,13 @@ export default class PushController {
     let promises: Promise<Job>[] = [];
     let currentDate: Date = new Date();
     let deliverablesRecord = this.courseSettings.deliverables;
-
+    // conditions for markByBatch is flag true on Course object, 
+    // and flag true in CourseSettings.deliverables[key].markInBatch 
     for (const key of Object.keys(deliverablesRecord)) {
       if (key.match(/d\d+/)) {
         let deliverable = deliverablesRecord[key];
         let rDate: Date = new Date(deliverable.releaseDate);
-        if (rDate <= currentDate) {
+        if (rDate <= currentDate && deliverable.markInBatch) {
           for (let repo of deliverable.repos) {
             let testJob: TestJob = {
               githubOrg: this.record.githubOrg,
@@ -107,7 +112,7 @@ export default class PushController {
               commit: this.record.commit.short,
               hook: this.record.commentHook,
               ref: this.record.ref,
-              markDelivsByBatch: this.courseSettings.markDelivsByBatch,
+              overrideBatchMarking: this.overrideBatchMarking,
               test: {
                 name: repo.name,
                 image: 'autotest/' + key + '-' + this.courseSettings.bootstrapImage + ':' + (repo.commit ? repo.commit : 'latest'),
@@ -141,7 +146,7 @@ export default class PushController {
               team: record.team,
               commit: record.commit.short,
               hook: record.commentHook,
-              markDelivsByBatch: this.courseSettings.markDelivsByBatch,
+              overrideBatchMarking: this.overrideBatchMarking,
               ref: record.ref,
               test: {
                 name: repo.name,
@@ -155,6 +160,13 @@ export default class PushController {
           }
         }
     return promises;
+  }
+
+  private checkOverrideBatchMarking(deliverable: string): boolean {
+    if (typeof deliverable === 'undefined') {
+      return false;
+    }
+    return true;
   }
 
   private async store(record: PushRecord): Promise<any> {

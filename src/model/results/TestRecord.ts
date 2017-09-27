@@ -49,6 +49,8 @@ export interface TestStatus {
   studentBuildMsg: string,
   deliverableBuildFailed: boolean,
   deliverableBuildMsg: string,
+  deliverableRuntimeError: boolean,
+  deliverableRuntimeMsg: string,
   containerExitCode: number,
   processErrors: string[]
 }
@@ -75,6 +77,8 @@ export default class TestRecord{
   private studentBuildMsg: string;
   private deliverableBuildFailed: boolean;
   private deliverableBuildMsg: string;
+  private deliverableRuntimeError: boolean;
+  private deliverableRuntimeMsg: string;
   private testReport: any;
   private commit: string;
   private committer: string;
@@ -83,7 +87,7 @@ export default class TestRecord{
   private scriptVersion: string;
   private suiteVersion: string;
   private failedCoverage: string;
-  private markDelivsByBatch: boolean;
+  private overrideBatchMarking: boolean;
   private ref: string;
   private githubOrg: string;
   private username: string;
@@ -96,7 +100,7 @@ export default class TestRecord{
     this.commit = testJob.commit;
     this.committer = testJob.username;
     this.ref = testJob.ref;
-    this.markDelivsByBatch = testJob.markDelivsByBatch;
+    this.overrideBatchMarking = testJob.overrideBatchMarking;
     this.timestamp = +new Date();
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
     this.githubOrg = testJob.githubOrg;
@@ -129,6 +133,14 @@ export default class TestRecord{
 
   public getDeliverableBuildMsg(): string {
     return this.deliverableBuildMsg;
+  }
+
+  public getDeliverableRuntimeMsg(): string {
+    return this.deliverableRuntimeMsg;
+  }
+
+  public getDeliverableRuntimeError(): boolean {
+    return this.deliverableRuntimeError;
   }
 
   public getScriptVersion(): string {
@@ -165,7 +177,7 @@ export default class TestRecord{
       this.ref,
       this.deliverable.deliverable,
       this.deliverable.image,
-      this.markDelivsByBatch,
+      this.overrideBatchMarking,
       tempDir.path
     ];
     let options = {
@@ -184,6 +196,7 @@ export default class TestRecord{
           fs.stat(tempDir.path + '/stdio.txt', (err, stats) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
+              console.log('ERROR getTrasncriptSize' + this.maxStdioSize);
               if (this.containerExitCode == 0) this.containerExitCode = 30;
               return fulfill(err);
             }
@@ -208,7 +221,8 @@ export default class TestRecord{
           fs.readFile(tempDir.path + '/stdio.txt', 'utf8', (err, data) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
-              if (this.containerExitCode == 0) this.containerExitCode = 30;
+              if (this.containerExitCode == 0) this.containerExitCode = 31;
+              console.log('ERROR read transcript')
               return fulfill(err);
             }
             else {
@@ -231,6 +245,10 @@ export default class TestRecord{
               this.deliverableBuildFailed = (deliverableBuildTag.exitcode > 0 ? true: false);
               this.deliverableBuildMsg = deliverableBuildTag.content;
 
+              let deliverableRuntimeTag: ProcessedTag = this.processDeliverableRuntimeTestTag(data);
+              this.deliverableRuntimeError = (deliverableRuntimeTag.exitcode > 0 ? true: false);
+              this.deliverableRuntimeMsg = deliverableRuntimeTag.content;
+
               // Process the coverage tag
               // let coverageTag: ProcessedTag = this.processCoverageTag(data);
               // this.failedCoverage = coverageTag.content;
@@ -247,7 +265,7 @@ export default class TestRecord{
           fs.stat(tempDir.path + '/report.json', (err, stats) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading report.json ' + err);
-              if (this.containerExitCode == 0) this.containerExitCode = 30;
+              if (this.containerExitCode == 0) this.containerExitCode = 31;
               return fulfill(err);
             }
 
@@ -284,6 +302,8 @@ export default class TestRecord{
             studentBuildMsg: this.studentBuildMsg,
             deliverableBuildFailed: this.deliverableBuildFailed,
             deliverableBuildMsg: this.deliverableBuildMsg,
+            deliverableRuntimeError: this.deliverableRuntimeError,
+            deliverableRuntimeMsg: this.deliverableRuntimeMsg,
             containerExitCode: this.containerExitCode,
             processErrors: err
           }
@@ -327,6 +347,22 @@ export default class TestRecord{
       throw 'Failed to process <BUILD_STUDENT_TESTS> tag. ' + err;
     }
   }
+
+  public processDeliverableRuntimeTestTag(stdout: string): ProcessedTag {
+    try {
+      let delivRuntimeTagRegex: RegExp = /^<RUN_DELIVERABLE_AGAINST_STUDENT_WORK>\n([\s\S]*)<\/RUN_DELIVERABLE_AGAINST_STUDENT_WORK exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
+      let delivRuntimeMsgRegex: RegExp = /^(npm.*)$/gm;
+      let matches: string[] = delivRuntimeTagRegex.exec(stdout);
+      let processed: ProcessedTag = {
+        content: matches[1].replace(delivRuntimeMsgRegex, '').trim(),
+        exitcode: +matches[2]
+      };
+      return processed;
+    } catch (err) {
+      throw 'Failed to process <RUN_DELIVERABLE_AGAINST_STUDENT_WORK> tag. ' + err;
+    }
+  }
+
 
   public processDeliverableProjectBuildTag(stdout: string): ProcessedTag {
     try {
@@ -409,6 +445,8 @@ public getTestRecord(): object {
         'studentBuildMsg': this.studentBuildMsg,
         'deliverableBuildFailed': this.deliverableBuildFailed,
         'deliverableBuildMsg': this.deliverableBuildMsg,
+        'deliverableRuntimeMsg': this.deliverableRuntimeMsg,
+        'deliverableRuntimeError': this.deliverableRuntimeError,
         'testReport': this.testReport,
         'commit': this.commit,
         'committer': this.committer,

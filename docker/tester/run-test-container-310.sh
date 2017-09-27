@@ -26,7 +26,7 @@ set -o errexit  # exit on command failure
 set -o pipefail # exit if any command in pipeline fails
 set -o nounset  # exit if undeclared variable is used
 
-CPSC310_ORG_NAME="CPSC310-2017W-T2"
+CPSC310_ORG_NAME="CPSC310-2017W-T1"
 
 githubApiKey=${1}
 projectName=${2}
@@ -34,13 +34,13 @@ projectCommit=${3}
 projectBranch=${4}
 delivToMark=${5}
 testImage=${6}
-markByBatch=${7}
+overrideBatchMarking=${7}
 tempDir=${8}
 
-if [ "${7}" -eq "1" ]; then
-  projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${projectName}.git"
-else
+if [ overrideBatchMarking == "1" ]; then
   projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${delivToMark}_${projectName}.git"
+else
+  projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${projectName}.git"
 fi
 
 docker run --cap-add=NET_ADMIN \

@@ -9,7 +9,7 @@ ARG externalServers
 ARG githubKey
 
 ENV GITHUB_KEY=$githubKey
-ENV MOCHAWESOME_REPORTDIR=../output
+ENV MOCHAWESOME_REPORTDIR="/cpsc310__bootstrap/cpsc310deliverablerepo/mochawesome-reports"
 ENV ALLOW_DNS=$allowDNS
 ENV WHITELISTED_SERVERS=$externalServers
 ENV TESTSUITE_VERSION=$testsuiteCommit
@@ -40,4 +40,4 @@ RUN /pull-repo.sh https://${GITHUB_KEY}@github.ubc.ca/steca/cpsc310__bootstrap "
 # RUN cd /cpsc310__bootstrap/cpsc310deliverablerepo/ && yarn install
 # RUN cd /cpsc310__bootstrap/cpsc310studentrepo/ && yarn install
 
-CMD timeout 10m /run-tests-310.sh >/output/stdio.txt 2>&1
+CMD timeout 15m /run-tests-310.sh >/output/stdio.txt 2>&1

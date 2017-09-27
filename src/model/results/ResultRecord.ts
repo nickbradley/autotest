@@ -11,12 +11,14 @@ export default class ResultRecord {
   private commit: string;
   private deliverable: string;
   private note: string;
+  private orgName: string;
   private gradeSummary: GradeSummary;
 
-  constructor(team: string, shortCommit: string, deliverable: string, note: string) {
+  constructor(team: string, shortCommit: string, deliverable: string, orgName: string, note: string) {
     this.config = new AppConfig();
     this.team = team;
     this.commit = shortCommit;
+    this.orgName = orgName;
     this.deliverable = deliverable;
     this.note = note;
   }
@@ -45,7 +47,7 @@ export default class ResultRecord {
     let that = this;
     return new Promise<GradeSummary>(async (fulfill, reject) => {
       try {
-        let testRecord = await testRecordRepo.getLatestTestRecord(this.team, this.commit, this.deliverable);
+        let testRecord = await testRecordRepo.getLatestTestRecord(this.team, this.commit, this.deliverable, this.orgName);
         let gradeSummary: GradeSummary = new GradeRecord(testRecord, this.deliverable).getGradeSummary();
 
         fulfill(gradeSummary)
@@ -86,7 +88,7 @@ export default class ResultRecord {
           '<EXIT_CODE>', gradeSummary.exitCode.toString()
         );
       } else if (gradeSummary.exitCode != 0) {
-        output += ' - Autotest encountered an error during testing (Exit <EXIT_CODE>).';
+        output += ' - AutoTest was unable to grade your assignment. (Exit <EXIT_CODE>).';
         output = output.replace(
           '<GRADE>', '0'
         ).replace(
@@ -97,15 +99,16 @@ export default class ResultRecord {
         // if 310 class, then run 310 logic
         console.log('310 hit');
         output += '- Test summary: <TEST_GRADE>% (<TEST_SUMMARY>)\n- Line coverage: <COVERAGE_SUMMARY>%';
-
+        let deliv = gradeSummary.deliverable;
+        
         output = output.replace(
-          '<GRADE>', gradeSummary.grade.toString()
+          '<GRADE>', String(gradeSummary.grade)
         ).replace(
-          '<TEST_GRADE>', (+gradeSummary.coverageSummary).toString()
+          '<TEST_GRADE>', String(+gradeSummary.coverageSummary)
         ).replace(
-          '<TEST_SUMMARY>', gradeSummary.testSummary 
+          '<TEST_SUMMARY>', String(gradeSummary.testSummary)
         ).replace(
-          '<COVERAGE_SUMMARY>', gradeSummary.lineCoverage.toString()
+          '<COVERAGE_SUMMARY>', String(gradeSummary.coverageGrade)
         );
 
         if (gradeSummary.coverageFailed.length > 0) {

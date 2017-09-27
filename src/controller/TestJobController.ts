@@ -26,7 +26,7 @@ export interface TestJob {
   hook: Url.Url;
   ref: string;
   test: TestJobDeliverable;
-  markDelivsByBatch: boolean;
+  overrideBatchMarking: boolean;
   courseNum: number;
   githubOrg: string;
 }
@@ -114,11 +114,18 @@ export default class TestJobController {
 
       if (result.studentBuildFailed) {
         Log.info('JobQueue::completed() - ['+opts.qname+'] build failed for ' + job.jobId + '.');
-        msg = ':warning:**AutoTest Warning**: Unable to build project for **' +dl + '**.\n\n```' + result.studentBuildMsg + '\n```';
+        msg = ':warning:**AutoTest Warning**: Unable to build project  **' +dl + '**.\n\n```' + result.studentBuildMsg + '\n```';
       } else if (result.deliverableBuildFailed) {
         Log.info('JobQueue::completed() - ['+opts.qname+'] build failed for deliverable tests againt student work for ' + job.jobId + '.');
-        msg = ':warning:**AutoTest Warning**: Unable to build project for **' +dl + '**.\n\n```' + result.deliverableBuildMsg + '\n```';
-      } else if (result.containerExitCode > 0) {
+        msg = ':warning:**AutoTest Warning**: Unable to build project **' +dl + '**.\n\n```' + result.deliverableBuildMsg + '\n```';
+      } else if (result.deliverableRuntimeError) {
+        Log.info('JobQueue::completed() - ['+opts.qname+'] runtime error for deliverable tests againt student work for ' + job.jobId + '.');
+        let runtime210ErrMsg = 'The tests failed to terminate or encountered a runtime exception. Please ensure you have not installed any new libraries and ensure your code has been effectively tested.';
+        let runtime310ErrMsg = 'The tests failed to terminate or encountered a runtime exception. Please ensure you have not installed any new npm package and ensure your code has been effectively tested.';
+        let runtimeErrMsg = String(jobData.courseNum).indexOf('310') > -1 ? runtime310ErrMsg : runtime210ErrMsg;
+        msg = ':warning:**AutoTest Warning**: Unable to run project **' +dl + '**.\n\n`' + runtimeErrMsg + '\n`';  
+        }
+        else if (result.containerExitCode > 0) {
         Log.info('JobQueue::completed() - ['+opts.qname+'] container exited with code ' + result.containerExitCode + ' for ' + job.jobId + '.');
         msg = ':warning:**AutoTest Warning**: Unable to run tests for **' +dl+ '**. Exit ' + result.containerExitCode +'.';
         switch(result.containerExitCode) {
@@ -132,18 +139,21 @@ export default class TestJobController {
             msg = ':warning:**AutoTest Warning**: Test container failed to emit stdio for **'+dl+'**. Try making another commit and, if it fails, post a comment on Piazza including your team and commit SHA. (Exit 30: Test container failed to emit stdio.txt).';
           break;
           case 31:
-            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed **your** tests for **'+dl+'**. Please make sure your tests run without error on your computer before committing to GitHub. (Exit 31: Test container failed to emit coverage.json).';
+            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed **your** tests for **'+dl+'**. Please make sure your tests run without error on your computer before committing to GitHub. (Exit 31: Test container failed to emit report.json).';
           break;
           case 32:
-            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed its test suite for **'+dl+'**. Please make sure you handle exceptions before committing to GitHub. (Exit 31: Test container failed to emit mocha.json).';
+            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed its test suite for **'+dl+'**. Please make sure you handle exceptions before committing to GitHub. (Exit 31: Test container failed to emit report.json).';
           break;
         }
       } else if (pendingRequest) {
+        console.log('pendingRequest', pendingRequest);
+        console.log('pendingRequest.orgName', pendingRequest.orgName);
         let team: string = pendingRequest.team;
+        let orgName: string = pendingRequest.orgName;
         let commit: string = pendingRequest.commit;
         let deliverable: string = pendingRequest.deliverable;
-        let controller: CommitCommentController = new CommitCommentController(1310);
-        let resultRecord: ResultRecord = new ResultRecord(team, commit, deliverable, '');
+        let controller: CommitCommentController = new CommitCommentController(this.courseNum);
+        let resultRecord: ResultRecord = new ResultRecord(team, commit, deliverable, orgName, '');
         await resultRecord.fetch();
         msg = resultRecord.formatResult();
       }
@@ -187,10 +197,10 @@ export default class TestJobController {
    */
   public async addJob(job: TestJob): Promise<Job> {
     let opts: JobOpts = {
-      jobId: job.test.image + '|'  + job.team + '#' + job.commit,
+      jobId: job.test.image + '|' + job.test.deliverable + '-'  + job.team + '#' + job.commit,
       removeOnComplete: true
     }
-
+    
     return <Promise<Job>>this.stdManager.queue.add(job, opts);
   }
 
