@@ -385,7 +385,6 @@ export default class CommitCommentContoller {
     //  jobId: job.test.image + '|'  + job.team + '#' + job.commit,
     return new Promise<number>((fulfill, reject) => {
       let imageName = this.getImageName();
-      console.log()
       let jobId: string = 'autotest/' + imageName + ':latest|' + deliverable + '-' + team + '#' + commit.short;
       let queue: TestJobController = TestJobController.getInstance();
 
