@@ -115,7 +115,7 @@ export default class PushController {
               overrideBatchMarking: this.overrideBatchMarking,
               test: {
                 name: repo.name,
-                image: 'autotest/' + key + '-' + this.courseSettings.bootstrapImage + ':' + (repo.commit ? repo.commit : 'latest'),
+                image: 'autotest/' + this.courseSettings.bootstrapImage + ':' + (repo.commit ? repo.commit : 'latest'),
                 visibility: repo.visibility,
                 deliverable: key
               }
