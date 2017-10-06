@@ -58,7 +58,7 @@ export interface TestStatus {
 export default class TestRecord{
   // private config: IConfig;
   private maxStdioSize: number = 5 * 1000000;  // 5 MB
-  private maxReportSize: number = 1/2 * 100000; // 500 KB
+  private maxReportSize: number = 1/2 * 1000000; // 500 KB
   private stdio: string;
   private report: string;
   private reportSize: number;
@@ -239,15 +239,15 @@ export default class TestRecord{
               // Process the project build tags for Student and Deliverable repos, respectively
               let studentBuildTag: ProcessedTag = this.processStudentProjectBuildTag(data);
               this.studentBuildFailed = (studentBuildTag.exitcode > 0 ? true : false);
-              this.studentBuildMsg = studentBuildTag.content;
+              this.studentBuildMsg = String(studentBuildTag.content).substring(0, 1000000);
 
               let deliverableBuildTag: ProcessedTag = this.processDeliverableProjectBuildTag(data);
               this.deliverableBuildFailed = (deliverableBuildTag.exitcode > 0 ? true: false);
-              this.deliverableBuildMsg = deliverableBuildTag.content;
+              this.deliverableBuildMsg = String(deliverableBuildTag.content).substring(0, 1000000);
 
               let deliverableRuntimeTag: ProcessedTag = this.processDeliverableRuntimeTestTag(data);
               this.deliverableRuntimeError = (deliverableRuntimeTag.exitcode > 0 ? true: false);
-              this.deliverableRuntimeMsg = deliverableRuntimeTag.content;
+              this.deliverableRuntimeMsg = String(deliverableRuntimeTag.content).substring(0, 1000000);
 
               // Process the coverage tag
               // let coverageTag: ProcessedTag = this.processCoverageTag(data);
