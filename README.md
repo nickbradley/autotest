@@ -7,6 +7,7 @@ Requirements
 - Docker version 17.03.1-ce, build c6d412e (any close version will do)
 - 'autotest.env' file in `./autotest/` directory: 
 
+```
 	DB_INSTANCE=http://localhost:11312 (old couchDB address)
 	DB_ADMIN_USERNAME=CouchDBAdminUserName
 	DB_ADMIN_PASSWORD=CouchDBAdminPassWord
@@ -21,15 +22,16 @@ Requirements
 	DEV_MONGO_DB_INSTANCE=mongodb://localhost:27017/development
 	PROD_MONGO_DB_INSTANCE=mongodb://localhost:27017/production
 	TEST_MONGO_DB_INSTANCE=mongodb://localhost:27017/testing
+```
 
 - `yarn run install` with original lockfile and then `yarn run build`
 
 Start Instructions
 ----------------------
 
-- `./deploy.sh` to install Docker instances that are needed.
-- `./autotest/docker/tester/docker-up.sh` to build Docker containers for courses
-- `yarn run start`
+- `./deploy.sh` Install required Docker instances.
+- `./autotest/docker/tester/docker-up.sh` Build required per-course Docker containers.
+- `yarn run start` Start AutoTest service.
 
 Extra Info
 --------------
