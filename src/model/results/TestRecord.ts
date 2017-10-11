@@ -196,7 +196,7 @@ export default class TestRecord{
           fs.stat(tempDir.path + '/stdio.txt', (err, stats) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
-              console.log('ERROR getTrasncriptSize' + this.maxStdioSize);
+              console.log('ERROR getTranscriptSize' + this.maxStdioSize);
               if (this.containerExitCode == 0) this.containerExitCode = 30;
               return fulfill(err);
             }
@@ -410,17 +410,23 @@ public getTestRecord(): object {
     }
 
     function getStdio() {
-      if (that.stdio && that.stdioSize <= that.maxStdioSize) {
-        let attachments = {name: 'stdio.txt', data: that.stdio, content_type: 'application/plain'};
-        return attachments;
+      
+      if (that.stdio && that.stdio.length > 3000000) {
+        let trimmedStdio = String(that.stdio).substring(0, 3000000);
+        trimmedStdio += "\n\n\n STDIO FILE TRUNCATED AS OVER SIZE LIMIT";
+        let attachment = {name: 'stdio.txt', data: trimmedStdio, content_type: 'application/plain'};
+        return attachment;
+      } else {
+        let attachment = {name: 'stdio.txt', data: that.stdio, content_type: 'application/plain'};
+        return attachment;
       }
     }
 
     function getReport() {
       let attachments = [];
       if (that.report && that.reportSize <= that.maxReportSize) {
-        let attachments = {name: 'report.json', data: that.report, content_type: 'application/json'};
-        return attachments;
+        let attachment = {name: 'report.json', data: that.report, content_type: 'application/json'};
+        return attachment;
       }
     }
     function parseReport() {
