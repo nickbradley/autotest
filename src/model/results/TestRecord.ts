@@ -82,6 +82,8 @@ export default class TestRecord{
   private deliverableRuntimeMsg: string;
   private testReport: any;
   private commit: string;
+  private commitUrl: string;
+  private projectUrl: string;
   private committer: string;
   private containerExitCode: number = 0;
   private timestamp: number;
@@ -98,6 +100,8 @@ export default class TestRecord{
     this.githubToken = githubToken;
     this.team = testJob.team;
     this.repo = testJob.repo;
+    this.projectUrl = testJob.projectUrl;
+    this.commitUrl = testJob.commitUrl;
     this.deliverable = testJob.test;
     this.commit = testJob.commit;
     this.committer = testJob.username;
@@ -450,6 +454,8 @@ public getTestRecord(): object {
        let doc = {
         'team': this.team,
         'repo': this.repo,
+        'projectUrl': this.projectUrl,
+        'commitUrl': this.commitUrl,
         'courseNum': this.courseNum,
         'orgName': this.githubOrg,
         'deliverable': this.deliverable.deliverable,
