@@ -107,7 +107,7 @@ export default class TestRecord{
     this.committer = testJob.username;
     this.ref = testJob.ref;
     this.overrideBatchMarking = testJob.overrideBatchMarking;
-    this.timestamp = +new Date();
+    this.timestamp = testJob.timestamp;
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
     this.githubOrg = testJob.githubOrg;
     this.username = testJob.username;
