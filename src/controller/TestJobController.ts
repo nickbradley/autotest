@@ -22,8 +22,10 @@ export interface TestJobDeliverable {
 export interface TestJob {
   username: string;
   team: string;
+  repo: string;
   commit: string;
   hook: Url.Url;
+  timestamp: number;
   ref: string;
   test: TestJobDeliverable;
   overrideBatchMarking: boolean;

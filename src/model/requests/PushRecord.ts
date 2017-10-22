@@ -15,25 +15,27 @@ export interface Push {
 export default class PushRecord {
   private payload: JSON;
   private _team: string;
+  private _repo: string;
   private _user: string;
   private _commit: Commit;
   private _deliverable?: string;
   private _commentHook: Url.Url;
   private _ref: string;
   private _githubOrg: string;
-  private timestamp: number;
+  private _timestamp: number;
 
   constructor(payload: any) {
     try {
       this.payload = payload;
       this._team = GithubUtil.getTeamOrProject(payload.repository.name);
+      this._repo = payload.repository.name;
       this._user = payload.pusher.name;
       this._deliverable = GithubUtil.parseDeliverable(payload.repository.name);
       this._commit = new Commit(payload.after);
       this._githubOrg = payload.repository.owner.name;
       this._commentHook = Url.parse(payload.repository.commits_url.replace('{/sha}', '/' + this._commit) + '/comments');
       this._ref = payload.ref;
-      this.timestamp = +new Date();
+      this._timestamp = payload.repository.pushed_at * 1000;
     } catch(err) {
       throw 'Failed to construct new PushRecord. ' + err;
     }
@@ -45,6 +47,14 @@ export default class PushRecord {
 
   get team(): string {
     return this._team;
+  }
+
+  get repo(): string {
+    return this._repo;
+  }
+
+  get timestamp(): number {
+    return this._timestamp;
   }
 
   get user(): string {

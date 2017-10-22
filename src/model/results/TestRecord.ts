@@ -61,6 +61,7 @@ export default class TestRecord{
   private maxReportSize: number = 1/2 * 1000000; // 500 KB
   private stdio: string;
   private report: string;
+  private repo: string;
   private reportSize: number;
   private stdioSize: number;
   private coverageZip: Buffer;
@@ -96,6 +97,7 @@ export default class TestRecord{
     this.courseNum = testJob.courseNum;
     this.githubToken = githubToken;
     this.team = testJob.team;
+    this.repo = testJob.repo;
     this.deliverable = testJob.test;
     this.commit = testJob.commit;
     this.committer = testJob.username;
@@ -429,20 +431,31 @@ public getTestRecord(): object {
         return attachment;
       }
     }
+    
     function parseReport() {
         if(typeof that.report !== 'undefined') {
           return JSON.parse(that.report);
         }
-        return 'REPORT_FAILED';
+        return null;
+    }
+
+    function didReportFail() {
+      let answer = parseReport();
+      if (answer === null) {
+        return true;
+      }
+      return false;
     }
     try {
        let doc = {
         'team': this.team,
+        'repo': this.repo,
         'courseNum': this.courseNum,
         'orgName': this.githubOrg,
         'deliverable': this.deliverable.deliverable,
         'user': this.username,
         'report': parseReport(),
+        'reportFailed': didReportFail(),
         'testStats': this.testStats,
         'coverStats': this.coverageStats,
         'coverReport': this.coverageReport,
