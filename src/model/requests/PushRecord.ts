@@ -16,6 +16,8 @@ export default class PushRecord {
   private payload: JSON;
   private _team: string;
   private _repo: string;
+  private _projectUrl: string;
+  private _commitUrl: string;
   private _user: string;
   private _commit: Commit;
   private _deliverable?: string;
@@ -29,6 +31,8 @@ export default class PushRecord {
       this.payload = payload;
       this._team = GithubUtil.getTeamOrProject(payload.repository.name);
       this._repo = payload.repository.name;
+      this._projectUrl = payload.repository.html_url.
+      this._commitUrl = payload.head_commit.url,
       this._user = payload.pusher.name;
       this._deliverable = GithubUtil.parseDeliverable(payload.repository.name);
       this._commit = new Commit(payload.after);
@@ -51,6 +55,14 @@ export default class PushRecord {
 
   get repo(): string {
     return this._repo;
+  }
+
+  get projectUrl(): string {
+    return this._projectUrl;
+  }
+
+  get commitUrl(): string {
+    return this._commitUrl;
   }
 
   get timestamp(): number {

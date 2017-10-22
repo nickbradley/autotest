@@ -23,6 +23,8 @@ export interface TestJob {
   username: string;
   team: string;
   repo: string;
+  projectUrl: string;
+  commitUrl: string;
   commit: string;
   hook: Url.Url;
   timestamp: number;

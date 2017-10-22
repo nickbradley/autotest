@@ -107,6 +107,8 @@ export default class PushController {
             let testJob: TestJob = {
               githubOrg: this.record.githubOrg,
               repo: this.record.repo,
+              projectUrl: this.record.projectUrl,
+              commitUrl: this.record.commitUrl,
               courseNum: this.courseNum,
               username: this.record.user,
               timestamp: this.record.timestamp,
@@ -144,6 +146,8 @@ export default class PushController {
             let testJob: TestJob = {
               githubOrg: record.githubOrg,
               repo: record.repo,
+              projectUrl: record.projectUrl,
+              commitUrl: record.commitUrl,
               courseNum: this.courseNum,
               username: record.user,
               timestamp: record.timestamp,
