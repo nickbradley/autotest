@@ -31,8 +31,8 @@ export default class PushRecord {
       this.payload = payload;
       this._team = GithubUtil.getTeamOrProject(payload.repository.name);
       this._repo = payload.repository.name;
-      this._projectUrl = payload.repository.html_url.
-      this._commitUrl = payload.head_commit.url,
+      this._projectUrl = payload.repository.html_url;
+      this._commitUrl = payload.head_commit.url;
       this._user = payload.pusher.name;
       this._deliverable = GithubUtil.parseDeliverable(payload.repository.name);
       this._commit = new Commit(payload.after);
