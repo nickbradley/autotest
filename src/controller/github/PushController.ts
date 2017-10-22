@@ -106,8 +106,12 @@ export default class PushController {
           for (let repo of deliverable.repos) {
             let testJob: TestJob = {
               githubOrg: this.record.githubOrg,
+              repo: this.record.repo,
+              projectUrl: this.record.projectUrl,
+              commitUrl: this.record.commitUrl,
               courseNum: this.courseNum,
               username: this.record.user,
+              timestamp: this.record.timestamp,
               team: this.record.team,
               commit: this.record.commit.short,
               hook: this.record.commentHook,
@@ -141,8 +145,12 @@ export default class PushController {
           for (let repo of deliverable.repos) {
             let testJob: TestJob = {
               githubOrg: record.githubOrg,
+              repo: record.repo,
+              projectUrl: record.projectUrl,
+              commitUrl: record.commitUrl,
               courseNum: this.courseNum,
               username: record.user,
+              timestamp: record.timestamp,
               team: record.team,
               commit: record.commit.short,
               hook: record.commentHook,
