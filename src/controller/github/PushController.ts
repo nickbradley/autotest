@@ -29,6 +29,7 @@ export default class PushController {
   }
 
   async process(data: JSON) {
+    console.log(data);
 
     this.record = new PushRecord(data);
     await this.store(this.record);
