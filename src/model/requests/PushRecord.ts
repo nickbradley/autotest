@@ -32,7 +32,9 @@ export default class PushRecord {
       this._team = GithubUtil.getTeamOrProject(payload.repository.name);
       this._repo = payload.repository.name;
       this._projectUrl = payload.repository.html_url;
-      this._commitUrl = payload.head_commit.url;
+      // head commit is sometimes null on new branches
+      let head_commit_url = payload.head_commit === null ? payload.repository.html_url + '/tree/' + String(payload.ref).replace('refs/heads/', '') : payload.head_commit.url;
+      this._commitUrl = head_commit_url;
       this._user = payload.pusher.name;
       this._deliverable = GithubUtil.parseDeliverable(payload.repository.name);
       this._commit = new Commit(payload.after);
