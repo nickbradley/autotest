@@ -59,17 +59,25 @@ export default class TestJobController {
   private expManager: Manager;
 
 
-  private redisAddress: Url.Url;
+  private _redisAddress: Url.Url;
   private process: ProcessJobCallback;
   private completed: CompletedJobCallback;
   private failed: FailedJobCallback;
   private active: ActiveJobCallback;
   private testQueue: JobQueue;
 
+  get redisAddress(): Url.Url {
+    return this._redisAddress;
+  }
+
+  set redisAddress(redisAddress: Url.Url) {
+    this._redisAddress = redisAddress;
+  }
+
   private constructor(redisPort: number) {
     let config: IConfig = new AppConfig();
-    this.redisAddress = config.getRedisAddress();
-    this.redisAddress.port = redisPort.toString();
+    this._redisAddress = config.getRedisAddress();
+    this._redisAddress.port = redisPort.toString();
 
     let stdQName: string = 'autotest-testqueue-std';
     let stdQPool: number = 2;
@@ -190,10 +198,14 @@ export default class TestJobController {
   }
 
   public static getInstance(courseNum: number): TestJobController {
-    if (!TestJobController.instance) {
-      TestJobController.instance = new TestJobController(RedisUtil.getRedisPort(courseNum));
-    }
-    return TestJobController.instance;
+    // if (!TestJobController.instance) {
+    return TestJobController.instance = new TestJobController(RedisUtil.getRedisPort(courseNum));
+    // }
+    // let testJobController: TestJobController = TestJobController.instance;
+    // let redisAddress: Url.Url = TestJobController.instance.redisAddress;
+    // redisAddress.port = RedisUtil.getRedisPort(courseNum).toString();
+    // testJobController.redisAddress = redisAddress;
+    // return testJobController.instance;
   }
 
   /**
