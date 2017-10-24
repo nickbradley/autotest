@@ -4,7 +4,7 @@ import fs = require('fs');
 
 let data = JSON.parse(fs.readFileSync('./test/github/push.json').toString());
 let EXAMPLE_PORT = 1310;
-let jobQueueController: TestJobController = TestJobController.getInstance();
+let jobQueueController: TestJobController = TestJobController.getInstance(310);
 
 function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))

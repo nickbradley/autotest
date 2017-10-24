@@ -4,6 +4,9 @@ import * as fs from 'fs';
 import RouteHandler from "../rest/RouteHandler";
 import {IConfig, AppConfig} from '../Config';
 import TestJobController from '../controller/TestJobController';
+import {RedisUtil} from '../model/RedisUtil';
+import RequestHelper from '../../src/rest/helpers/RequestHelper'
+
 
 /**
  * This configures the REST endpoints for the server.
@@ -26,7 +29,8 @@ export default class Server {
   public async stop(): Promise<boolean> {
     Log.info('Server::close()');
     let that = this;
-    await TestJobController.getInstance().close();
+    await TestJobController.getInstance(7310).close();
+    await TestJobController.getInstance(7210).close();    
     return new Promise<boolean>(function (fulfill) {
       that.rest.close(function () {
           fulfill(true);

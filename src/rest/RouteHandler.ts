@@ -16,7 +16,9 @@ export default class RouteHandler {
   public static queueStats(req: restify.Request, res: restify.Response, next: restify.Next) {
     Log.info('RouteHandler::queueStats() - <RCV> Queue stats.');
     try {
-      let controller: TestJobController = TestJobController.getInstance();
+      let serverPort: number = RequestHelper.parseServerPort(req);
+      let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
+      let controller: TestJobController = TestJobController.getInstance(currentCourseNum);
       controller.getStats().then(stats => {
         let lenExpQueue: number = stats[1].waiting + stats[1].paused;
         Log.info('RouteHandler::queueStats() - <200> Number of waiting or paused jobs: ' + lenExpQueue + '.');
