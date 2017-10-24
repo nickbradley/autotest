@@ -183,7 +183,7 @@ export default class PushController {
   }
 
   private async enqueue(job: TestJob): Promise<Job> {
-    let controller: TestJobController = TestJobController.getInstance();
+    let controller: TestJobController = TestJobController.getInstance(this.courseNum);
     return controller.addJob(job);
   }
 }

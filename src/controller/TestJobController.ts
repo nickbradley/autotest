@@ -5,6 +5,7 @@ import TestController from './TestController';
 import {TestStatus} from '../model/results/TestRecord';
 import * as Url from 'url';
 import {GithubUsername, Commit} from '../model/GithubUtil';
+import {RedisUtil} from '../model/RedisUtil';
 import {Visibility} from '../model/settings/DeliverableRecord';
 import PostbackController from './github/PostbackController';
 import CommitCommentController from './github/CommitCommentController'
@@ -65,9 +66,10 @@ export default class TestJobController {
   private active: ActiveJobCallback;
   private testQueue: JobQueue;
 
-  private constructor() {
+  private constructor(redisPort: number) {
     let config: IConfig = new AppConfig();
     this.redisAddress = config.getRedisAddress();
+    this.redisAddress.port = redisPort.toString();
 
     let stdQName: string = 'autotest-testqueue-std';
     let stdQPool: number = 2;
@@ -187,9 +189,9 @@ export default class TestJobController {
     }
   }
 
-  public static getInstance(): TestJobController {
+  public static getInstance(courseNum: number): TestJobController {
     if (!TestJobController.instance) {
-      TestJobController.instance = new TestJobController();
+      TestJobController.instance = new TestJobController(RedisUtil.getRedisPort(courseNum));
     }
     return TestJobController.instance;
   }

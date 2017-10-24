@@ -66,7 +66,7 @@ export default class CommitCommentContoller {
     return new Promise<GithubResponse>(async (fulfill, reject) => {
       try {
         let redis: RedisManager = new RedisManager();
-        let queue: TestJobController = TestJobController.getInstance();
+        let queue: TestJobController = TestJobController.getInstance(this.courseNum);
         let record: CommitCommentRecord = new CommitCommentRecord(this.courseNum);
         let response: GithubResponse;
 
@@ -199,7 +199,7 @@ export default class CommitCommentContoller {
     return new Promise<GithubResponse>(async (fulfill, reject) => {
       try {
         let redis: RedisManager = new RedisManager();
-        let queue: TestJobController = TestJobController.getInstance();
+        let queue: TestJobController = TestJobController.getInstance(this.courseNum);
         let record: CommitCommentRecord = new CommitCommentRecord(this.courseNum);
         let response: GithubResponse;
 
@@ -386,7 +386,7 @@ export default class CommitCommentContoller {
     return new Promise<number>((fulfill, reject) => {
       let imageName = this.getImageName();
       let jobId: string = 'autotest/' + imageName + ':latest|' + deliverable + '-' + team + '#' + commit.short;
-      let queue: TestJobController = TestJobController.getInstance();
+      let queue: TestJobController = TestJobController.getInstance(this.courseNum);
 
       queue.getJob(jobId).then(job => {
         if (!job)

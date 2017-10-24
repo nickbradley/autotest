@@ -21,6 +21,7 @@ class RedisSingleton {
   private constructor() {
     let config: IConfig = new AppConfig();
     let redis = config.getRedisAddress();
+    console.log('redis-port', redis.port);
     this._client = new RedisClient({port:+redis.port});
   }
 
