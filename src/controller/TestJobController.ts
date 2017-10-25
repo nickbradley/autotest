@@ -121,7 +121,7 @@ export default class TestJobController {
       let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
 
       try {
-        let redis: RedisManager = new RedisManager(this.redisPort);
+        let redis: RedisManager = new RedisManager(that.redisPort);
         await redis.client.connect();
         pendingRequest = await redis.client.get(reqId);
         await redis.client.del(reqId);
