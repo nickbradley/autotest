@@ -12,6 +12,7 @@ import {AdminRecord, Admin} from '../../model/settings/AdminRecord';
 import TestJobController from '../TestJobController';
 import ResultRecord from '../../model/results/ResultRecord';
 import {Job} from '../../model/JobQueue';
+import {RedisUtil} from '../../model/RedisUtil';
 import RedisManager from '../RedisManager';
 import db from '../../db/MongoDB';
 import DeliverableRepo from '../../repos/DeliverableRepo';
@@ -65,7 +66,8 @@ export default class CommitCommentContoller {
     let that = this;
     return new Promise<GithubResponse>(async (fulfill, reject) => {
       try {
-        let redis: RedisManager = new RedisManager();
+        let redisPort = RedisUtil.getRedisPort(this.courseNum);
+        let redis: RedisManager = new RedisManager(redisPort);
         let queue: TestJobController = TestJobController.getInstance(this.courseNum);
         let record: CommitCommentRecord = new CommitCommentRecord(this.courseNum);
         let response: GithubResponse;
@@ -198,7 +200,8 @@ export default class CommitCommentContoller {
     let that = this;
     return new Promise<GithubResponse>(async (fulfill, reject) => {
       try {
-        let redis: RedisManager = new RedisManager();
+        let redisPort = RedisUtil.getRedisPort(this.courseNum);
+        let redis: RedisManager = new RedisManager(redisPort);
         let queue: TestJobController = TestJobController.getInstance(this.courseNum);
         let record: CommitCommentRecord = new CommitCommentRecord(this.courseNum);
         let response: GithubResponse;

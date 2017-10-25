@@ -5,37 +5,16 @@ import {IConfig, AppConfig} from '../Config';
  * Provides access to the redis client via the singleton.
  */
 export default class RedisManager {
-  public get client(): RedisClient {
-    return RedisSingleton.getInstance().client;
-  }
-}
 
-/**
- * Singleton to ensure there is only one connection to Redis.
- */
-class RedisSingleton {
-  private static _instance: RedisSingleton;
+  private portNum: number;
   private _client: RedisClient;
-
-
-  private constructor() {
+  
+  constructor(portNum: number) {
     let config: IConfig = new AppConfig();
     let redis = config.getRedisAddress();
-    this._client = new RedisClient({port:+redis.port});
+    this._client = new RedisClient({port: portNum});
   }
 
-
-  public static getInstance(): RedisSingleton {
-    if (!RedisSingleton._instance)
-      RedisSingleton._instance = new RedisSingleton();
-
-    return RedisSingleton._instance;
-  }
-
-
-  /**
-   * Provides access to the single instance of the redis client.
-   */
   public get client(): RedisClient {
     return this._client;
   }

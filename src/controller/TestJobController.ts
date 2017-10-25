@@ -58,7 +58,7 @@ export default class TestJobController {
   private stdManager: Manager;
   private expManager: Manager;
 
-
+  private redisPort: number;
   private _redisAddress: Url.Url;
   private process: ProcessJobCallback;
   private completed: CompletedJobCallback;
@@ -78,12 +78,15 @@ export default class TestJobController {
     let config: IConfig = new AppConfig();
     this._redisAddress = config.getRedisAddress();
     this._redisAddress.port = redisPort.toString();
+    this.redisPort = redisPort;
 
     let stdQName: string = 'autotest-testqueue-std';
     let stdQPool: number = 2;
 
     let expQName: string = 'autotest-testqueue-exp';
     let expQPool: number = 2;
+
+    let that = this;
 
 
     this.process = function(job: Job, opts: CallbackOpts) {
@@ -117,7 +120,7 @@ export default class TestJobController {
       let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
 
       try {
-        let redis: RedisManager = new RedisManager();
+        let redis: RedisManager = new RedisManager(that.redisPort);
         await redis.client.connect();
         pendingRequest = await redis.client.get(reqId);
         await redis.client.del(reqId);
