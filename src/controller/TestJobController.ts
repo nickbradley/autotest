@@ -55,6 +55,7 @@ interface Manager {
 
 export default class TestJobController {
   private static instance: TestJobController;
+  private static instances: TestJobController[];
   private stdManager: Manager;
   private expManager: Manager;
 
@@ -120,7 +121,7 @@ export default class TestJobController {
       let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
 
       try {
-        let redis: RedisManager = new RedisManager(that.redisPort);
+        let redis: RedisManager = new RedisManager(this.redisPort);
         await redis.client.connect();
         pendingRequest = await redis.client.get(reqId);
         await redis.client.del(reqId);
@@ -201,14 +202,26 @@ export default class TestJobController {
   }
 
   public static getInstance(courseNum: number): TestJobController {
-    // if (!TestJobController.instance) {
-    return TestJobController.instance = new TestJobController(RedisUtil.getRedisPort(courseNum));
-    // }
-    // let testJobController: TestJobController = TestJobController.instance;
-    // let redisAddress: Url.Url = TestJobController.instance.redisAddress;
-    // redisAddress.port = RedisUtil.getRedisPort(courseNum).toString();
-    // testJobController.redisAddress = redisAddress;
-    // return testJobController.instance;
+
+    // Ensures that Singleton exists and is returned based on each port;
+
+    let redisPort = RedisUtil.getRedisPort(courseNum);
+    if (!TestJobController.instances) {
+      let testJobController: TestJobController = new TestJobController(redisPort);
+      TestJobController.instances = new Array();
+      TestJobController.instance = testJobController;
+      TestJobController.instances.push(testJobController);
+    return testJobController;
+    } else {
+      for ( let testJobController of TestJobController.instances) {
+        if (testJobController.redisPort === redisPort) {
+          return testJobController;
+        } 
+      }
+      let testJobController = new TestJobController(redisPort);
+      TestJobController.instances.push(testJobController);
+      return testJobController;
+    }
   }
 
   /**

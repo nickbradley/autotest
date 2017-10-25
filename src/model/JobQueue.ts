@@ -49,8 +49,13 @@ export class JobQueue {
 
   constructor(name: string, concurrency: number, redisAddress: Url, process: ProcessJobCallback, completed: CompletedJobCallback, failed: FailedJobCallback, active: ActiveJobCallback) {
     this.name = name;
+    console.log('name', name);
+    console.log('redisAddress', redisAddress);
+    console.log('redisPort', redisAddress.port);
     this.redis = redisAddress;
     this.concurrency = (concurrency <= 0 ? 0 : concurrency);
+    console.log('concurrency', this.concurrency);
+    
     this.processCallback = process;
     this.completedCallback = completed;
     this.failedCallback = failed;
@@ -62,6 +67,7 @@ export class JobQueue {
     try {
       if (!this.initialized) {
         this.initialized = true;
+        console.log('Connected to' + this.name + ' ' + this.redis.port + ' ' + this.redis.host);
         this.queue = <Queue>bull(this.name, +this.redis.port, this.redis.host);
         this.queue.process(this.concurrency, (job: bull.Job) => {
           return this.processCallback(job, {qname: this.name});
