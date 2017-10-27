@@ -10,13 +10,14 @@ import PostbackController from './PostbackController'
 import {Course, CourseSettings} from '../../model/business/CourseModel';
 import {AdminRecord, Admin} from '../../model/settings/AdminRecord';
 import TestJobController from '../TestJobController';
-import ResultRecord from '../../model/results/ResultRecord';
+import GithubGradeComment from '../../model/results/GithubGradeComment';
 import {Job} from '../../model/JobQueue';
 import {RedisUtil} from '../../model/RedisUtil';
 import RedisManager from '../RedisManager';
 import db from '../../db/MongoDB';
 import DeliverableRepo from '../../repos/DeliverableRepo';
-import CommitCommentRepo from '../../repos/CommitCommentRepo';
+import CommitCommentRecordRepo from '../../repos/CommitCommentRepo';
+import ResultRecordRepo from '../../repos/ResultRecordRepo';
 import CourseRepo from '../../repos/CourseRepo';
 
 const COURSE_210: number = 210;
@@ -120,9 +121,9 @@ export default class CommitCommentContoller {
             let diff: number = +new Date() - +lastRequest;
             if (diff > record.getDeliverableRate() || isAdmin) {
               try {
-                let resultRecord: ResultRecord = new ResultRecord(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getOrgName(), this.record.getNote());
-                await resultRecord.fetch();
-                let body: string = resultRecord.formatResult();
+                let githubGradeComment: GithubGradeComment = new GithubGradeComment(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getOrgName(), this.record.getNote());
+                await githubGradeComment.fetch();
+                let body: string = githubGradeComment.formatResult();
                 response = {
                   statusCode: 200,
                   body: body
@@ -254,9 +255,9 @@ export default class CommitCommentContoller {
             let diff: number = +new Date() - +lastRequest;
             if (diff > record.getDeliverableRate() || isAdmin) {
               try {
-                let resultRecord: ResultRecord = new ResultRecord(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getOrgName(), this.record.getNote());
-                await resultRecord.fetch();
-                let body: string = await resultRecord.formatResult();
+                let githubGradeComment: GithubGradeComment = new GithubGradeComment(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getOrgName(), this.record.getNote());
+                await githubGradeComment.fetch();
+                let body: string = await githubGradeComment.formatResult();
                 response = {
                   statusCode: 200,
                   body: body
@@ -415,7 +416,7 @@ export default class CommitCommentContoller {
    * @param deliverable - Deliverable identifier (i.e. d1, d2, etc.).
    */
   private async getLatestRequest(user: string, deliverable: string): Promise<Date> {
-    let commitCommentRepo: CommitCommentRepo = new CommitCommentRepo();
+    let commitCommentRepo: CommitCommentRecordRepo = new CommitCommentRecordRepo();
     let that = this;
     return new Promise<Date>(async (fulfill, reject) => {
       try {
@@ -432,12 +433,23 @@ export default class CommitCommentContoller {
   }
 
   /**
+   * Updates corresponding GithubGradeComment, with the same username, branch, and commit in the record,
+   * if isProcessed and isRequest are both set to true in the record.
+   * 
+   *  @param record - the record to analyze if isProcessed and isRequest is true
+   */
+
+  private async addGradeRequestedStatus() {
+
+  }
+
+  /**
    * Insert the request into the database.
    *
    * @param record - the record to insert into the database.
    */
   private async store(record: CommitCommentRecord) {
-    let commitCommentRepo = new CommitCommentRepo();
+    let commitCommentRepo = new CommitCommentRecordRepo();
     return commitCommentRepo.insertCommitComment(record.convertToJSON());
   }
 }

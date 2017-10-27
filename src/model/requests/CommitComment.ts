@@ -171,9 +171,11 @@ export default class CommitCommentRecord {
   public getDeliverable(): string {
     return this.deliverable;
   }
+  
   public getDeliverableRate(): number {
     return this.deliverableRate;
   }
+
   public getIsProcessed(): boolean {
     return this.isProcessed;
   }

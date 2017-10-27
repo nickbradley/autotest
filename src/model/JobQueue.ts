@@ -62,7 +62,6 @@ export class JobQueue {
     try {
       if (!this.initialized) {
         this.initialized = true;
-        console.log('Connected to' + this.name + ' ' + this.redis.port + ' ' + this.redis.host);
         this.queue = <Queue>bull(this.name, +this.redis.port, this.redis.host);
         this.queue.process(this.concurrency, (job: bull.Job) => {
           return this.processCallback(job, {qname: this.name});

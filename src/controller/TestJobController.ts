@@ -9,7 +9,7 @@ import {RedisUtil} from '../model/RedisUtil';
 import {Visibility} from '../model/settings/DeliverableRecord';
 import PostbackController from './github/PostbackController';
 import CommitCommentController from './github/CommitCommentController'
-import ResultRecord from '../model/results/ResultRecord';
+import GithubGradeComment from '../model/results/GithubGradeComment';
 import RedisManager from './RedisManager';
 import Server from '../../src/rest/Server'
 
@@ -171,9 +171,9 @@ export default class TestJobController {
         let commit: string = pendingRequest.commit;
         let deliverable: string = pendingRequest.deliverable;
         let controller: CommitCommentController = new CommitCommentController(this.courseNum);
-        let resultRecord: ResultRecord = new ResultRecord(team, commit, deliverable, orgName, '');
-        await resultRecord.fetch();
-        msg = resultRecord.formatResult();
+        let githubGradeComment: GithubGradeComment = new GithubGradeComment(team, commit, deliverable, orgName, '');
+        await githubGradeComment.fetch();
+        msg = githubGradeComment.formatResult();
       }
       await controller.submit(msg);
     }
