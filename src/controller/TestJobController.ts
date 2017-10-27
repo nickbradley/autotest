@@ -164,8 +164,8 @@ export default class TestJobController {
           break;
         }
       } else if (pendingRequest) {
-        console.log('pendingRequest', pendingRequest);
-        console.log('pendingRequest.orgName', pendingRequest.orgName);
+        Log.info('TestJobController:: Pending Request on commit ' + pendingRequest.commit + ' and ' 
+          + pendingRequest.team);
         let team: string = pendingRequest.team;
         let orgName: string = pendingRequest.orgName;
         let commit: string = pendingRequest.commit;
@@ -203,7 +203,7 @@ export default class TestJobController {
 
   public static getInstance(courseNum: number): TestJobController {
 
-    // Ensures that Singleton exists and is returned based on each port;
+    // Ensures that Singleton exists and is returned for each port (Yes, multiple Singletons);
 
     let redisPort = RedisUtil.getRedisPort(courseNum);
     if (!TestJobController.instances) {

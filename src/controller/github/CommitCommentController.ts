@@ -11,6 +11,7 @@ import {Course, CourseSettings} from '../../model/business/CourseModel';
 import {AdminRecord, Admin} from '../../model/settings/AdminRecord';
 import TestJobController from '../TestJobController';
 import GithubGradeComment from '../../model/results/GithubGradeComment';
+import {Result} from '../../model/results/ResultRecord';
 import {Job} from '../../model/JobQueue';
 import {RedisUtil} from '../../model/RedisUtil';
 import RedisManager from '../RedisManager';
@@ -433,13 +434,33 @@ export default class CommitCommentContoller {
   }
 
   /**
-   * Updates corresponding GithubGradeComment, with the same username, branch, and commit in the record,
-   * if isProcessed and isRequest are both set to true in the record.
+   * Updates corresponding GithubGradeComment, with the same username, branch, and commit in the ResultRecord,
+   * if isProcessed and isRequest are both set to True in the @param CommitCommentRecord. If not processed, 
+   * ResultRecords with same commit, branch and user are set to False;
    * 
    *  @param record - the record to analyze if isProcessed and isRequest is true
    */
 
-  private async addGradeRequestedStatus() {
+  private async addGradeRequestedStatus(_record: CommitCommentRecord) {
+    let commit: string = _record.getCommit().short;
+    let gradeRequested: boolean = false;
+    let resultRecordRepo: ResultRecordRepo = new ResultRecordRepo();    
+    
+    if (_record.getIsProcessed() && _record.getIsRequest()) {
+      
+      gradeRequested = true;
+
+      return resultRecordRepo.updateResultRecords(_record.getUser(), commit, gradeRequested)
+      .then((fulfilledResponse) => {
+        // If results found, update ResultRecords with true/false isProcessed and isRequest statuses
+        console.log('fulfilledResponse', fulfilledResponse);
+        return;
+        // throw `CommitCommentController:: addGradeRequestedStatus() No ResultRecords could be found for Commit ${commit}`;
+      });
+    }
+
+
+
 
   }
 
@@ -449,7 +470,13 @@ export default class CommitCommentContoller {
    * @param record - the record to insert into the database.
    */
   private async store(record: CommitCommentRecord) {
-    let commitCommentRepo = new CommitCommentRecordRepo();
-    return commitCommentRepo.insertCommitComment(record.convertToJSON());
+    let commitCommentRepo: CommitCommentRecordRepo = new CommitCommentRecordRepo();
+    
+    return commitCommentRepo.insertCommitComment(record.convertToJSON())
+      .then((fulfilledResponse) => {
+        if (fulfilledResponse.insertedCount > 0) {
+          return this.addGradeRequestedStatus(record);
+        }
+      });
   }
 }

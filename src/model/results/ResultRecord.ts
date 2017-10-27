@@ -5,6 +5,7 @@ import TestRecord from '../../model/results/TestRecord'
 import TestRecordRepo from '../../repos/TestRecordRepo';
 
 export interface Result {
+  _id: string;
   team: string;
   courseNum: number;
   orgName: string;

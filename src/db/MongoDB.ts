@@ -11,7 +11,6 @@ let MongoClient = mongodb.MongoClient;
 export class MongoDB {
 
   private config: IConfig = new AppConfig();
-  // must implement authentication before production release
   private username: string;
   private password: string;
   private conn: Promise<mongodb.Db>;
