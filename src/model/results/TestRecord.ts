@@ -8,6 +8,8 @@ import {TestJob, TestJobDeliverable} from '../../controller/TestJobController';
 import {Report} from '../../model/results/ReportRecord';
 import Log from '../../Util';
 
+const REPORT_FAILED_FLAG = 'REPORT_FAILED';
+
 interface TestOutput {
   testStats: TestStats;
 }
@@ -440,12 +442,12 @@ public getTestRecord(): object {
         if(typeof that.report !== 'undefined') {
           return JSON.parse(that.report);
         }
-        return null;
+        return REPORT_FAILED_FLAG;
     }
 
     function didReportFail() {
-      let answer = parseReport();
-      if (answer === null) {
+      let reportStatus = parseReport();
+      if (reportStatus === REPORT_FAILED_FLAG) {
         return true;
       }
       return false;
@@ -462,17 +464,12 @@ public getTestRecord(): object {
         'user': this.username,
         'report': parseReport(),
         'reportFailed': didReportFail(),
-        'testStats': this.testStats,
-        'coverStats': this.coverageStats,
-        'coverReport': this.coverageReport,
-        'coverStderr': this.failedCoverage,
         'studentBuildFailed': this.studentBuildFailed,
         'studentBuildMsg': this.studentBuildMsg,
         'deliverableBuildFailed': this.deliverableBuildFailed,
         'deliverableBuildMsg': this.deliverableBuildMsg,
         'deliverableRuntimeMsg': this.deliverableRuntimeMsg,
         'deliverableRuntimeError': this.deliverableRuntimeError,
-        'testReport': this.testReport,
         'commit': this.commit,
         'committer': this.committer,
         'timestamp': this.timestamp,
