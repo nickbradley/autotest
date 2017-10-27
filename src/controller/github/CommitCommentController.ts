@@ -435,8 +435,8 @@ export default class CommitCommentContoller {
 
   /**
    * Updates corresponding GithubGradeComment, with the same username, branch, and commit in the ResultRecord,
-   * if isProcessed and isRequest are both set to True in the @param CommitCommentRecord. If not processed, 
-   * ResultRecords with same commit, branch and user are set to False;
+   * if isProcessed and isRequest are both set to True in the @param CommitCommentRecord. If conjunct not set 
+   * to true, ResultRecords with same commit, branch and user are set to False;
    * 
    *  @param record - the record to analyze if isProcessed and isRequest is true
    */
@@ -447,21 +447,16 @@ export default class CommitCommentContoller {
     let resultRecordRepo: ResultRecordRepo = new ResultRecordRepo();    
     
     if (_record.getIsProcessed() && _record.getIsRequest()) {
-      
       gradeRequested = true;
+    }
 
-      return resultRecordRepo.updateResultRecords(_record.getUser(), commit, gradeRequested)
+    return resultRecordRepo.updateResultRecords(_record.getUser(), commit, gradeRequested)
       .then((fulfilledResponse) => {
         // If results found, update ResultRecords with true/false isProcessed and isRequest statuses
         console.log('fulfilledResponse', fulfilledResponse);
         return;
         // throw `CommitCommentController:: addGradeRequestedStatus() No ResultRecords could be found for Commit ${commit}`;
       });
-    }
-
-
-
-
   }
 
   /**

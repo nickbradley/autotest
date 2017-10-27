@@ -474,6 +474,7 @@ public getTestRecord(): object {
         'committer': this.committer,
         'timestamp': this.timestamp,
         'container': container,
+        'gradeRequested': false,
         'ref': this.ref,
         'attachments': [getStdio(), getReport()],
         'idStamp': this._id + this.suiteVersion

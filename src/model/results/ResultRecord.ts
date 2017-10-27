@@ -25,6 +25,7 @@ export interface Result {
   ref: string;
   attachments: object[];
   idStamp: string;
+  gradeRequested: boolean;
 }
 
 export interface GradeSummary {

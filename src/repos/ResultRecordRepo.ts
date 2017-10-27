@@ -71,7 +71,6 @@ export default class CommitCommentRepo {
                 .toArray((err: Error, results: Result[]) => {
                   if (results.length > 0) {
                   fulfill(results);
-                  console.log('results', results);
                   return;
                   }
                   throw `Could not find any results under commit ${_commit} with username ${_username}`;
