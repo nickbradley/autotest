@@ -12,6 +12,7 @@ import { Deliverable } from '../model/settings/DeliverableRecord';
 import { Course } from '../model/settings/CourseRecord';
 
 const RESULTS_COLLECTION = 'results';
+const REQUESTS_COLLECTION = 'requests';
 const DELIVERABLES_COLLECTION = 'deliverables';
 const OBJECT_ID_PROPERTY = '_id';
 
@@ -52,47 +53,93 @@ export default class CommitCommentRepo {
    * @param _commitComment CommitComment object that is being stored
    * @return <InsertOneResponse> that includes number of successful DB entries
    */
-  public updateResultRecords(_username: string, _commit: string, 
-    _gradeRequested: boolean): Promise<mongodb.UpdateWriteOpResult> {
+  public updateGradeRequestedStatus(_request: CommitCommentRecord): Promise<mongodb.UpdateWriteOpResult> {
     let context: mongodb.Db; 
-    try {
-      return new Promise<mongodb.UpdateWriteOpResult>((fulfill, reject) => {
-        db.initDB()
-          .then((_db: mongodb.Db) => {
-            if (_db) {
-              context = _db;
-              return _db;
-            }
-            throw `Could not retrieve DB connection in updateResultRecords()`;
-          })
-          .then(() => {
-            return new Promise<Result[]>((fulfill, reject) => {
-              context.collection(RESULTS_COLLECTION).find({user: _username, commit: _commit})
-                .toArray((err: Error, results: Result[]) => {
-                  if (results.length > 0) {
-                  fulfill(results);
+    let requests: Request[];
+    let results: Result[];
+    let resultIds: string[] = [];
+    let orgName: string = _request.getOrgName();
+    let deliverable: string = _request.getDeliverable();
+    let user: string = _request.getUser();
+    let commit: string = _request.getCommit().short;
+    let repo: string = _request.getRepo();
+    let requestTimeStamp: number;
+    let requestCommentUrl: string = _request.getHtmlUrl().substring(0, _request.getHtmlUrl().indexOf('#'));
+
+    return new Promise<mongodb.UpdateWriteOpResult>((fulfill, reject) => {
+      return db.initDB()
+        .then((_db: mongodb.Db) => {
+          if (_db) {
+            context = _db;
+            return _db;
+          }
+          throw `Could not retrieve DB connection in updateResultRecords()`;
+        })
+        .then(() => {
+          return new Promise<Result[]>((fulfill, reject) => {
+            context.collection(RESULTS_COLLECTION).find({user, commit, deliverable, orgName, repo})
+              .toArray((err: Error, _results: Result[]) => {
+                if (_results.length > 0) {
+                  results = _results;
+                  _results.map((result: any) => {
+                    resultIds.push(result._id); 
+                  })
+                  fulfill(_results);
                   return;
-                  }
-                  throw `Could not find any results under commit ${_commit} with username ${_username}`;
+                }
+                reject(`Could not find any results under commit ${commit} with username ${user}`);
+            });
+          });
+        })
+        .then(() => {
+          let updateIds: any = [];
+          return new Promise<mongodb.UpdateWriteOpResult>((fulfill, reject) => {
+            context.collection(REQUESTS_COLLECTION).find({'commit.commitString': { $regex: commit}, user: user})
+              .toArray((err: Error, requests: Request[]) => {
+
+              // if isProcessed becomes true, then all ResultRecords get updated gradeRequested flag with
+              // the timestamp from the Request.
+              let isRequest: boolean = false;
+              let firstGradeRequestTime: number = -1;
+
+              requests.some((request: any, index: number) => {
+
+                let requestCommentData = JSON.parse(request.attachments[0].data);
+
+                if (request.isRequest || _request.getIsProcessed()) {
+                  isRequest = true;
+                  firstGradeRequestTime = new Date(requestCommentData.comment.created_at).getTime();
+                  return request.isRequest === true || _request.getIsProcessed();
+                }
+              });
+
+              context.collection(RESULTS_COLLECTION).updateMany({_id: {$in: resultIds}}, { 
+                $set: { 
+                  gradeRequested: isRequest, 
+                  gradeRequestedTimeStamp: firstGradeRequestTime
+                }
+              })
+              .then((onFulfilled: mongodb.UpdateWriteOpResult) => {
+                if (onFulfilled) {
+                  Log.info('ResultRecordRepo::updateGradeRequestStatus() matched ' + onFulfilled.matchedCount
+                   + 'result records on ' + `${deliverable}, ${orgName}, ${user}, and ${repo} for ${commit}`);
+                  fulfill(onFulfilled);    
+                } else {
+                  throw 'ResultRecordRepo::updateResultRecordsGradeRequested() ERROR No ResultRecords could ' + 
+                  'be updated';
+                }
+                return;
               });
             });
-          })
-          .then((results: Result[]) => {
-            let resultIds = new Array();
-            for (let result of results) {
-              resultIds.push(result._id);
-            }
-            context.collection(RESULTS_COLLECTION).updateMany({_id: {$in: resultIds}}, {$set: {gradeRequsted: true}})
-              .then((onfulfilled: mongodb.UpdateWriteOpResult) => {
-                Log.info('ResultRecordrepo:: updateResultRecords() Updated ' + onfulfilled.modifiedCount + ' records');
-                fulfill(onfulfilled);
-              });
           });
+        })
+        .then((onfulfilled: mongodb.UpdateWriteOpResult) => {
+          fulfill(onfulfilled);
+        })
+        .catch((err: any) => {
+          Log.error('ResultRecordRepo::updateGradeRequestedStatus() ERROR ' + err);
         });
-    }
-    catch (err) {
-      throw `CommitCommentRepo::insertCommitComment: ${err}.`
-    }
+      });
   }
 
   /**

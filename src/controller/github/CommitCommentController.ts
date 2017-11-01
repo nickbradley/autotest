@@ -434,43 +434,29 @@ export default class CommitCommentContoller {
   }
 
   /**
-   * Updates corresponding GithubGradeComment, with the same username, branch, and commit in the ResultRecord,
-   * if isProcessed and isRequest are both set to True in the @param CommitCommentRecord. If conjunct not set 
-   * to true, ResultRecords with same commit, branch and user are set to False;
-   * 
-   *  @param record - the record to analyze if isProcessed and isRequest is true
-   */
-
-  private async addGradeRequestedStatus(_record: CommitCommentRecord) {
-    let commit: string = _record.getCommit().short;
-    let gradeRequested: boolean = false;
-    let resultRecordRepo: ResultRecordRepo = new ResultRecordRepo();    
-    
-    if (_record.getIsProcessed() && _record.getIsRequest()) {
-      gradeRequested = true;
-    }
-
-    return resultRecordRepo.updateResultRecords(_record.getUser(), commit, gradeRequested)
-      .then((fulfilledResponse) => {
-        // If results found, update ResultRecords with true/false isProcessed and isRequest statuses
-        console.log('fulfilledResponse', fulfilledResponse);
-        return;
-        // throw `CommitCommentController:: addGradeRequestedStatus() No ResultRecords could be found for Commit ${commit}`;
-      });
-  }
-
-  /**
    * Insert the request into the database.
    *
    * @param record - the record to insert into the database.
    */
   private async store(record: CommitCommentRecord) {
     let commitCommentRepo: CommitCommentRecordRepo = new CommitCommentRecordRepo();
+    let resultRecordRepo: ResultRecordRepo = new ResultRecordRepo();    
     
     return commitCommentRepo.insertCommitComment(record.convertToJSON())
       .then((fulfilledResponse) => {
         if (fulfilledResponse.insertedCount > 0) {
-          return this.addGradeRequestedStatus(record);
+
+          // Updates corresponding GithubGradeComment, with the same username, branch, and commit in the ResultRecord,
+          // if isProcessed and isRequest are both set to True in the @param CommitCommentRecord. If conjunct not set 
+          // to true, ResultRecords with same commit, branch and user are set to False;
+
+          return resultRecordRepo.updateGradeRequestedStatus(record)
+            .then((fulfilledResponse) => {
+              if (fulfilledResponse) {
+                return fulfilledResponse;                
+              }
+              throw 'Could not update Grade Requested Status on ' + record.getCommit();
+            });
         }
       });
   }

@@ -475,6 +475,7 @@ public getTestRecord(): object {
         'timestamp': this.timestamp,
         'container': container,
         'gradeRequested': false,
+        'gradeRequestedTimestamp': -1,
         'ref': this.ref,
         'attachments': [getStdio(), getReport()],
         'idStamp': this._id + this.suiteVersion

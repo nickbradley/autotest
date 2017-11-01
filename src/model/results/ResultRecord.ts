@@ -21,6 +21,7 @@ export interface Result {
   commit: string;
   committer: string;
   timestamp: number;
+  gradeRequestedTimeStamp: number;
   container: object;
   ref: string;
   attachments: object[];
