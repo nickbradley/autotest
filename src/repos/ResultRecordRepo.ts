@@ -92,7 +92,7 @@ export default class CommitCommentRepo {
         });
     }
     catch (err) {
-      throw `CommitCommentRepo::insertCommitComment: ${err}.`
+      Log.error(`CommitCommentRepo::insertCommitComment: ${err}.`);
     }
   }
 
