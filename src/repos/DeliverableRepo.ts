@@ -18,7 +18,7 @@ export default class DeliverableRepo {
   private db: MongoDB;
 
   constructor() {
-    this.db = db.getInstance();
+    this.db = new MongoDB();
   }
 
   public getDeliverables(key: string, courseNum: number): Promise<DeliverableRecord> {
