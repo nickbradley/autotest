@@ -5,7 +5,7 @@
 import Log from '../Util';
 import { IConfig, AppConfig } from '../Config';
 import mongodb = require('mongodb');
-import db, {Database} from '../db/MongoDB';
+import db, {MongoDB} from '../db/MongoDB';
 import { DeliverableRecord } from '../model/settings/DeliverableRecord'
 import { Course } from '../model/settings/CourseRecord';
 
@@ -15,10 +15,10 @@ const OBJECT_ID_PROPERTY = '_id';
 
 export default class DeliverableRepo {
 
-  private db: Database;
+  private db: MongoDB;
 
   constructor() {
-    this.db = db;
+    this.db = db.getInstance();
   }
 
   public getDeliverables(key: string, courseNum: number): Promise<DeliverableRecord> {

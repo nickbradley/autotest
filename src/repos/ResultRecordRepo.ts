@@ -5,7 +5,7 @@
 import Log from '../Util';
 import { IConfig, AppConfig } from '../Config';
 import mongodb = require('mongodb');
-import db, {Database, InsertOneResponse} from '../db/MongoDB';
+import db, {MongoDB, InsertOneResponse} from '../db/MongoDB';
 import CommitCommentRecord, {CommitComment} from '../model/requests/CommitComment';
 import ResultRecord, {Result} from '../model/results/ResultRecord';
 import { Deliverable } from '../model/settings/DeliverableRecord';
@@ -17,7 +17,7 @@ const OBJECT_ID_PROPERTY = '_id';
 
 export default class CommitCommentRepo {
 
-  private db: Database;
+  private db: MongoDB;
 
   constructor() {
     this.db = db;
@@ -57,7 +57,7 @@ export default class CommitCommentRepo {
     let context: mongodb.Db; 
     try {
       return new Promise<mongodb.UpdateWriteOpResult>((fulfill, reject) => {
-        db.initDB()
+        db.getInstance()
           .then((_db: mongodb.Db) => {
             if (_db) {
               context = _db;

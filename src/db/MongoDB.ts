@@ -19,12 +19,19 @@ export class MongoDB {
   constructor() {
     this.config = new AppConfig();
     if (!MongoDB.conn) {
-      MongoDB.conn = this.initDB();      
-    } else {
-
+      MongoDB.conn = this.initDB();    
     }
   }
   
+  async getInstance(): Promise<mongodb.Db> {
+    if (!MongoDB.conn) {
+      MongoDB.conn = this.initDB();    
+      return MongoDB.conn;  
+    } else {
+      return MongoDB.conn;
+    }
+  }
+
   /**
    * Gets MongoDB connection
    */
@@ -223,6 +230,4 @@ export class Database extends MongoDB {
   }
 }
 
-let db = new MongoDB;
-
-export default db;
+export default new MongoDB();
