@@ -453,7 +453,7 @@ export default class CommitCommentContoller {
       return resultRecordRepo.updateResultRecords(_record.getUser(), commit, gradeRequested)
       .then((fulfilledResponse) => {
         // If results found, update ResultRecords with true/false isProcessed and isRequest statuses
-        console.log('fulfilledResponse', fulfilledResponse);
+        Log.info(`CommitCommentController::addGradeRequestedStatus Succesfully updated ${fulfilledResponse.result} record.`)
         return;
         // throw `CommitCommentController:: addGradeRequestedStatus() No ResultRecords could be found for Commit ${commit}`;
       });

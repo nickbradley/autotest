@@ -99,7 +99,7 @@ export default class CommitCommentRepo {
    * Insert a CommitComment to the 'requests' collection on MongoDB
    * @param _commitComment CommitComment object that is being stored
    * @return <InsertOneResponse> that includes number of successful DB entries
-   */
+   */cd 
   public insertCommitComment(_commitComment: CommitComment): Promise<InsertOneResponse> {
     try {
       return new Promise<InsertOneResponse>((fulfill, reject) => {

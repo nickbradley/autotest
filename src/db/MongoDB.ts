@@ -13,11 +13,16 @@ export class MongoDB {
   private config: IConfig = new AppConfig();
   private username: string;
   private password: string;
-  private conn: Promise<mongodb.Db>;
+  public static conn: Promise<mongodb.Db>;
 
+  // If already inited, returns prior instance
   constructor() {
     this.config = new AppConfig();
-    this.conn = this.initDB();
+    if (!MongoDB.conn) {
+      MongoDB.conn = this.initDB();      
+    } else {
+
+    }
   }
   
   /**
@@ -52,7 +57,7 @@ export class MongoDB {
    */
   async getRecord(collectionName: string, query: object): Promise<any> {
     try {
-      return this.conn.then((db: mongodb.Db) => {
+      return MongoDB.conn.then((db: mongodb.Db) => {
         return db.collection(collectionName)
           .findOne(query)
           .then((result: JSON) => {
@@ -77,7 +82,7 @@ export class MongoDB {
   async getLatestRecord(collectionName: string, query: object): Promise<any> {
     return new Promise<any>((fulfill, reject) => {
       try {
-        this.conn.then((db: mongodb.Db) => {
+        MongoDB.conn.then((db: mongodb.Db) => {
           db.collection(collectionName)
             .findOne(query, {sort: {"$natural": -1}})
             .then((result: JSON) => {
@@ -106,7 +111,7 @@ export class MongoDB {
         query[field] = { "$in" : queries };
 
         return new Promise<object[]>((fulfill, reject) => {
-          this.conn.then(db => {
+          MongoDB.conn.then(db => {
             db.collection(collectionName)
               .find(query)
               .toArray((err: Error, results: any[]) => {
@@ -132,7 +137,7 @@ export class MongoDB {
   async getRecords(collectionName: string, query: object): Promise<any[]> {
     try {
       return new Promise<any[]>((fulfill, reject) => {
-        this.conn.then((db: mongodb.Db) => {
+        MongoDB.conn.then((db: mongodb.Db) => {
           db.collection(collectionName)
             .find(query)
             .sort({ _id: -1 })
@@ -160,7 +165,7 @@ export class MongoDB {
   async getCollection(collectionName: string): Promise<any[]> {
     try {
       return new Promise<JSON[]>((fulfill, reject) => {
-        this.conn.then((db: mongodb.Db) => {
+        MongoDB.conn.then((db: mongodb.Db) => {
           db.collection(collectionName)
             .find().toArray((err: Error, result: JSON[]) => {
               if (err) {
@@ -185,7 +190,7 @@ export class MongoDB {
   async insertRecord(collectionName: string, document: any): Promise<InsertOneResponse> {
     try {
       return new Promise<InsertOneResponse>((fulfill, reject) => {
-        this.conn.then((db: mongodb.Db) => {
+        MongoDB.conn.then((db: mongodb.Db) => {
           db.collection(collectionName).insertOne(document, (err, result) => {
             if (err) { throw `InsertRecord() ERROR: ${err}`; };
             Log.info(`MongoDB::insertRecord() Successfully inserted document in ${collectionName}.`);
@@ -218,6 +223,6 @@ export class Database extends MongoDB {
   }
 }
 
-let db = new Database();
+let db = new MongoDB;
 
 export default db;
