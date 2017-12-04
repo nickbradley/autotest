@@ -8,15 +8,29 @@ interface IDictionary<T> {
 }
 
 export interface Deliverable {
-  description?: string
-  dueDate: Date;
-  releaseDate: Date;
-  repos: Repository[];
-  gradeFormula: string;
-  rate: number;  // milliseconds
-  runs?: number;  // total number of requests to view test results
-  // external servers that should be accessible inside the test container
-  externalUrls?: Url.Url[];
+  _id: string;
+  url: string;
+  open: number;
+  close: number;
+  name: string;
+  buildingRepos: string;
+  courseId: string;
+  gradesReleased: boolean;
+  projectCount: number;
+  teamsInSameLab: boolean;
+  teamsAllowed: boolean;
+  maxTeamSize: number;
+  minTeamSize: number;
+  dockerRef: string;
+  // description?: string
+  // dueDate: Date;
+  // releaseDate: Date;
+  // repos: Repository[];
+  // gradeFormula: string;
+  // rate: number;  // milliseconds
+  // runs?: number;  // total number of requests to view test results
+  // // external servers that should be accessible inside the test container
+  // externalUrls?: Url.Url[];
 }
 
 export enum Visibility {
@@ -50,10 +64,7 @@ export class DeliverableRecord {
 
   constructor(deliverables: { [id: string]: Deliverable }) {
     for (const key of Object.keys(deliverables)) {
-      if (key.match(/d\d+/)) {
-        this.add(key, deliverables[key])
-      }
-      if (key.match(/p\d+/)) {
+      if (key.match(/[1-3a-zA-Z]+\d+/)) {
         this.add(key, deliverables[key])
       }
     }

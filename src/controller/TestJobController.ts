@@ -203,7 +203,8 @@ export default class TestJobController {
 
   public static getInstance(courseNum: number): TestJobController {
 
-    // Ensures that Singleton exists and is returned for each port (Yes, multiple Singletons);
+    // Ensures that Singleton exists and each Singleton returned for each port.
+    // (Yes, multiple Singletons)
 
     let redisPort = RedisUtil.getRedisPort(courseNum);
     if (!TestJobController.instances) {

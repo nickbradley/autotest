@@ -37,7 +37,7 @@ export default class PushController {
     let course: Course;
     let deliverableKeys: any;
 
-    course = await this.getCourseLogic();
+    course = await this.getDeliverableLogic();
     courseSettings = course.settings;
     this.overrideBatchMarking = this.checkOverrideBatchMarking(this.record.deliverable);
 
@@ -57,25 +57,20 @@ export default class PushController {
     }
   }
 
-  async getCourseLogic() {
+  async getDeliverableLogic() {
     try {
       let deliverables: Deliverable[] = new Array<Deliverable>();
       let promises = [];
       let courseRepo: CourseRepo = new CourseRepo();
 
-      let courseSettingsQuery = courseRepo.getCourseSettings(this.courseNum)
-        .then((courseSettings: CourseSettings) => {
-          this.courseSettings = courseSettings;
-          return courseSettings;
-        });
-      let courseQuery = courseRepo.getCourse(this.courseNum)
+      let deliverableQuery = courseRepo.getDeliverable(this.courseNum)
         .then((course: Course) => {
           this.course = course;
           return course;
         });
       
       promises.push(courseSettingsQuery);
-      promises.push(courseQuery);
+      promises.push(deliverableQuery);
 
       return await Promise.all(promises)
         .then(() => {

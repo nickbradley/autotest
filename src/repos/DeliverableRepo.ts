@@ -8,6 +8,7 @@ import mongodb = require('mongodb');
 import db, {MongoDB} from '../db/MongoDB';
 import { DeliverableRecord } from '../model/settings/DeliverableRecord'
 import { Course } from '../model/settings/CourseRecord';
+import { Deliverable } from '../model/settings/DeliverableRecord';
 
 const COURSE_COLLECTION = 'courses';
 const DELIVERABLES_COLLECTION = 'deliverables';
@@ -19,6 +20,26 @@ export default class DeliverableRepo {
 
   constructor() {
     this.db = new MongoDB();
+  }
+
+  public getDeliverable(delivName: string, courseNum: number) {
+    let courseQuery = { courseId: courseNum.toString() }
+    db.getRecord(COURSE_COLLECTION, courseQuery)
+      .then((course: Course) => {
+        if (!course) {
+          throw `DeliverableRepo::getDeliverable() Could not find ${courseNum}`;
+        }
+        return course;
+      })
+      .then((course: Course) => {
+        return db.getRecord(DELIVERABLES_COLLECTION, {courseId: course.courseId, delivName})
+          .then((deliv: Deliverable) => {
+            if (!deliv) {
+              throw `DeliverableRepo::getDeliverable() Could not find Deliverable for ${delivName} and ${courseNum}`;
+            }
+            return deliv;
+          });
+      })
   }
 
   public getDeliverables(key: string, courseNum: number): Promise<DeliverableRecord> {
