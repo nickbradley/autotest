@@ -104,7 +104,7 @@ export default class CommitCommentRecord {
           let deliverable: Deliverable = deliverableRecord.item(key);
 
           // The key refers to a vaild deliverable that has been released
-          if (new Date(deliverable.releaseDate) <= now) {
+          if (new Date(deliverable.open) <= now) {
             return fulfill({
               key: key,
               deliverable: deliverableRecord.item(key)
@@ -112,11 +112,11 @@ export default class CommitCommentRecord {
           // The key refers to a vaild deliverable that hasn't been released
           // Get all deliverables that have been released
           } else {
-            let date = Moment(deliverable.releaseDate).format('MMMM Do YYYY, h:mm:ss a');
+            let date = Moment(deliverable.open).format('MMMM Do YYYY, h:mm:ss a');
             this.note = `The specified deliverable has not been released yet; Please wait until ${date}.`;
             for (const key of deliverableRecord.keys()) {
               let deliverable: Deliverable = deliverableRecord.item(key);
-              if (new Date(deliverable.releaseDate) <= now) {
+              if (new Date(deliverable.open) <= now) {
                 fetchedDeliverables.push({key: key, deliverable: deliverable});
               }
             }
@@ -128,14 +128,14 @@ export default class CommitCommentRecord {
             this.note = 'Invalid deliverable specified; using latest. To specify an earlier deliverable, follow the metion with `#dX`, where `X` is the deliverable.';
           for (const key of deliverableRecord.keys()) {
             let deliverable: Deliverable = deliverableRecord.item(key);
-            if (new Date(deliverable.releaseDate) <= now) {
+            if (new Date(deliverable.open) <= now) {
               fetchedDeliverables.push({key: key, deliverable: deliverable});
             }
           }
         }
         // Of the released deliverables, return the one with the latest due date
         let latestDeliverable: FetchedDeliverable = fetchedDeliverables.reduce((prev, current) => {
-          return (prev.deliverable.dueDate > current.deliverable.dueDate) ? prev : current
+          return (prev.deliverable.close > current.deliverable.close) ? prev : current
         }, fetchedDeliverables[0]);
 
         fulfill(latestDeliverable);

@@ -4,24 +4,21 @@ import PushRecord, {Push} from '../../model/requests/PushRecord';
 import TestJobController from '../TestJobController';
 import {Job} from '../../model/JobQueue';
 import {DeliverableRecord} from '../../model/settings/DeliverableRecord';
-import {CourseRecord} from '../../model/settings/CourseRecord';
-import {Course, CourseSettings} from '../../model/business/CourseModel';
-import {Deliverable} from '../../model/business/DeliverableModel';
+import {Course} from '../../model/business/CourseModel';
+import {Deliverable} from '../../model/settings/DeliverableRecord';
 import {TestJob} from '../TestJobController';
 import PushRepo from '../../repos/PushRepo';
 import CourseRepo from '../../repos/CourseRepo';
+import DeliverableRepo from '../../repos/DeliverableRepo';
 
 const BOT_USERNAME = 'autobot';
 
 export default class PushController {
   private config: IConfig;
   private runningPort: number;
-  private course: Course;
+  private deliverable: Deliverable;
   private courseNum: number;
-  private courseRecord: CourseRecord;
-  private courseSettings: CourseSettings;
   private record: PushRecord;
-  private overrideBatchMarking: boolean;
   
   constructor(courseNum: number) {
     this.config = new AppConfig();
@@ -33,13 +30,10 @@ export default class PushController {
     this.record = new PushRecord(data);
     await this.store(this.record);
 
-    let courseSettings: CourseSettings;
-    let course: Course;
+    let deliverable: Deliverable;
     let deliverableKeys: any;
 
-    course = await this.getDeliverableLogic();
-    courseSettings = course.settings;
-    this.overrideBatchMarking = this.checkOverrideBatchMarking(this.record.deliverable);
+    deliverable = await this.getDeliverableLogic();
 
     if (this.record.user.toString().indexOf(BOT_USERNAME) > -1) {
       try {
@@ -49,9 +43,6 @@ export default class PushController {
         Log.info(err);
       }
     }
-    else if (courseSettings.markDelivsByBatch == true && !this.overrideBatchMarking) {
-      return Promise.all(this.markDeliverablesByBatch());
-    } 
     else {
       return Promise.all(this.markDeliverableByRepo());
     }
@@ -61,21 +52,20 @@ export default class PushController {
     try {
       let deliverables: Deliverable[] = new Array<Deliverable>();
       let promises = [];
-      let courseRepo: CourseRepo = new CourseRepo();
+      let delivRepo: DeliverableRepo = new DeliverableRepo();
 
-      let deliverableQuery = courseRepo.getDeliverable(this.courseNum)
-        .then((course: Course) => {
-          this.course = course;
-          return course;
+      let deliverableQuery = delivRepo.getDeliverable(this.record.deliverable, this.courseNum)
+        .then((deliverable: Deliverable) => {
+          this.deliverable = deliverable;
+          return deliverable;
         });
       
-      promises.push(courseSettingsQuery);
       promises.push(deliverableQuery);
 
       return await Promise.all(promises)
         .then(() => {
-          if (this.course) {
-            return this.course;
+          if (this.deliverable) {
+            return this.deliverable;
           }
           else {
             throw `Could not find deliverables for ${this.courseNum} course logic.`;
@@ -87,57 +77,17 @@ export default class PushController {
     }
   }
 
-  private markDeliverablesByBatch(): Promise<Job>[] {
-    let promises: Promise<Job>[] = [];
-    let currentDate: Date = new Date();
-    let deliverablesRecord = this.courseSettings.deliverables;
-    // conditions for markByBatch is flag true on Course object, 
-    // and flag true in CourseSettings.deliverables[key].markInBatch 
-    for (const key of Object.keys(deliverablesRecord)) {
-      if (key.match(/d\d+/)) {
-        let deliverable = deliverablesRecord[key];
-        let rDate: Date = new Date(deliverable.releaseDate);
-        if (rDate <= currentDate && deliverable.markInBatch) {
-          for (let repo of deliverable.repos) {
-            let testJob: TestJob = {
-              githubOrg: this.record.githubOrg,
-              repo: this.record.repo,
-              projectUrl: this.record.projectUrl,
-              commitUrl: this.record.commitUrl,
-              courseNum: this.courseNum,
-              username: this.record.user,
-              timestamp: this.record.timestamp,
-              team: this.record.team,
-              commit: this.record.commit.short,
-              hook: this.record.commentHook,
-              ref: this.record.ref,
-              overrideBatchMarking: this.overrideBatchMarking,
-              test: {
-                name: repo.name,
-                image: 'autotest/' + this.courseSettings.bootstrapImage + ':' + (repo.commit ? repo.commit : 'latest'),
-                visibility: repo.visibility,
-                deliverable: key
-              }
-            }
-            // Log.info('PushController::process() - ' + record.team +'#'+ record.commit.short + ' enqueued to run against ' + repo.name + '.');
-            promises.push(this.enqueue(testJob));
-          }
-        }
-      }
-    }
-    return promises;
-  }
-
   private markDeliverableByRepo(): Promise<Job>[] {
     let promises: Promise<Job>[] = [];
     let currentDate: Date = new Date();
     let record: PushRecord = this.record;
-    let deliverablesRecord = this.courseSettings.deliverables;
 
-        let deliverable = deliverablesRecord[record.deliverable];
-        let rDate: Date = new Date(deliverable.releaseDate);
-        if (rDate <= currentDate) {
-          for (let repo of deliverable.repos) {
+        let deliverable = this.deliverable;
+        let open: Date = new Date(deliverable.open);
+        let close: Date = new Date(deliverable.close);
+        let dockerImage = String(deliverable.dockerRef).split(':')[0];
+        let dockerBuild = String(deliverable.dockerRef).split(':')[1];
+        if (open <= currentDate && close >= currentDate) {
             let testJob: TestJob = {
               githubOrg: record.githubOrg,
               repo: record.repo,
@@ -149,23 +99,23 @@ export default class PushController {
               team: record.team,
               commit: record.commit.short,
               hook: record.commentHook,
-              overrideBatchMarking: this.overrideBatchMarking,
               ref: record.ref,
               test: {
-                name: repo.name,
-                image: 'autotest/' + this.courseSettings.bootstrapImage + ':' + (repo.commit ? repo.commit : 'latest'),
-                visibility: repo.visibility,
+                dockerRef: deliverable.dockerRef,
+                dockerImage: dockerImage,
+                dockerBuild: dockerBuild,
+                stamp: 'autotest/' + this.deliverable.dockerRef + ':' + dockerBuild,
                 deliverable: record.deliverable
               }
-            }
             // Log.info('PushController::process() - ' + record.team +'#'+ record.commit.short + ' enqueued to run against ' + repo.name + '.');
-            promises.push(this.enqueue(testJob));
           }
+          promises.push(this.enqueue(testJob));          
         }
     return promises;
   }
 
   private checkOverrideBatchMarking(deliverable: string): boolean {
+    // aka. if does not exist because not in REGEX of repo name
     if (typeof deliverable === 'undefined') {
       return false;
     }

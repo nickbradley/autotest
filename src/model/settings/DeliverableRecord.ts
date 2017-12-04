@@ -22,6 +22,8 @@ export interface Deliverable {
   maxTeamSize: number;
   minTeamSize: number;
   dockerRef: string;
+  rate: number;
+  markInBatch: boolean; // multiple deliverables per repo flag
   // description?: string
   // dueDate: Date;
   // releaseDate: Date;

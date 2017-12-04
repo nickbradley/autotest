@@ -15,10 +15,11 @@ import Server from '../../src/rest/Server'
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
-  name: string;
-  image: string;
-  visibility: number;
   deliverable: string;
+  dockerRef: string;
+  dockerImage: string;
+  dockerBuild: string;
+  stamp: string;
 }
 export interface TestJob {
   username: string;
@@ -31,7 +32,6 @@ export interface TestJob {
   timestamp: number;
   ref: string;
   test: TestJobDeliverable;
-  overrideBatchMarking: boolean;
   courseNum: number;
   githubOrg: string;
 }
@@ -232,7 +232,7 @@ export default class TestJobController {
    */
   public async addJob(job: TestJob): Promise<Job> {
     let opts: JobOpts = {
-      jobId: job.test.image + '|' + job.test.deliverable + '-'  + job.team + '#' + job.commit,
+      jobId: job.test.dockerImage + '|' + job.test.deliverable + '-'  + job.team + '#' + job.commit,
       removeOnComplete: true
     }
     

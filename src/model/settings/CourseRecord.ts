@@ -17,6 +17,7 @@ export interface CourseSettings {
 }
 
 export class Course {
+  _id: string;
   courseId: string;
   minTeamSize: number;
   maxTeamSize: number;
