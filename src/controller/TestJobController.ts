@@ -82,7 +82,7 @@ export default class TestJobController {
     this.redisPort = redisPort;
 
     let stdQName: string = 'autotest-testqueue-std';
-    let stdQPool: number = 2;
+    let stdQPool: number = 1;
 
     let expQName: string = 'autotest-testqueue-exp';
     let expQPool: number = 2;
@@ -248,10 +248,12 @@ export default class TestJobController {
     try {
       let job: Job = await this.stdManager.queue.getJob(id);
       let jobState: string = await job.getState();
-      if (jobState !== 'completed' && jobState !== 'failed' && jobState !== 'active') {
+      if (jobState !== 'active' && jobState !== 'failed') {
         await this.stdManager.queue.remove(job.jobId);
         await this.expManager.queue.add(job.data, job.opts);
         Log.info('TestJobController::promoteJob() - The job ' + id + ' was successfully moved to the express queue.');
+      } else if (jobState === 'active') {
+        Log.info('TestJobController::promoteJob() - The job ' + id + ' cannot be promoted because it is already ' + jobState);        
       } else {
         Log.info('TestJobController::promoteJob() - The job ' + id + ' was not be promoted because it is ' + jobState);
       }

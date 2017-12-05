@@ -20,7 +20,7 @@ export interface CommitComment {
   deliverable: string;
   team: string;
   user: string;
-  commit: Commit;
+  commit: string;
   orgName: string;
   body: string;
   type: string;
@@ -206,7 +206,7 @@ export default class CommitCommentRecord {
       team: this.team, 
       user: this.user, 
       orgName: this.orgName,
-      commit: this.commit, 
+      commit: this.commit.toString(), 
       body: this.message, 
       type: 'commit_comment', 
       timestamp: this.timestamp, 
