@@ -7,7 +7,7 @@ import {Database, QueryParameters, ViewResponse} from '../../model/Database';
 import CommitCommentRecord, {CommitComment} from '../../model/requests/CommitComment';
 import {GithubResponse, Commit} from '../../model/GithubUtil';
 import PostbackController from './PostbackController'
-import {Course, CourseSettings} from '../../model/business/CourseModel';
+import {Course} from '../../model/business/CourseModel';
 import {AdminRecord, Admin} from '../../model/settings/AdminRecord';
 import TestJobController from '../TestJobController';
 import GithubGradeComment from '../../model/results/GithubGradeComment';
@@ -16,10 +16,12 @@ import {Job} from '../../model/JobQueue';
 import {RedisUtil} from '../../model/RedisUtil';
 import RedisManager from '../RedisManager';
 import db from '../../db/MongoDB';
-import DeliverableRepo from '../../repos/DeliverableRepo';
 import CommitCommentRecordRepo from '../../repos/CommitCommentRepo';
 import ResultRecordRepo from '../../repos/ResultRecordRepo';
+import DeliverableRepo from '../../repos/DeliverableRepo';
+import {Deliverable} from '../../model/settings/DeliverableRecord';
 import CourseRepo from '../../repos/CourseRepo';
+
 
 const COURSE_210: number = 210;
 const COURSE_310: number = 310;
@@ -73,7 +75,13 @@ export default class CommitCommentContoller {
         let queue: TestJobController = TestJobController.getInstance(this.courseNum);
         let record: CommitCommentRecord = new CommitCommentRecord(this.courseNum);
         let response: GithubResponse;
+        let delivRepo: DeliverableRepo = new DeliverableRepo();
+        let deliv: Deliverable;
 
+        await delivRepo.getDeliverable(record.getDeliverable(), this.courseNum)
+          .then((_deliv: Deliverable) => {
+            deliv = _deliv;
+          });
         await redis.client.connect();
         await record.process(data);
         this.record = record;
@@ -134,11 +142,11 @@ export default class CommitCommentContoller {
                 record.setIsProcessed(false);
                 try {
                   Log.info('CommitCommentController::process() - Checking if commit is queued.')
-                  let maxPos: number = await that.isQueued(record.getDeliverable(), record.getTeam(), record.getCommit());
+                  let maxPos: number = await that.isQueued(deliv, record.getTeam(), record.getCommit());
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = 'autotest/' + imageName + ':latest|' + req.deliverable + '-' + req.team+ '#' + req.commit;
+                    let jobId: string = deliv.dockerRef + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -207,10 +215,17 @@ export default class CommitCommentContoller {
         let queue: TestJobController = TestJobController.getInstance(this.courseNum);
         let record: CommitCommentRecord = new CommitCommentRecord(this.courseNum);
         let response: GithubResponse;
+        let delivRepo: DeliverableRepo = new DeliverableRepo();
+        let deliv: Deliverable;
 
         await redis.client.connect();
         await record.process(data);
         this.record = record;
+
+        await delivRepo.getDeliverable(record.getDeliverable(), this.courseNum)
+        .then((_deliv: Deliverable) => {
+          deliv = _deliv;
+        });
 
         let isAdmin: boolean = await that.isAdmin(record.getUser());
 
@@ -268,11 +283,11 @@ export default class CommitCommentContoller {
                 record.setIsProcessed(false)
                 try {
                   Log.info('CommitCommentController::process() - Checking if commit is queued.')
-                  let maxPos: number = await that.isQueued(record.getDeliverable(), record.getTeam(), record.getCommit())
+                  let maxPos: number = await that.isQueued(deliv, record.getTeam(), record.getCommit())
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = 'autotest/' + imageName + ':latest|' + req.deliverable + '-' + req.team+ '#' + req.commit;
+                    let jobId: string = deliv.dockerRef + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -386,11 +401,11 @@ export default class CommitCommentContoller {
    * Checks if the request is in the job queue.
    *
    */
-  private async isQueued(deliverable: string, team: string, commit: Commit): Promise<number> {
+  private async isQueued(deliverable: Deliverable, team: string, commit: Commit): Promise<number> {
     //  jobId: job.test.image + '|'  + job.team + '#' + job.commit,
     return new Promise<number>((fulfill, reject) => {
       let imageName = this.getImageName();
-      let jobId: string = 'autotest/' + imageName + ':latest|' + deliverable + '-' + team + '#' + commit.short;
+      let jobId: string = deliverable.dockerRef + '|' + deliverable.name + '-' + team + '#' + commit.short;
       let queue: TestJobController = TestJobController.getInstance(this.courseNum);
 
       queue.getJob(jobId).then(job => {

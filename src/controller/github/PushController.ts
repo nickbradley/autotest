@@ -44,7 +44,7 @@ export default class PushController {
       }
     }
     else {
-      return Promise.all(this.markDeliverableByRepo());
+      return Promise.all(this.markDeliverable());
     }
   }
 
@@ -77,7 +77,7 @@ export default class PushController {
     }
   }
 
-  private markDeliverableByRepo(): Promise<Job>[] {
+  private markDeliverable(): Promise<Job>[] {
     let promises: Promise<Job>[] = [];
     let currentDate: Date = new Date();
     let record: PushRecord = this.record;
@@ -87,8 +87,9 @@ export default class PushController {
         let close: Date = new Date(deliverable.close);
         let dockerImage = String(deliverable.dockerRef).split(':')[0];
         let dockerBuild = String(deliverable.dockerRef).split(':')[1];
+        let testJob: TestJob;
         if (open <= currentDate && close >= currentDate) {
-            let testJob: TestJob = {
+            testJob = {
               githubOrg: record.githubOrg,
               repo: record.repo,
               projectUrl: record.projectUrl,
@@ -109,8 +110,8 @@ export default class PushController {
               }
             // Log.info('PushController::process() - ' + record.team +'#'+ record.commit.short + ' enqueued to run against ' + repo.name + '.');
           }
-          promises.push(this.enqueue(testJob));          
         }
+    promises.push(this.enqueue(testJob));          
     return promises;
   }
 

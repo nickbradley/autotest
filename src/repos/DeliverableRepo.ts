@@ -22,7 +22,7 @@ export default class DeliverableRepo {
     this.db = new MongoDB();
   }
 
-  public getDeliverable(delivName: string, courseNum: number) {
+  public getDeliverable(delivName: string, courseNum: number): Promise<Deliverable> {
     let courseQuery = { courseId: courseNum.toString() }
     return db.getRecord(COURSE_COLLECTION, courseQuery)
       .then((course: Course) => {
@@ -39,23 +39,30 @@ export default class DeliverableRepo {
             }
             return deliv;
           });
-      })
-      .catch((err: any) => {
-        Log.error(`DeliverableRepo::getDeliverable() ERROR ${err}`);
       });
+      // .catch((err: any) => {
+      //   Log.error(`DeliverableRepo::getDeliverable() ERROR ${err}`);
+      // });
   }
 
-  public getDeliverables(key: string, courseNum: number): Promise<DeliverableRecord> {
+  public getDeliverables(courseNum: number): Promise<Deliverable[]> {
     let courseQuery = { courseId: courseNum.toString() };
-    let deliverableQuery = {};
-    deliverableQuery[key] = key;
 
-    return new Promise<DeliverableRecord>((fulfill, reject) => {
+    return new Promise<Deliverable[]>((fulfill, reject) => {
       db.getRecord(COURSE_COLLECTION, courseQuery).then((course: Course) => {
         if (!course) {
           throw `DeliverableRepo::getDeliverables() Could not find ${courseNum}`;
         }
-        fulfill(new DeliverableRecord(course.settings.deliverables))
+        return course;
+      })
+      .then((course: Course) => {
+        db.getRecords(DELIVERABLES_COLLECTION, {courseId: course._id})
+          .then((deliverables: Deliverable[]) => {
+            if (deliverables) {
+              return fulfill(deliverables);
+            }
+            throw `DeliverableRepo::getDeliverables() Could not find list of Deliverables under ${course.courseId}`;
+          });
       });
     });
   }

@@ -232,10 +232,9 @@ export default class TestJobController {
    */
   public async addJob(job: TestJob): Promise<Job> {
     let opts: JobOpts = {
-      jobId: job.test.dockerImage + '|' + job.test.deliverable + '-'  + job.team + '#' + job.commit,
+      jobId: job.test.dockerRef + '|' + job.test.deliverable + '-'  + job.team + '#' + job.commit,
       removeOnComplete: true
     }
-    
     return <Promise<Job>>this.stdManager.queue.add(job, opts);
   }
 

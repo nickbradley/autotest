@@ -12,8 +12,8 @@ import Log from '../Util';
 import { IConfig, AppConfig } from '../Config';
 import mongodb = require('mongodb');
 import db, {Database} from '../db/MongoDB';
-import { Deliverable } from '../model/settings/DeliverableRecord'
-import { Course, CourseSettings } from '../model/business/CourseModel';
+import {Deliverable} from '../model/settings/DeliverableRecord'
+import {Course} from '../model/business/CourseModel';
 
 const COURSE_COLLECTION = 'courses';
 const COURSE_ID_PROPERTY = 'courseId';
@@ -26,15 +26,6 @@ export default class CourseRepo {
 
   constructor() {
     this.db = db;
-  }
-
-  public getCourseSettings(courseNum: number): Promise<CourseSettings> {
-    return new Promise<CourseSettings>((fulfill, resolve) => {
-      let courseQuery = db.getRecord('courses', {'courseId': courseNum.toString()})
-      .then((course: Course )=> {
-        fulfill(course.settings);
-      });
-    })
   }
 
   public getCourse(courseNum: number): Promise<Course> {

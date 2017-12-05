@@ -4,16 +4,6 @@
 import * as Url from 'url';
 import {Commit} from '../GithubUtil';
 
-export interface Deliverable {
-  courseId: string;
-  name: string;
-  url: string;
-  open: Date;
-  close: Date;
-  gradesReleased: Boolean;
-  deliverableSettings: DeliverableSettings;
-}
-
 export enum Visibility {
   Public,
   Private,

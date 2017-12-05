@@ -90,34 +90,42 @@ export default class CommitCommentRecord {
 
   private async fetchDeliverable(key: string, courseNum: number): Promise<FetchedDeliverable> {
 
-    if (!key) this.note = 'No deliverable specified; using latest. To specify an earlier deliverable, follow the metion with `#dX`.';
+    if (!key) this.note = 'No deliverable specified; using latest. To specify an earlier deliverable, follow the mention (ie. @autobot #d5).';
     let that = this;
     return new Promise<FetchedDeliverable>(async (fulfill, reject) => {
       try {
         let deliverableRepo = new DeliverableRepo();
-        let deliverableRecord: DeliverableRecord = await deliverableRepo.getDeliverableSettings(courseNum);
+        let deliverable: Deliverable = await deliverableRepo.getDeliverable(key, courseNum);
+        let deliverables: Deliverable[] = await deliverableRepo.getDeliverables(this.courseNum);
         let fetchedDeliverables: FetchedDeliverable[] = [];
         let now: Date = new Date();
 
-        if (deliverableRecord.containsKey(key)) {
-          let getDeliverableSettings = await deliverableRepo.getDeliverableSettings(courseNum)
-          let deliverable: Deliverable = deliverableRecord.item(key);
+        if (typeof deliverable.name !== 'undefined' && deliverable.name === key) {
 
           // The key refers to a vaild deliverable that has been released
-          if (new Date(deliverable.open) <= now) {
+          if (new Date(deliverable.open) <= now && new Date(deliverable.close) >= now) {
             return fulfill({
               key: key,
-              deliverable: deliverableRecord.item(key)
+              deliverable: deliverable
             });
           // The key refers to a vaild deliverable that hasn't been released
           // Get all deliverables that have been released
-          } else {
+          } else if (new Date(deliverable.open) >= now && new Date(deliverable.close) >= now) {
             let date = Moment(deliverable.open).format('MMMM Do YYYY, h:mm:ss a');
-            this.note = `The specified deliverable has not been released yet; Please wait until ${date}.`;
-            for (const key of deliverableRecord.keys()) {
-              let deliverable: Deliverable = deliverableRecord.item(key);
-              if (new Date(deliverable.open) <= now) {
-                fetchedDeliverables.push({key: key, deliverable: deliverable});
+            this.note = `The deliverable '${key}' has not been released. Please wait until ${date}.`;
+            for (const deliv of deliverables) {
+              if (new Date(deliv.open) <= now && new Date(deliv.close) >= now) {
+                fetchedDeliverables.push({key: key, deliverable: deliv});
+              }
+            }
+          // The key refers to a vaild deliverable that has been released but have been closed
+          // Get all such deliverables
+          } else if (new Date(deliverable.open) <= now && new Date(deliverable.close) >= now) {
+            let date = Moment(deliverable.close).format('MMMM Do YYYY, h:mm:ss a');
+            this.note = `The deliverable '${key}' is closed; The due date was ${date}.`;
+            for (const deliv of deliverables) {
+              if (new Date(deliv.open) <= now && new Date(deliv.close) >= now) {
+                fetchedDeliverables.push({key: key, deliverable: deliv});
               }
             }
           }
@@ -126,10 +134,9 @@ export default class CommitCommentRecord {
         } else {
           if (!this.note)
             this.note = 'Invalid deliverable specified; using latest. To specify an earlier deliverable, follow the metion with `#dX`, where `X` is the deliverable.';
-          for (const key of deliverableRecord.keys()) {
-            let deliverable: Deliverable = deliverableRecord.item(key);
-            if (new Date(deliverable.open) <= now) {
-              fetchedDeliverables.push({key: key, deliverable: deliverable});
+          for (const deliv of deliverables) {
+            if (new Date(deliv.open) <= now) {
+              fetchedDeliverables.push({key: key, deliverable: deliv});
             }
           }
         }
