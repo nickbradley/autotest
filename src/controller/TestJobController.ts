@@ -15,6 +15,7 @@ import Server from '../../src/rest/Server'
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
+  jsonInput: object;
   deliverable: string;
   dockerRef: string;
   dockerImage: string;

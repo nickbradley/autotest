@@ -95,6 +95,7 @@ export default class TestRecord{
   private ref: string;
   private githubOrg: string;
   private username: string;
+  private jsonInput: object;
 
   constructor(githubToken: string, testJob: TestJob) {
     this.courseNum = testJob.courseNum;
@@ -111,6 +112,7 @@ export default class TestRecord{
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
     this.githubOrg = testJob.githubOrg;
     this.username = testJob.username;
+    this.jsonInput = testJob.test.jsonInput;
   }
 
   public getTeam(): string {
@@ -174,7 +176,10 @@ export default class TestRecord{
   }
 
   public async generate(): Promise<TestStatus> {
+
     let tempDir = await tmp.dir({ dir: '/tmp', unsafeCleanup: true });
+    // JSON input will be accessible in mounted volume of Docker container
+    await this.writeContainerInput(tempDir, this.jsonInput);    
     let file: string = './docker/tester/run-test-container-' + this.courseNum + '.sh';
     let args: string[] = [
       this.githubToken,
@@ -404,6 +409,23 @@ export default class TestRecord{
     }
   }
 
+  public writeContainerInput(tmpDir: any, jsonInput: object) {
+    new Promise((fulfill, reject) => {
+      try {
+        Log.info(`TestRecord::writeContainerInput Writing 'docker_SHA.json' file in container volume`);
+        fs.writeFile(tmpDir.path + '/docker_SHA.json', JSON.stringify(jsonInput), (err) => {
+          if (err) {
+            throw err;
+          } else {
+            return fulfill();
+          }
+        });   
+      } catch (err) {
+        Log.error(`TestRecord::writeDockerJSON() ERROR ${err}`);
+      }
+    });
+  }
+
 public getTestRecord(): object {
   let that = this;
     this._id += this.suiteVersion;
@@ -434,9 +456,17 @@ public getTestRecord(): object {
         return attachment;
       }
     }
+
+    function getDockerSHA() {
+      let attachments = [];
+      if (that.report && that.reportSize <= that.maxReportSize) {
+        let attachment = {name: 'docker_SHA.json', data: that.jsonInput, content_type: 'application/json'};
+        return attachment;
+      }
+    }
     
     function parseReport() {
-        if(typeof that.report !== 'undefined') {
+        if (typeof that.report !== 'undefined') {
           return JSON.parse(that.report);
         }
         return REPORT_FAILED_FLAG;
@@ -472,7 +502,7 @@ public getTestRecord(): object {
         'timestamp': this.timestamp,
         'container': container,
         'ref': this.ref,
-        'attachments': [getStdio(), getReport()],
+        'attachments': [getStdio(), getReport(), getDockerSHA()],
         'idStamp': this._id + this.suiteVersion
       }
       return doc;

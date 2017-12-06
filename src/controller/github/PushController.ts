@@ -10,6 +10,7 @@ import {TestJob} from '../TestJobController';
 import PushRepo from '../../repos/PushRepo';
 import CourseRepo from '../../repos/CourseRepo';
 import DeliverableRepo from '../../repos/DeliverableRepo';
+import DockerHelper from '../../model/docker/DockerInput';
 
 const BOT_USERNAME = 'autobot';
 
@@ -19,6 +20,7 @@ export default class PushController {
   private deliverable: Deliverable;
   private courseNum: number;
   private record: PushRecord;
+  private dockerHelper: DockerHelper;
   
   constructor(courseNum: number) {
     this.config = new AppConfig();
@@ -30,10 +32,10 @@ export default class PushController {
     this.record = new PushRecord(data);
     await this.store(this.record);
 
-    let deliverable: Deliverable;
-    let deliverableKeys: any;
+    this.deliverable = await this.getDeliverableLogic();
+    this.dockerHelper = await new DockerHelper(this.deliverable, this.record);
 
-    deliverable = await this.getDeliverableLogic();
+    console.log(await this.dockerHelper.createDockerInputContainer());
 
     if (this.record.user.toString().indexOf(BOT_USERNAME) > -1) {
       try {
@@ -102,6 +104,7 @@ export default class PushController {
               hook: record.commentHook,
               ref: record.ref,
               test: {
+                jsonInput: {test: 'ey'},
                 dockerRef: deliverable.dockerRef,
                 dockerImage: dockerImage,
                 dockerBuild: dockerBuild,
