@@ -12,7 +12,7 @@ import DeliverableRepo from '../../repos/DeliverableRepo';
 
 const BOT_USERNAME = 'autobot';
 
-export interface DockerInputContainer {
+export interface DockerInputJSON {
   userInfo: DockerUserInfo;  
   pushInfo: DockerPushInfo;
   deliverableToMark: string;
@@ -45,7 +45,7 @@ export default class DockerInput {
 
   private deliverable: Deliverable;
   private pushRecord: PushRecord;
-  private _dockerInputContainer: DockerInputContainer = null;
+  private _DockerInputJSON: DockerInputJSON = null;
   
   constructor(deliverable: Deliverable, pushRecord: PushRecord) {
     this.deliverable = deliverable;
@@ -63,26 +63,29 @@ export default class DockerInput {
         if (user) {
           return user;
         }
-        throw `DockerInput::getUserInfo() Cannot find user`;
+        Log.warn(`DockerInput::getUserInfo() The user ${this.pushRecord.user} cannot be found in the DB. ` + 
+          'DockerInput will have null user entries.')
       });
   }
 
-  public async createDockerInputContainer() {
+  public async createDockerInputJSON() {
     let that = this;
     try {
 
       let userInfo: DockerUserInfo = {username: null, csid: null, snum: null, profileUrl: null, fname: null, lname: null};
       let pushInfo: DockerPushInfo = {branch: null, commit: null, commitUrl: null};
-      let dockerInput: DockerInputContainer = {userInfo, pushInfo, githubOrg: null, deliverableToMark: null, custom: null};
+      let dockerInput: DockerInputJSON = {userInfo, pushInfo, githubOrg: null, deliverableToMark: null, custom: null};
 
       return this.getUserInfo()
         .then((user: User) => {
-          dockerInput.userInfo.csid = user.csid;
-          dockerInput.userInfo.snum = user.snum;
-          dockerInput.userInfo.fname = user.fname;
-          dockerInput.userInfo.lname = user.lname;
-          dockerInput.userInfo.username = user.username;
-          dockerInput.userInfo.profileUrl = user.profileUrl;
+          if (user) {
+            dockerInput.userInfo.csid = user.csid;
+            dockerInput.userInfo.snum = user.snum;
+            dockerInput.userInfo.fname = user.fname;
+            dockerInput.userInfo.lname = user.lname;
+            dockerInput.userInfo.username = user.username;
+            dockerInput.userInfo.profileUrl = user.profileUrl;
+          }
         })
         .then(() => {
           dockerInput.pushInfo.branch = this.pushRecord.ref;
@@ -92,14 +95,11 @@ export default class DockerInput {
           dockerInput.deliverableToMark = this.pushRecord.deliverable;
           dockerInput.githubOrg = this.pushRecord.githubOrg;
 
-          that._dockerInputContainer = dockerInput;
-          return this._dockerInputContainer;          
+          that._DockerInputJSON = dockerInput;
+          return this._DockerInputJSON;          
         });
     } catch (err) {
-      Log.error(`DockerInput::dockerInputContainer() ERROR ${err}`);
+      Log.error(`DockerInput::DockerInputJSON() ERROR ${err}`);
     }
   }
-
-  
-
 }

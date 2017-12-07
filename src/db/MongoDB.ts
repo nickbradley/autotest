@@ -68,13 +68,7 @@ export class MongoDB {
         return db.collection(collectionName)
           .findOne(query)
           .then((result: JSON) => {
-            if (!result) {
-              throw `Could not find ${JSON.stringify(query)} under ${collectionName}. 
-              This is NOT a true error if a push has never occurred on this repo.`
-            }
-            else {
-              return result;
-            }
+            return result;
           });
       });
     }

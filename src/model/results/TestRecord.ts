@@ -59,8 +59,10 @@ export interface TestStatus {
 
 export default class TestRecord{
   // private config: IConfig;
-  private maxStdioSize: number = 5 * 1000000;  // 5 MB
+  private maxStdioSize: number = 1 * 1000000;  // 1 MB
   private maxReportSize: number = 1/2 * 1000000; // 500 KB
+  private maxSHASize: number = 1/2 * 1000000; // 500 KB
+  private shaSize: number;
   private stdio: string;
   private report: string;
   private repo: string;
@@ -95,7 +97,7 @@ export default class TestRecord{
   private ref: string;
   private githubOrg: string;
   private username: string;
-  private jsonInput: object;
+  private dockerInput: object;
 
   constructor(githubToken: string, testJob: TestJob) {
     this.courseNum = testJob.courseNum;
@@ -112,7 +114,7 @@ export default class TestRecord{
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
     this.githubOrg = testJob.githubOrg;
     this.username = testJob.username;
-    this.jsonInput = testJob.test.jsonInput;
+    this.dockerInput = testJob.test.dockerInput;
   }
 
   public getTeam(): string {
@@ -179,7 +181,7 @@ export default class TestRecord{
 
     let tempDir = await tmp.dir({ dir: '/tmp', unsafeCleanup: true });
     // JSON input will be accessible in mounted volume of Docker container
-    await this.writeContainerInput(tempDir, this.jsonInput);    
+    await this.writeContainerInput(tempDir, this.dockerInput);    
     let file: string = './docker/tester/run-test-container-' + this.courseNum + '.sh';
     let args: string[] = [
       this.githubToken,
@@ -284,6 +286,21 @@ export default class TestRecord{
           });
         });
         promises.push(getReportSize);
+
+        let getSHASize: Promise<string> = new Promise((fulfill, reject) => {
+          fs.stat(tempDir.path + '/docker_sha.json', (err, stats) => {
+            if (err) {
+              Log.error('TestRecord::generate() - ERROR reading docker_sha.json ' + err);
+              if (this.containerExitCode == 0) this.containerExitCode = 31;
+              return fulfill(err);
+            }
+
+            this.shaSize = stats.size;
+            fulfill();
+          });
+        });
+        promises.push(getSHASize);
+
 
         let readReports: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.path + '/report.json', 'utf8', (err, data) => {
@@ -409,11 +426,11 @@ export default class TestRecord{
     }
   }
 
-  public writeContainerInput(tmpDir: any, jsonInput: object) {
+  public writeContainerInput(tmpDir: any, dockerInput: object) {
     new Promise((fulfill, reject) => {
       try {
         Log.info(`TestRecord::writeContainerInput Writing 'docker_SHA.json' file in container volume`);
-        fs.writeFile(tmpDir.path + '/docker_SHA.json', JSON.stringify(jsonInput), (err) => {
+        fs.writeFile(tmpDir.path + '/docker_SHA.json', JSON.stringify(dockerInput), (err) => {
           if (err) {
             throw err;
           } else {
@@ -460,7 +477,7 @@ public getTestRecord(): object {
     function getDockerSHA() {
       let attachments = [];
       if (that.report && that.reportSize <= that.maxReportSize) {
-        let attachment = {name: 'docker_SHA.json', data: that.jsonInput, content_type: 'application/json'};
+        let attachment = {name: 'docker_SHA.json', data: that.dockerInput, content_type: 'application/json'};
         return attachment;
       }
     }

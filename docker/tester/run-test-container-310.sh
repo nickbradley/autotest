@@ -34,7 +34,7 @@ projectCommit=${3}
 projectBranch=${4}
 delivToMark=${5}
 testImage=${6}
-jsonInput=${7}
+dockerInput=${7}
 tempDir=${8}
 
 projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${delivToMark}_${projectName}.git"

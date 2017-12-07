@@ -10,7 +10,7 @@ import {TestJob} from '../TestJobController';
 import PushRepo from '../../repos/PushRepo';
 import CourseRepo from '../../repos/CourseRepo';
 import DeliverableRepo from '../../repos/DeliverableRepo';
-import DockerHelper from '../../model/docker/DockerInput';
+import DockerHelper, {DockerInputJSON} from '../../model/docker/DockerInput';
 
 const BOT_USERNAME = 'autobot';
 
@@ -21,6 +21,7 @@ export default class PushController {
   private courseNum: number;
   private record: PushRecord;
   private dockerHelper: DockerHelper;
+  private dockerInput: DockerInputJSON;
   
   constructor(courseNum: number) {
     this.config = new AppConfig();
@@ -34,12 +35,11 @@ export default class PushController {
 
     this.deliverable = await this.getDeliverableLogic();
     this.dockerHelper = await new DockerHelper(this.deliverable, this.record);
-
-    console.log(await this.dockerHelper.createDockerInputContainer());
+    this.dockerInput = await this.dockerHelper.createDockerInputJSON();
 
     if (this.record.user.toString().indexOf(BOT_USERNAME) > -1) {
       try {
-        throw `PushController::process() Recieved ${BOT_USERNAME} push from batch cloning repo. Ignoring`;
+        throw `PushController::process() Recieved ${BOT_USERNAME} push from batch cloning repo. Ignoring.`;
       }
       catch (err) {
         Log.info(err);
@@ -104,7 +104,7 @@ export default class PushController {
               hook: record.commentHook,
               ref: record.ref,
               test: {
-                jsonInput: {test: 'ey'},
+                dockerInput: this.dockerInput,
                 dockerRef: deliverable.dockerRef,
                 dockerImage: dockerImage,
                 dockerBuild: dockerBuild,
