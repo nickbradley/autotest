@@ -57,8 +57,7 @@ export interface TestStatus {
   processErrors: string[]
 }
 
-export default class TestRecord{
-  // private config: IConfig;
+export default class TestRecord {
   private maxStdioSize: number = 1 * 1000000;  // 1 MB
   private maxReportSize: number = 1/2 * 1000000; // 500 KB
   private maxSHASize: number = 1/2 * 1000000; // 500 KB
@@ -98,6 +97,8 @@ export default class TestRecord{
   private githubOrg: string;
   private username: string;
   private dockerInput: object;
+  private openDate: number;
+  private closeDate: number;
 
   constructor(githubToken: string, testJob: TestJob) {
     this.courseNum = testJob.courseNum;
@@ -115,6 +116,8 @@ export default class TestRecord{
     this.githubOrg = testJob.githubOrg;
     this.username = testJob.username;
     this.dockerInput = testJob.test.dockerInput;
+    this.closeDate = testJob.closeDate;
+    this.openDate = testJob.openDate;
   }
 
   public getTeam(): string {
@@ -182,16 +185,13 @@ export default class TestRecord{
     let tempDir = await tmp.dir({ dir: '/tmp', unsafeCleanup: true });
     // JSON input will be accessible in mounted volume of Docker container
     await this.writeContainerInput(tempDir, this.dockerInput);    
-    let file: string = './docker/tester/run-test-container-' + this.courseNum + '.sh';
+    console.log(JSON.stringify(this.dockerInput));
+    let file: string = './docker/tester/run-test-container.sh';
     let args: string[] = [
-      this.githubToken,
-      this.team,
-      this.commit,
-      this.ref,
-      this.deliverable.deliverable,
-      this.deliverable.dockerRef,
+      this.deliverable.dockerImage + ':' + this.deliverable.dockerBuild,
       tempDir.path
     ];
+
     let options = {
       encoding: 'utf8'
     }
@@ -208,7 +208,6 @@ export default class TestRecord{
           fs.stat(tempDir.path + '/stdio.txt', (err, stats) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
-              console.log('ERROR getTranscriptSize' + this.maxStdioSize);
               if (this.containerExitCode == 0) this.containerExitCode = 30;
               return fulfill(err);
             }
@@ -234,7 +233,6 @@ export default class TestRecord{
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
               if (this.containerExitCode == 0) this.containerExitCode = 31;
-              console.log('ERROR read transcript')
               return fulfill(err);
             }
             else {
@@ -294,7 +292,7 @@ export default class TestRecord{
               if (this.containerExitCode == 0) this.containerExitCode = 31;
               return fulfill(err);
             }
-
+            this.githubToken = 'Unavailable in Result Record';
             this.shaSize = stats.size;
             fulfill();
           });
@@ -454,9 +452,8 @@ public getTestRecord(): object {
     }
 
     function getStdio() {
-      
-      if (that.stdio && that.stdio.length > 3000000) {
-        let trimmedStdio = String(that.stdio).substring(0, 3000000);
+      if (that.stdio && that.stdio.length > 700000) {
+        let trimmedStdio = String(that.stdio).substring(0, 700000);
         trimmedStdio += "\n\n\n STDIO FILE TRUNCATED AS OVER SIZE LIMIT";
         let attachment = {name: 'stdio.txt', data: trimmedStdio, content_type: 'application/plain'};
         return attachment;
@@ -505,6 +502,8 @@ public getTestRecord(): object {
         'courseNum': this.courseNum,
         'orgName': this.githubOrg,
         'deliverable': this.deliverable.deliverable,
+        'openDate': this.openDate,
+        'closeDate': this.closeDate,
         'user': this.username,
         'report': parseReport(),
         'reportFailed': didReportFail(),

@@ -3,6 +3,7 @@ import restify = require("restify");
 import PushController from '../controller/github/PushController';
 import {TestJob} from '../controller/TestJobController';
 import CommitCommentController from '../controller/github/CommitCommentController';
+import ResultController from '../controller/docker/ResultController';
 import Log from "../Util";
 import Server from "./Server";
 import TestJobController from '../controller/TestJobController';
@@ -100,6 +101,17 @@ export default class RouteHandler {
       default:
         Log.warn('RouteHandler::postGithubHook() - ['+ team +'] Unhandled GitHub event: ' + githubEvent);
     }
+    return next();
+  }
+
+    /**
+   * Handles GitHub POSTs, currently:
+   *  - commit_comment
+   *  - push
+   */
+  public static resultSubmission(req: restify.Request, res: restify.Response, next: restify.Next) {
+    let controller: ResultController = new ResultController(currentCourseNum);
+
     return next();
   }
 }

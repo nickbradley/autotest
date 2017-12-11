@@ -34,7 +34,7 @@ export default class PushController {
     await this.store(this.record);
 
     this.deliverable = await this.getDeliverableLogic();
-    this.dockerHelper = await new DockerHelper(this.deliverable, this.record);
+    this.dockerHelper = await new DockerHelper(this.deliverable, this.record, this.courseNum);
     this.dockerInput = await this.dockerHelper.createDockerInputJSON();
 
     if (this.record.user.toString().indexOf(BOT_USERNAME) > -1) {
@@ -87,8 +87,8 @@ export default class PushController {
         let deliverable = this.deliverable;
         let open: Date = new Date(deliverable.open);
         let close: Date = new Date(deliverable.close);
-        let dockerImage = String(deliverable.dockerRef).split(':')[0];
-        let dockerBuild = String(deliverable.dockerRef).split(':')[1];
+        let dockerImage = deliverable.dockerImage;
+        let dockerBuild = deliverable.dockerBuild;
         let testJob: TestJob;
         if (open <= currentDate && close >= currentDate) {
             testJob = {
@@ -96,6 +96,8 @@ export default class PushController {
               repo: record.repo,
               projectUrl: record.projectUrl,
               commitUrl: record.commitUrl,
+              closeDate: deliverable.close,
+              openDate: deliverable.open,
               courseNum: this.courseNum,
               username: record.user,
               timestamp: record.timestamp,
@@ -105,10 +107,9 @@ export default class PushController {
               ref: record.ref,
               test: {
                 dockerInput: this.dockerInput,
-                dockerRef: deliverable.dockerRef,
                 dockerImage: dockerImage,
                 dockerBuild: dockerBuild,
-                stamp: 'autotest/' + this.deliverable.dockerRef + ':' + dockerBuild,
+                stamp: 'autotest/' + this.deliverable.dockerImage + ':' + dockerBuild,
                 deliverable: record.deliverable
               }
             // Log.info('PushController::process() - ' + record.team +'#'+ record.commit.short + ' enqueued to run against ' + repo.name + '.');

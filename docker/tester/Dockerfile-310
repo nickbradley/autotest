@@ -31,6 +31,8 @@ COPY pull-repo.sh /pull-repo.sh
 COPY run-tests-310.sh /run-tests-310.sh
 RUN chmod +x /pull-repo.sh
 RUN chmod +x /run-tests-310.sh
+RUN mkdir -p /container-io/output && /container-io/input && /container-io/runtime
+#Output is deprecated and will disappear after script conversion work is done.
 RUN mkdir /output
 
 RUN yarn config set yarn-offline-mirror ./npm-packages-offline-cache
@@ -40,4 +42,4 @@ RUN /pull-repo.sh https://${GITHUB_KEY}@github.ubc.ca/steca/cpsc310__bootstrap "
 # RUN cd /cpsc310__bootstrap/cpsc310deliverablerepo/ && yarn install
 # RUN cd /cpsc310__bootstrap/cpsc310studentrepo/ && yarn install
 
-CMD timeout 15m /run-tests-310.sh >/output/stdio.txt 2>&1
+CMD timeout 15m /run-tests-310.sh >/container-io/output/stdio.txt 2>&1

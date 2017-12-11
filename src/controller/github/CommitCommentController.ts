@@ -146,7 +146,7 @@ export default class CommitCommentContoller {
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = deliv.dockerRef + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
+                    let jobId: string = deliv.dockerImage + ':' + deliv.dockerBuild + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -287,7 +287,7 @@ export default class CommitCommentContoller {
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = deliv.dockerRef + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
+                    let jobId: string = deliv.dockerImage + ':' + deliv.dockerBuild + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -405,7 +405,7 @@ export default class CommitCommentContoller {
     //  jobId: job.test.image + '|'  + job.team + '#' + job.commit,
     return new Promise<number>((fulfill, reject) => {
       let imageName = this.getImageName();
-      let jobId: string = deliverable.dockerRef + '|' + deliverable.name + '-' + team + '#' + commit.short;
+      let jobId: string = deliverable.dockerImage + ':' + deliverable.dockerBuild + '|' + deliverable.name + '-' + team + '#' + commit.short;
       let queue: TestJobController = TestJobController.getInstance(this.courseNum);
 
       queue.getJob(jobId).then(job => {

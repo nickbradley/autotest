@@ -16,15 +16,3 @@ export interface Repository {
   commit?: Commit;
   visibility: Visibility;
 }
-
-export interface DeliverableSettings {
-  description?: string;
-  dueDate: Date;
-  releaseDate: Date;
-  repos: Repository[];
-  gradeFormula: string;
-  rate: number;  // milliseconds
-  runs?: number;  // total number of requests to view test results
-  // external servers that should be accessible inside the test container
-  externalUrls?: Url.Url[];
-}

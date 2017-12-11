@@ -36,7 +36,7 @@ set -o nounset  # exit if undeclared variable is used
 
 dockerDir=$(dirname $BASH_SOURCE)
 
-githubApiKey=${1}
+githubKey=${1}
 repoName=${2}
 commit=${3}
 deliverable=${4}
@@ -51,13 +51,13 @@ else
 fi
 
 docker build -f Dockerfile-310 --tag autotest/${repoName}:${commit} \
- --build-arg testsuiteUrl=https://${githubApiKey}@github.ubc.ca/steca/${repoName}.git \
+ --build-arg testsuiteUrl=https://${githubKey}@github.ubc.ca/steca/${repoName}.git \
  --build-arg testsuiteCommit=${commit} \
  --build-arg allowDNS=${allowDNS} \
  --build-arg externalServers="${externalServers}" \
  --build-arg isContainerLive=1 \
  --build-arg deliverable="${deliverable}" \
- --build-arg githubKey="${githubApiKey}" \
+ --build-arg githubKey="${githubKey}" \
  --no-cache \
  "${dockerDir}"
 

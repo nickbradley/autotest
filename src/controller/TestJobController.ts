@@ -17,7 +17,6 @@ import Server from '../../src/rest/Server'
 export interface TestJobDeliverable {
   dockerInput: object;
   deliverable: string;
-  dockerRef: string;
   dockerImage: string;
   dockerBuild: string;
   stamp: string;
@@ -26,6 +25,8 @@ export interface TestJob {
   username: string;
   team: string;
   repo: string;
+  closeDate: number;
+  openDate: number;
   projectUrl: string;
   commitUrl: string;
   commit: string;
@@ -233,7 +234,7 @@ export default class TestJobController {
    */
   public async addJob(job: TestJob): Promise<Job> {
     let opts: JobOpts = {
-      jobId: job.test.dockerRef + '|' + job.test.deliverable + '-'  + job.team + '#' + job.commit,
+      jobId: job.test.dockerImage + ':' + job.test.dockerBuild + '|' + job.test.deliverable + '-'  + job.team + '#' + job.commit,
       removeOnComplete: true
     }
     return <Promise<Job>>this.stdManager.queue.add(job, opts);

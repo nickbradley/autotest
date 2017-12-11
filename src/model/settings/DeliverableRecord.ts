@@ -10,6 +10,8 @@ interface IDictionary<T> {
 export interface Deliverable {
   _id: string;
   url: string;
+  commit: string;
+  solutionsUrl: string;
   open: number;
   close: number;
   name: string;
@@ -21,9 +23,10 @@ export interface Deliverable {
   teamsAllowed: boolean;
   maxTeamSize: number;
   minTeamSize: number;
-  dockerRef: string;
   dockerImage: string;
-  dockerCommit: string;
+  dockerBuild: string;
+  allowDNS: number;
+  whitelistedServers: string;
   custom: object;
   rate: number;
   htmlOutput: boolean;

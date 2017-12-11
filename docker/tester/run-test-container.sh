@@ -26,25 +26,10 @@ set -o errexit  # exit on command failure
 set -o pipefail # exit if any command in pipeline fails
 set -o nounset  # exit if undeclared variable is used
 
-CPSC_210_ORG="CPSC210-2017W-T1"
-
-githubApiKey=${1}
-projectNum=${2}
-projectCommit=${3}
-projectBranch=${4}
-delivToMark=${5}
-testImage=${6}
-tempDir=${7}
-
-projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC_210_ORG}/cpsc210_${delivToMark}_${projectNum}.git"
+testImage=${1}
+tempDir=${2}
 
 docker run --cap-add=NET_ADMIN \
-           --env PROJECT_URL=$projectUrl \
-           --env PROJECT_COMMIT=$projectCommit \
-           --env PROJECT_BRANCH=$projectBranch \
-           --env DELIVERABLE_URL="https://${githubApiKey}@github.ubc.ca/steca/cpsc210__deliverables.git" \
-           --env DELIVERABLE_COMMIT="master" \
-           --env DELIVERABLE_TO_MARK=$delivToMark \
-           --volume "${tempDir}":/output/ \
+           --volume "${tempDir}":/container-io/ \
            --rm \
            ${testImage}
