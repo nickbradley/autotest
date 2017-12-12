@@ -90,7 +90,7 @@ export default class Server {
               // GitHub Webhook endpoints
               that.rest.post('/submit', restify.bodyParser(), RouteHandler.postGithubHook);
 
-              that.rest.post('/result', restify.bodyParser(), RouteHandler.resultSubmission);
+            //   that.rest.post('/result', restify.bodyParser(), RouteHandler.resultSubmission);
 
 /*
               // Serves static files for the UI.
