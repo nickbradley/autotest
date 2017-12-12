@@ -197,7 +197,6 @@ export default class CommitCommentContoller {
         }
 
         //Log.info('CommitCommentContoller::process() - Request completed with status ' + response.statusCode + '.');
-
         fulfill(response);
 
       } catch(err) {
@@ -338,7 +337,6 @@ export default class CommitCommentContoller {
         }
 
         //Log.info('CommitCommentContoller::process() - Request completed with status ' + response.statusCode + '.');
-
         fulfill(response);
 
       } catch(err) {
@@ -356,7 +354,6 @@ export default class CommitCommentContoller {
   //  private async extractMentionOptions(requestMsg: string): string {
   //
   //  }
-
 
   /**
    * Checks to see if the user is in the admin list in the database.

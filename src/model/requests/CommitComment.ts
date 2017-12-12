@@ -36,6 +36,8 @@ export default class CommitCommentRecord {
   private courseNum: number;
   private team: string;
   private user: string;
+  private htmlUrl: string;
+  private repo: string;
   private hook: Url.Url;
   private commit: Commit;
   private message: string;
@@ -66,9 +68,11 @@ export default class CommitCommentRecord {
       try {
         that.payload = JSON.parse(JSON.stringify(payload));
         that.commit = new Commit(payload.comment.commit_id);
+        that.htmlUrl = payload.comment.html_url;
         that.team = GithubUtil.getTeamOrProject(payload.repository.name);
         that.user = String(payload.comment.user.login).toLowerCase();
         that.orgName = payload.organization.login;
+        that.repo = payload.repository.name;
         that.hook = Url.parse(payload.repository.commits_url.replace('{/sha}', '/' + this.commit) + '/comments');
         that.message = payload.comment.body;
 
@@ -193,6 +197,14 @@ export default class CommitCommentRecord {
 
   public setIsProcessed(value: boolean) {
     this.isProcessed = value;
+  }
+
+  public getHtmlUrl(): string {
+    return this.htmlUrl;
+  }
+
+  public getRepo(): string {
+    return this.repo;
   }
 
   public convertToJSON(): CommitComment {
