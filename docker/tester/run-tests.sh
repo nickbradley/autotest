@@ -29,7 +29,7 @@ version=1.0.2
 projectDir="/cpsc310project"
 deliverableDir="/testsuite"
 bootstrapDir="/bootstrap"
-outputDir="/output"
+outputDir="/container-io/output"
 
 buildCmd="yarn run build"
 #coverCmd="nyc -r json-summary yarn run test"

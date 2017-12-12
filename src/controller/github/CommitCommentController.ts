@@ -7,7 +7,7 @@ import {Database, QueryParameters, ViewResponse} from '../../model/Database';
 import CommitCommentRecord, {CommitComment} from '../../model/requests/CommitComment';
 import {GithubResponse, Commit} from '../../model/GithubUtil';
 import PostbackController from './PostbackController'
-import {Course, CourseSettings} from '../../model/business/CourseModel';
+import {Course} from '../../model/business/CourseModel';
 import {AdminRecord, Admin} from '../../model/settings/AdminRecord';
 import TestJobController from '../TestJobController';
 import GithubGradeComment from '../../model/results/GithubGradeComment';
@@ -16,10 +16,12 @@ import {Job} from '../../model/JobQueue';
 import {RedisUtil} from '../../model/RedisUtil';
 import RedisManager from '../RedisManager';
 import db from '../../db/MongoDB';
-import DeliverableRepo from '../../repos/DeliverableRepo';
 import CommitCommentRecordRepo from '../../repos/CommitCommentRepo';
 import ResultRecordRepo from '../../repos/ResultRecordRepo';
+import DeliverableRepo from '../../repos/DeliverableRepo';
+import {Deliverable} from '../../model/settings/DeliverableRecord';
 import CourseRepo from '../../repos/CourseRepo';
+
 
 const COURSE_210: number = 210;
 const COURSE_310: number = 310;
@@ -73,7 +75,13 @@ export default class CommitCommentContoller {
         let queue: TestJobController = TestJobController.getInstance(this.courseNum);
         let record: CommitCommentRecord = new CommitCommentRecord(this.courseNum);
         let response: GithubResponse;
+        let delivRepo: DeliverableRepo = new DeliverableRepo();
+        let deliv: Deliverable;
 
+        await delivRepo.getDeliverable(record.getDeliverable(), this.courseNum)
+          .then((_deliv: Deliverable) => {
+            deliv = _deliv;
+          });
         await redis.client.connect();
         await record.process(data);
         this.record = record;
@@ -134,11 +142,11 @@ export default class CommitCommentContoller {
                 record.setIsProcessed(false);
                 try {
                   Log.info('CommitCommentController::process() - Checking if commit is queued.')
-                  let maxPos: number = await that.isQueued(record.getDeliverable(), record.getTeam(), record.getCommit());
+                  let maxPos: number = await that.isQueued(deliv, record.getTeam(), record.getCommit());
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = 'autotest/' + imageName + ':latest|' + req.deliverable + '-' + req.team+ '#' + req.commit;
+                    let jobId: string = deliv.dockerImage + ':' + deliv.dockerBuild + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -189,7 +197,6 @@ export default class CommitCommentContoller {
         }
 
         //Log.info('CommitCommentContoller::process() - Request completed with status ' + response.statusCode + '.');
-
         fulfill(response);
 
       } catch(err) {
@@ -207,10 +214,17 @@ export default class CommitCommentContoller {
         let queue: TestJobController = TestJobController.getInstance(this.courseNum);
         let record: CommitCommentRecord = new CommitCommentRecord(this.courseNum);
         let response: GithubResponse;
+        let delivRepo: DeliverableRepo = new DeliverableRepo();
+        let deliv: Deliverable;
 
         await redis.client.connect();
         await record.process(data);
         this.record = record;
+
+        await delivRepo.getDeliverable(record.getDeliverable(), this.courseNum)
+        .then((_deliv: Deliverable) => {
+          deliv = _deliv;
+        });
 
         let isAdmin: boolean = await that.isAdmin(record.getUser());
 
@@ -268,11 +282,11 @@ export default class CommitCommentContoller {
                 record.setIsProcessed(false)
                 try {
                   Log.info('CommitCommentController::process() - Checking if commit is queued.')
-                  let maxPos: number = await that.isQueued(record.getDeliverable(), record.getTeam(), record.getCommit())
+                  let maxPos: number = await that.isQueued(deliv, record.getTeam(), record.getCommit())
                   let body: string;
                   try {
                     let imageName = this.getImageName();
-                    let jobId: string = 'autotest/' + imageName + ':latest|' + req.deliverable + '-' + req.team+ '#' + req.commit;
+                    let jobId: string = deliv.dockerImage + ':' + deliv.dockerBuild + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
                     await queue.promoteJob(jobId);
 
@@ -323,7 +337,6 @@ export default class CommitCommentContoller {
         }
 
         //Log.info('CommitCommentContoller::process() - Request completed with status ' + response.statusCode + '.');
-
         fulfill(response);
 
       } catch(err) {
@@ -341,7 +354,6 @@ export default class CommitCommentContoller {
   //  private async extractMentionOptions(requestMsg: string): string {
   //
   //  }
-
 
   /**
    * Checks to see if the user is in the admin list in the database.
@@ -386,11 +398,11 @@ export default class CommitCommentContoller {
    * Checks if the request is in the job queue.
    *
    */
-  private async isQueued(deliverable: string, team: string, commit: Commit): Promise<number> {
+  private async isQueued(deliverable: Deliverable, team: string, commit: Commit): Promise<number> {
     //  jobId: job.test.image + '|'  + job.team + '#' + job.commit,
     return new Promise<number>((fulfill, reject) => {
       let imageName = this.getImageName();
-      let jobId: string = 'autotest/' + imageName + ':latest|' + deliverable + '-' + team + '#' + commit.short;
+      let jobId: string = deliverable.dockerImage + ':' + deliverable.dockerBuild + '|' + deliverable.name + '-' + team + '#' + commit.short;
       let queue: TestJobController = TestJobController.getInstance(this.courseNum);
 
       queue.getJob(jobId).then(job => {
@@ -434,29 +446,48 @@ export default class CommitCommentContoller {
   }
 
   /**
+   * Updates corresponding GithubGradeComment, with the same username, branch, and commit in the ResultRecord,
+   * if isProcessed and isRequest are both set to True in the @param CommitCommentRecord. If not processed, 
+   * ResultRecords with same commit, branch and user are set to False;
+   * 
+   *  @param record - the record to analyze if isProcessed and isRequest is true
+   */
+
+  private async addGradeRequestedStatus(_record: CommitCommentRecord) {
+    let commit: string = _record.getCommit().short;
+    let gradeRequested: boolean = false;
+    let resultRecordRepo: ResultRecordRepo = new ResultRecordRepo();    
+    
+    if (_record.getIsProcessed() && _record.getIsRequest()) {
+      
+      gradeRequested = true;
+
+      return resultRecordRepo.updateResultRecords(_record.getUser(), commit, gradeRequested)
+      .then((fulfilledResponse) => {
+        // If results found, update ResultRecords with true/false isProcessed and isRequest statuses
+        Log.info(`CommitCommentController::addGradeRequestedStatus Succesfully updated ${fulfilledResponse.result} record.`)
+        return;
+        // throw `CommitCommentController:: addGradeRequestedStatus() No ResultRecords could be found for Commit ${commit}`;
+      });
+    }
+
+
+
+
+  }
+
+  /**
    * Insert the request into the database.
    *
    * @param record - the record to insert into the database.
    */
   private async store(record: CommitCommentRecord) {
     let commitCommentRepo: CommitCommentRecordRepo = new CommitCommentRecordRepo();
-    let resultRecordRepo: ResultRecordRepo = new ResultRecordRepo();    
     
     return commitCommentRepo.insertCommitComment(record.convertToJSON())
       .then((fulfilledResponse) => {
         if (fulfilledResponse.insertedCount > 0) {
-
-          // Updates corresponding GithubGradeComment, with the same username, branch, and commit in the ResultRecord,
-          // if isProcessed and isRequest are both set to True in the @param CommitCommentRecord. If conjunct not set 
-          // to true, ResultRecords with same commit, branch and user are set to False;
-
-          return resultRecordRepo.updateGradeRequestedStatus(record)
-            .then((fulfilledResponse) => {
-              if (fulfilledResponse) {
-                return fulfilledResponse;                
-              }
-              throw 'Could not update Grade Requested Status on ' + record.getCommit();
-            });
+          return this.addGradeRequestedStatus(record);
         }
       });
   }

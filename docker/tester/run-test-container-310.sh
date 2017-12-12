@@ -28,28 +28,24 @@ set -o nounset  # exit if undeclared variable is used
 
 CPSC310_ORG_NAME="CPSC310-2017W-T1"
 
-githubApiKey=${1}
+githubKey=${1}
 projectName=${2}
 projectCommit=${3}
 projectBranch=${4}
 delivToMark=${5}
 testImage=${6}
-overrideBatchMarking=${7}
+dockerInput=${7}
 tempDir=${8}
 
-if [ overrideBatchMarking == "1" ]; then
-  projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${delivToMark}_${projectName}.git"
-else
-  projectUrl="https://${githubApiKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${projectName}.git"
-fi
+projectUrl="https://${githubKey}@github.ubc.ca/${CPSC310_ORG_NAME}/cpsc310_${delivToMark}_${projectName}.git"
 
 docker run --cap-add=NET_ADMIN \
            --env PROJECT_URL=$projectUrl \
            --env PROJECT_COMMIT=$projectCommit \
            --env PROJECT_BRANCH=$projectBranch \
-           --env DELIVERABLE_URL=https://${githubApiKey}@github.ubc.ca/steca/cpsc310__deliverables.git \
+           --env DELIVERABLE_URL=https://${githubKey}@github.ubc.ca/steca/cpsc310__deliverables.git \
            --env DELIVERABLE_COMMIT=master \
            --env DELIVERABLE_TO_MARK=$delivToMark \
-           --volume "${tempDir}":/output/ \
+           --volume "${tempDir}":/container-io/ \
            --rm \
            ${testImage}

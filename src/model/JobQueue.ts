@@ -109,7 +109,10 @@ export class JobQueue {
   }
 
   public async remove(id: string) {
-
+    return this.getJob(id)
+      .then((job) => {
+        return job.remove();
+      });
   }
 
   public async getJob(id: string): Promise<Job> {

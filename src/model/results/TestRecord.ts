@@ -57,10 +57,11 @@ export interface TestStatus {
   processErrors: string[]
 }
 
-export default class TestRecord{
-  // private config: IConfig;
-  private maxStdioSize: number = 5 * 1000000;  // 5 MB
+export default class TestRecord {
+  private maxStdioSize: number = 1 * 1000000;  // 1 MB
   private maxReportSize: number = 1/2 * 1000000; // 500 KB
+  private maxSHASize: number = 1/2 * 1000000; // 500 KB
+  private shaSize: number;
   private stdio: string;
   private report: string;
   private repo: string;
@@ -92,10 +93,12 @@ export default class TestRecord{
   private scriptVersion: string;
   private suiteVersion: string;
   private failedCoverage: string;
-  private overrideBatchMarking: boolean;
   private ref: string;
   private githubOrg: string;
   private username: string;
+  private dockerInput: object;
+  private openDate: number;
+  private closeDate: number;
 
   constructor(githubToken: string, testJob: TestJob) {
     this.courseNum = testJob.courseNum;
@@ -108,11 +111,13 @@ export default class TestRecord{
     this.commit = testJob.commit;
     this.committer = testJob.username;
     this.ref = testJob.ref;
-    this.overrideBatchMarking = testJob.overrideBatchMarking;
     this.timestamp = testJob.timestamp;
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
     this.githubOrg = testJob.githubOrg;
     this.username = testJob.username;
+    this.dockerInput = testJob.test.dockerInput;
+    this.closeDate = testJob.closeDate;
+    this.openDate = testJob.openDate;
   }
 
   public getTeam(): string {
@@ -176,18 +181,17 @@ export default class TestRecord{
   }
 
   public async generate(): Promise<TestStatus> {
+
     let tempDir = await tmp.dir({ dir: '/tmp', unsafeCleanup: true });
-    let file: string = './docker/tester/run-test-container-' + this.courseNum + '.sh';
+    // JSON input will be accessible in mounted volume of Docker container
+    await this.writeContainerInput(tempDir, this.dockerInput);    
+    console.log(JSON.stringify(this.dockerInput));
+    let file: string = './docker/tester/run-test-container.sh';
     let args: string[] = [
-      this.githubToken,
-      this.team,
-      this.commit,
-      this.ref,
-      this.deliverable.deliverable,
-      this.deliverable.image,
-      this.overrideBatchMarking,
+      this.deliverable.dockerImage + ':' + this.deliverable.dockerBuild,
       tempDir.path
     ];
+
     let options = {
       encoding: 'utf8'
     }
@@ -204,7 +208,6 @@ export default class TestRecord{
           fs.stat(tempDir.path + '/stdio.txt', (err, stats) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
-              console.log('ERROR getTranscriptSize' + this.maxStdioSize);
               if (this.containerExitCode == 0) this.containerExitCode = 30;
               return fulfill(err);
             }
@@ -230,7 +233,6 @@ export default class TestRecord{
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
               if (this.containerExitCode == 0) this.containerExitCode = 31;
-              console.log('ERROR read transcript')
               return fulfill(err);
             }
             else {
@@ -282,6 +284,21 @@ export default class TestRecord{
           });
         });
         promises.push(getReportSize);
+
+        let getSHASize: Promise<string> = new Promise((fulfill, reject) => {
+          fs.stat(tempDir.path + '/docker_sha.json', (err, stats) => {
+            if (err) {
+              Log.error('TestRecord::generate() - ERROR reading docker_sha.json ' + err);
+              if (this.containerExitCode == 0) this.containerExitCode = 31;
+              return fulfill(err);
+            }
+            this.githubToken = 'Unavailable in Result Record';
+            this.shaSize = stats.size;
+            fulfill();
+          });
+        });
+        promises.push(getSHASize);
+
 
         let readReports: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.path + '/report.json', 'utf8', (err, data) => {
@@ -407,20 +424,36 @@ export default class TestRecord{
     }
   }
 
+  public writeContainerInput(tmpDir: any, dockerInput: object) {
+    new Promise((fulfill, reject) => {
+      try {
+        Log.info(`TestRecord::writeContainerInput Writing 'docker_SHA.json' file in container volume`);
+        fs.writeFile(tmpDir.path + '/docker_SHA.json', JSON.stringify(dockerInput), (err) => {
+          if (err) {
+            throw err;
+          } else {
+            return fulfill();
+          }
+        });   
+      } catch (err) {
+        Log.error(`TestRecord::writeDockerJSON() ERROR ${err}`);
+      }
+    });
+  }
+
 public getTestRecord(): object {
   let that = this;
     this._id += this.suiteVersion;
     let container = {
       scriptVersion: this.scriptVersion,
       suiteVersion: this.suiteVersion,
-      image: this.deliverable.image,
+      image: this.deliverable.dockerImage,
       exitcode: this.containerExitCode
     }
 
     function getStdio() {
-      
-      if (that.stdio && that.stdio.length > 3000000) {
-        let trimmedStdio = String(that.stdio).substring(0, 3000000);
+      if (that.stdio && that.stdio.length > 700000) {
+        let trimmedStdio = String(that.stdio).substring(0, 700000);
         trimmedStdio += "\n\n\n STDIO FILE TRUNCATED AS OVER SIZE LIMIT";
         let attachment = {name: 'stdio.txt', data: trimmedStdio, content_type: 'application/plain'};
         return attachment;
@@ -437,9 +470,17 @@ public getTestRecord(): object {
         return attachment;
       }
     }
+
+    function getDockerSHA() {
+      let attachments = [];
+      if (that.report && that.reportSize <= that.maxReportSize) {
+        let attachment = {name: 'docker_SHA.json', data: that.dockerInput, content_type: 'application/json'};
+        return attachment;
+      }
+    }
     
     function parseReport() {
-        if(typeof that.report !== 'undefined') {
+        if (typeof that.report !== 'undefined') {
           return JSON.parse(that.report);
         }
         return REPORT_FAILED_FLAG;
@@ -461,6 +502,8 @@ public getTestRecord(): object {
         'courseNum': this.courseNum,
         'orgName': this.githubOrg,
         'deliverable': this.deliverable.deliverable,
+        'openDate': this.openDate,
+        'closeDate': this.closeDate,
         'user': this.username,
         'report': parseReport(),
         'reportFailed': didReportFail(),
@@ -477,7 +520,7 @@ public getTestRecord(): object {
         'gradeRequested': false,
         'gradeRequestedTimestamp': -1,
         'ref': this.ref,
-        'attachments': [getStdio(), getReport()],
+        'attachments': [getStdio(), getReport(), getDockerSHA()],
         'idStamp': this._id + this.suiteVersion
       }
       return doc;

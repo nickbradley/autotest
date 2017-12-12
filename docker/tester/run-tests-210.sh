@@ -30,7 +30,7 @@ version=1.0.2
 projectDir="/cpsc310project"
 deliverableDir="/testsuite"
 bootstrapDir="/bootstrap"
-outputDir="/output"
+outputDir="/container-io/output"
 bootstrapName="cpsc210__bootstrap"
 
 buildCmd="yarn run build"

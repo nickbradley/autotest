@@ -320,8 +320,8 @@ npm ERR!     /deliverable/npm-debug.log
 </DELIVERABLE_TESTS>
 
 <FILE_OPERATIONS exitcode=0>
-Copying /cpsc310project/mocha_output/mochawesome.json to /output/mocha.json.
-Archiving /cpsc310project/coverage as /output/coverage.zip.
+Copying /cpsc310project/mocha_output/mochawesome.json to /container-io/output/mocha.json.
+Archiving /cpsc310project/coverage as /container-io/output/coverage.zip.
   adding: cpsc310project/coverage/ (stored 0%)
   adding: cpsc310project/coverage/coverage.json (deflated 86%)
   adding: cpsc310project/coverage/lcov.info (deflated 75%)
