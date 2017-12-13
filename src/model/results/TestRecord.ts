@@ -463,21 +463,6 @@ public getTestRecord(): object {
       }
     }
 
-    function getReport() {
-      let attachments = [];
-      if (that.report && that.reportSize <= that.maxReportSize) {
-        let attachment = {name: 'report.json', data: that.report, content_type: 'application/json'};
-        return attachment;
-      }
-    }
-
-    function getDockerSHA() {
-      let attachments = [];
-      if (that.report && that.reportSize <= that.maxReportSize) {
-        let attachment = {name: 'docker_SHA.json', data: that.dockerInput, content_type: 'application/json'};
-        return attachment;
-      }
-    }
     
     function parseReport() {
         if (typeof that.report !== 'undefined') {
@@ -520,7 +505,7 @@ public getTestRecord(): object {
         'gradeRequested': false,
         'gradeRequestedTimestamp': -1,
         'ref': this.ref,
-        'attachments': [getStdio(), getReport(), getDockerSHA()],
+        'attachments': [getStdio()],
         'idStamp': this._id + this.suiteVersion
       }
       return doc;

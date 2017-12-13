@@ -13,6 +13,7 @@ ENV TESTSUITE_VERSION=$testsuiteCommit
 ENV TS=$deliverable
 ENV IS_CONTAINER_LIVE=1
 
+RUN echo "New Container"
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 
@@ -47,10 +48,11 @@ COPY pull-repo.sh /pull-repo.sh
 RUN chmod +x /pull-repo.sh
 COPY run-tests-210.sh /run-tests-210.sh
 RUN chmod +x /run-tests-210.sh
-RUN mkdir -p /container-io/output && /container-io/input && /container-io/runtime
-#Output is deprecated and will disappear after script conversion work is done.
-RUN mkdir /output 
 
+RUN mkdir /container-io
+run mkdir /container-io/output
+RUN mkdir /container-io/input 
+RUN mkdir /container-io/temp
 RUN /pull-repo.sh "https://${GITHUB_KEY}@github.ubc.ca/steca/cpsc210__bootstrap" "master" /cpsc210__bootstrap
 RUN cd /cpsc210__bootstrap/bootstrap/scripts && ./2_setup_gradle_for_tests.sh
 RUN cd /cpsc210__bootstrap/bootstrap/studentTests && ./gradlew clean build && rm -rf output/*
@@ -59,5 +61,5 @@ RUN cd /cpsc210__bootstrap/bootstrap/studentTests && ./gradlew clean build && rm
 # Note: Maven repositories are still downloaded through allowed repo1.maven.org ipTable
 RUN mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
 
-CMD timeout 2m /run-tests-210.sh $PROJECT_URL $PROJECT_COMMIT >/container-io/output/stdio.txt 2>&1
+CMD timeout 2m /run-tests-210.sh $PROJECT_URL $PROJECT_COMMIT >/output/stdio.txt 2>&1
 

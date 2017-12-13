@@ -7,26 +7,25 @@ import TestRecord from '../model/results/TestRecord';
 import {TestJob} from './TestJobController';
 import TestRecordRepo from '../repos/TestRecordRepo';
 
-export default class TestController {
+export default class ResultRecordController {
   private config: IConfig;
   private resultsDB: Database;
-  private testJob: TestJob
-  private result: TestRecord;
+  private courseNum: number;
 
-  constructor(testJob: TestJob) {
+  constructor(courseNum: number) { // resultRecord: ResultRecord
     this.config = new AppConfig();
-    this.result = new TestRecord(this.config.getGithubToken(), testJob);
-    this.testJob = testJob;
+    this.courseNum = courseNum;
   }
 
   public async exec() {
-    return this.result.generate();
+    //
   }
 
   public async store() {
     let testRecordRepo: TestRecordRepo = new TestRecordRepo();
-    let result = await this.result.getTestRecord();
-    return testRecordRepo.insertTestRecord(result);
+    let angeboot = null;
+    // let result = await this.result.getTestRecord();
+    return testRecordRepo.insertTestRecord(angeboot);
   }
 
 }

@@ -3,7 +3,6 @@ export interface GithubResponse {
   body: string;
 }
 
-
 export class GithubUtil {
 
   public static getTeamOrProject(repositoryName: string): string {
@@ -19,8 +18,6 @@ export class GithubUtil {
     }
   }
 }
-
-
 
 export class Commit {
   private commitString: string;
@@ -45,7 +42,6 @@ export class Commit {
   }
 }
 
-
 export type GithubUsername = string;
 
 export interface GithubAccount {
@@ -60,7 +56,4 @@ export class User {
   constructor(account: GithubAccount) {
     this.account = account;
   }
-
-
-
 }

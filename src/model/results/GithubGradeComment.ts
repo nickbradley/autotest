@@ -3,7 +3,7 @@ import {IConfig, AppConfig} from '../../Config';
 import {Database, QueryParameters, ViewResponse} from '../../model/Database';
 import TestRecord from '../../model/results/TestRecord'
 import TestRecordRepo from '../../repos/TestRecordRepo';
-import ResultRecord, {GradeSummary} from './ResultRecord';
+import ResultRecord from './ResultRecord';
 
 
 export default class GithubGradeComment {
@@ -13,7 +13,7 @@ export default class GithubGradeComment {
   private deliverable: string;
   private note: string;
   private orgName: string;
-  private gradeSummary: GradeSummary;
+  private resultRecord: ResultRecord;
 
   constructor(team: string, shortCommit: string, deliverable: string, orgName: string, note: string) {
     this.config = new AppConfig();
@@ -25,10 +25,9 @@ export default class GithubGradeComment {
   }
 
   public async fetch() {
-    this.gradeSummary = await this.getResult();
+    this.resultRecord = await this.getResult();
   }
 
-  // TODO @nickbradley Create view and design document
   /**
    * Pulls the test/coverage results from the database.
    *
@@ -36,22 +35,17 @@ export default class GithubGradeComment {
    * @param commit - The GitHub commit SHA that the tests were run against.
    * @param deliverable - Deliverable identifier (i.e. d1, d2, etc.).
    */
-  private async getResult(): Promise<GradeSummary> {
-    let designName: string = 'grades';
-    let viewName: string = 'byTeamDeliverableCommit';
+  private async getResult(): Promise<ResultRecord> {
     let testRecordRepo = new TestRecordRepo();
-    let params: QueryParameters = {
-      key: [this.team, this.deliverable, this.commit],
-      descending: true
-    };
 
     let that = this;
-    return new Promise<GradeSummary>(async (fulfill, reject) => {
+    return new Promise<ResultRecord>(async (fulfill, reject) => {
       try {
+        // important: this query has to be done in descending order to get the latest result.
         let testRecord = await testRecordRepo.getLatestTestRecord(this.team, this.commit, this.deliverable, this.orgName);
-        let gradeSummary: GradeSummary = new ResultRecord(testRecord, this.deliverable).getGradeSummary();
+        let resultRecord: ResultRecord = new ResultRecord(testRecord, this.deliverable);
 
-        fulfill(gradeSummary)
+        fulfill(resultRecord)
       } catch(err) {
         reject('Unable to get test result for ' + this.team + ' commit ' + this.commit + '. ' + err);
       }
@@ -60,70 +54,70 @@ export default class GithubGradeComment {
 
 
   /**
-   * Formats the GradeSummary as a Markdown string suitable for display on GitHub.
+   * Formats the resultRecord as a Markdown string suitable for display on GitHub.
    *
-   * @param gradeSummary
+   * @param resultRecord
    */
   public formatResult(): string {
     try {
-      let gradeSummary: GradeSummary = this.gradeSummary;
+      let resultRecord: any = this.resultRecord;
       let preamble: string = this.note ? '_' + this.note + '_\n\n' : '';
-      let output: string = preamble + 'For deliverable **' + gradeSummary.deliverable + '**, this commit received a grade of **<GRADE>%**.\n';
+      let output: string = preamble + 'For deliverable **' + resultRecord.deliverable + '**, this commit received a grade of **<GRADE>%**.\n';
 
 
-      if (gradeSummary.studentBuildFailed) {
+      if (resultRecord.studentBuildFailed) {
         output += '\nBuild failed:\n\n```<BUILD_MSG>\n```';
         output = output.replace(
           '<GRADE>', '0'
         ).replace(
-          '<BUILD_MSG>', gradeSummary.studentBuildMsg
+          '<BUILD_MSG>', resultRecord.studentBuildMsg
         );
-      } else if (gradeSummary.exitCode == 124) {
+      } else if (resultRecord.exitCode == 124) {
         output += ' - Timeout exceeded while executing tests.';
         output = output.replace('<GRADE>', '0');
-      } else if (gradeSummary.exitCode == 29) {
+      } else if (resultRecord.exitCode == 29) {
         output += ' - You must reduce your console output and make another commit before you can receive a grade.';
         output = output.replace(
           '<GRADE>', '0'
         ).replace(
-          '<EXIT_CODE>', gradeSummary.exitCode.toString()
+          '<EXIT_CODE>', resultRecord.exitCode.toString()
         );
-      } else if (gradeSummary.exitCode != 0) {
+      } else if (resultRecord.exitCode != 0) {
         output += ' - AutoTest was unable to grade your assignment. (Exit <EXIT_CODE>).';
         output = output.replace(
           '<GRADE>', '0'
         ).replace(
-          '<EXIT_CODE>', gradeSummary.exitCode.toString()
+          '<EXIT_CODE>', resultRecord.exitCode.toString()
         );
       } 
-      else if ('310'.indexOf(gradeSummary.courseNum.toString()) > -1) {
+      else if ('310'.indexOf(resultRecord.courseNum.toString()) > -1) {
         // if 310 class, then run 310 logic
         Log.info('GithubGradeComment:: 310 hit');
         output += '- Test summary: <TEST_GRADE>% (<TEST_SUMMARY>)\n- Line coverage: <COVERAGE_SUMMARY>%';
-        let deliv = gradeSummary.deliverable;
+        let deliv = resultRecord.deliverable;
         
         output = output.replace(
-          '<GRADE>', String(gradeSummary.grade)
+          '<GRADE>', String(resultRecord.grade)
         ).replace(
-          '<TEST_GRADE>', String(+gradeSummary.coverageSummary)
+          '<TEST_GRADE>', String(+resultRecord.coverageSummary)
         ).replace(
-          '<TEST_SUMMARY>', String(gradeSummary.testSummary)
+          '<TEST_SUMMARY>', String(resultRecord.testSummary)
         ).replace(
-          '<COVERAGE_SUMMARY>', String(gradeSummary.coverageGrade)
+          '<COVERAGE_SUMMARY>', String(resultRecord.coverageGrade)
         );
 
-        if (gradeSummary.coverageFailed.length > 0) {
+        if (resultRecord.coverageFailed.length > 0) {
           output += '\n\nSome of your tests failed when run on AutoTest:\n ```\n';
-          if (gradeSummary.coverageFailed.length > 1024)
-            output += gradeSummary.coverageFailed.substring(0, 1024)+'\n...';
+          if (resultRecord.coverageFailed.length > 1024)
+            output += resultRecord.coverageFailed.substring(0, 1024)+'\n...';
           else
-            output += gradeSummary.coverageFailed
+            output += resultRecord.coverageFailed
           output += '\n```\n';
         }
 
-        if (gradeSummary.failedTests.length > 0) {
+        if (resultRecord.failedTests.length > 0) {
           output += '\n\nYour code failed the tests:\n - ';
-          output += gradeSummary.failedTests.join('\n - ');
+          output += resultRecord.failedTests.join('\n - ');
         }
       }
       else {
@@ -133,30 +127,30 @@ export default class GithubGradeComment {
           \n- Code coverage: <CODE_COVERAGE>%`;
 
         output = output.replace(
-          '<GRADE>', gradeSummary.grade.toString()
+          '<GRADE>', resultRecord.grade.toString()
         ).replace(
-          '<TEST_GRADE>', gradeSummary.testingGrade.toString()
+          '<TEST_GRADE>', resultRecord.testingGrade.toString()
         ).replace(
-          '<TEST_SUMMARY>', gradeSummary.testSummary 
+          '<TEST_SUMMARY>', resultRecord.testSummary 
         ).replace(
-          '<CODE_COVERAGE>', gradeSummary.coverageGrade
+          '<CODE_COVERAGE>', resultRecord.coverageGrade
         );
 
-        if (gradeSummary.coverageFailed.length > 0) {
+        if (resultRecord.coverageFailed.length > 0) {
           output += '\n\nSome of your tests failed when run on AutoTest:\n ```\n';
-          if (gradeSummary.coverageFailed.length > 1024)
-            output += gradeSummary.coverageFailed.substring(0, 1024)+'\n...';
+          if (resultRecord.coverageFailed.length > 1024)
+            output += resultRecord.coverageFailed.substring(0, 1024)+'\n...';
           else
-            output += gradeSummary.coverageFailed
+            output += resultRecord.coverageFailed
           output += '\n```\n';
         }
 
-        if (gradeSummary.failedTests.length > 0) {
+        if (resultRecord.failedTests.length > 0) {
           output += '\n\nYour code failed the tests:\n - ';
-          output += gradeSummary.failedTests.join('\n - ');
+          output += resultRecord.failedTests.join('\n - ');
         }
       }
-      output += '\n\n<sub>suite: ' + gradeSummary.suiteVersion + '  |  script: ' + gradeSummary.scriptVersion + '.</sub>';
+      output += '\n\n<sub>suite: ' + resultRecord.suiteVersion + '  |  script: ' + resultRecord.scriptVersion + '.</sub>';
 
       return output;
     }

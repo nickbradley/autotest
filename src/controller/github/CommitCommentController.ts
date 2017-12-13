@@ -11,7 +11,6 @@ import {Course} from '../../model/business/CourseModel';
 import {AdminRecord, Admin} from '../../model/settings/AdminRecord';
 import TestJobController from '../TestJobController';
 import GithubGradeComment from '../../model/results/GithubGradeComment';
-import {Result} from '../../model/results/ResultRecord';
 import {Job} from '../../model/JobQueue';
 import {RedisUtil} from '../../model/RedisUtil';
 import RedisManager from '../RedisManager';

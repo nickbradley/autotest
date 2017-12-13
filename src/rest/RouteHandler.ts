@@ -3,6 +3,8 @@ import restify = require("restify");
 import PushController from '../controller/github/PushController';
 import {TestJob} from '../controller/TestJobController';
 import CommitCommentController from '../controller/github/CommitCommentController';
+import ResultRecordController from '../controller/ResultRecordController';
+
 // import ResultController from '../controller/ResultController';
 import Log from "../Util";
 import Server from "./Server";
@@ -105,13 +107,16 @@ export default class RouteHandler {
   }
 
     /**
-   * Handles GitHub POSTs, currently:
-   *  - commit_comment
-   *  - push
+   * Handles ResultRecord objects sent from container
+   *  - req should container ResultRecord container with payload
    */
-  // public static resultSubmission(req: restify.Request, res: restify.Response, next: restify.Next) {
-  //   let controller: ResultController = new ResultController(currentCourseNum);
+  public static resultSubmission(req: restify.Request, res: restify.Response, next: restify.Next) {
+    let serverPort = RequestHelper.parseServerPort(req);
+    let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
+    let controller: ResultRecordController = new ResultRecordController(currentCourseNum);
 
-  //   return next();
-  // }
+
+
+    return next();
+  }
 }

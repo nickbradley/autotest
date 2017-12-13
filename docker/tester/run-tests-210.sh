@@ -54,7 +54,7 @@ pushd /cpsc210__bootstrap/
 # during development
 git pull
 
-printf "./run-tests-210.sh"
+printf "./runTests.sh"
 ./runTests.sh
 
 # Clone the specified student repo into the projectDir

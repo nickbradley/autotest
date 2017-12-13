@@ -9,7 +9,6 @@ import {RedisUtil} from '../model/RedisUtil';
 import {Visibility} from '../model/settings/DeliverableRecord';
 import PostbackController from './github/PostbackController';
 import CommitCommentController from './github/CommitCommentController'
-import GithubGradeComment from '../model/results/GithubGradeComment';
 import RedisManager from './RedisManager';
 import Server from '../../src/rest/Server'
 
@@ -173,10 +172,11 @@ export default class TestJobController {
         let commit: string = pendingRequest.commit;
         let deliverable: string = pendingRequest.deliverable;
         let controller: CommitCommentController = new CommitCommentController(this.courseNum);
-        let githubGradeComment: GithubGradeComment = new GithubGradeComment(team, commit, deliverable, orgName, '');
-        await githubGradeComment.fetch();
-        msg = githubGradeComment.formatResult();
+        // let githubGradeComment: GithubGradeComment = new GithubGradeComment(team, commit, deliverable, orgName, '');
+        // await githubGradeComment.fetch();
+        // msg = githubGradeComment.formatResult();
       }
+      msg = "textplace holder for git commit comments to Github -- refactor in progress"
       await controller.submit(msg);
     }
 

@@ -7,7 +7,7 @@ import { IConfig, AppConfig } from '../Config';
 import mongodb = require('mongodb');
 import db, {MongoDB, InsertOneResponse} from '../db/MongoDB';
 import CommitCommentRecord, {CommitComment} from '../model/requests/CommitComment';
-import ResultRecord, {Result} from '../model/results/ResultRecord';
+import ResultRecord from '../model/results/ResultRecord';
 import { Deliverable } from '../model/settings/DeliverableRecord';
 import { Course } from '../model/settings/CourseRecord';
 
@@ -29,12 +29,12 @@ export default class CommitCommentRepo {
    * @param _deliverable: the abbreivation, ie. d1, d2, of the Deliverable.
    * @return Promise<CommitComment> CommitComment interface object
    */
-  public getGithubGradeComments(_username: string, _commit: string): Promise<Result[]> {
+  public getGithubGradeComments(_username: string, _commit: string): Promise<ResultRecord[]> {
     let query: object = { user: _username, commit: _commit };
 
-    return new Promise<Result[]>((fulfill, reject) => {
+    return new Promise<ResultRecord[]>((fulfill, reject) => {
       try {
-        db.getRecords(RESULTS_COLLECTION, query).then((results: Result[]) => {
+        db.getRecords(RESULTS_COLLECTION, query).then((results: ResultRecord[]) => {
           fulfill(results);
         });
       }
@@ -66,9 +66,9 @@ export default class CommitCommentRepo {
             throw `Could not retrieve DB connection in updateResultRecords()`;
           })
           .then(() => {
-            return new Promise<Result[]>((fulfill, reject) => {
+            return new Promise<ResultRecord[]>((fulfill, reject) => {
               context.collection(RESULTS_COLLECTION).find({user: _username, commit: _commit})
-                .toArray((err: Error, results: Result[]) => {
+                .toArray((err: Error, results: ResultRecord[]) => {
                   if (results.length > 0) {
                   fulfill(results);
                   return;
@@ -77,7 +77,7 @@ export default class CommitCommentRepo {
               });
             });
           })
-          .then((results: Result[]) => {
+          .then((results: ResultRecord[]) => {
             let resultIds = new Array();
             for (let result of results) {
               resultIds.push(result._id);
