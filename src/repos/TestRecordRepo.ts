@@ -22,8 +22,6 @@ export default class TestRecordRepo {
     this.db = db;
   }
 
-
-
   public async insertTestRecord(testRecord: Object): Promise<InsertOneResponse> {
     return new Promise<InsertOneResponse>((fulfill, reject) => {
       db.insertRecord(RESULTS_COLLECTION, testRecord).then( (insertedResponse: InsertOneResponse) => {

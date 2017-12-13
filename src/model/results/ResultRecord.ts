@@ -24,6 +24,7 @@ export interface ResultRecordPayload {
   report: object;  // CommitReport; Need proper JSON schema for this.
   container: ContainerInfo;
   attachments: object[];
+  gradeComment: string;
   idStamp: string;
 }
 
@@ -41,19 +42,39 @@ export interface ReportJSON {
 export default class ResultRecord {
   // Should match MongoDb result record because ResultRecord gradeRequested flags need to be updated 
   // in Repository using this schema.
-  private textOutput: string;
-  private resultRecord: ResultRecord;
-  private testRecord: TestRecord;
-  private deliverableName: string;
-  private _id: string;
+  _id: string;
+  team: string;
+  repo: string;
+  projectUrl: string;
+  commitUrl: string;
+  orgName: string;
+  deliverable: string;
+  openDate: number;
+  closeDate: number;
+  user: string;
+  committer: string;
+  timestamp: number;
+  ref: string;
+  report: object;  // CommitReport; Need proper JSON schema for this.
+  container: ContainerInfo;
+  attachments: object[];
+  gradeComment: string;
+  idStamp: string;
 
-  constructor(testRecord: any, deliverableName: string) {
-    this.testRecord = testRecord;
-    this.deliverableName = deliverableName;
+  constructor() {
+    // 
+  }
+
+  get id() {
+    return this._id;
   }
 
   public async getResultRecord(orgName: string, repoName: string, commit: string) { // should return Promsie<ResultREcord>
     // return ResultRecord with text output that is sent to the Github Comment area.
+  }
+
+  public validateResultRecord(resultContainer: ResultRecordContainer) {
+    let resultRecord: ResultRecord = new ResultRecord();
   }
 
 }
