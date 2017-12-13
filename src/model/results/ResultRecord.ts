@@ -4,13 +4,15 @@ import {Database, QueryParameters, ViewResponse} from '../../model/Database';
 import TestRecord from '../../model/results/TestRecord'
 import TestRecordRepo from '../../repos/TestRecordRepo';
 
-export interface ResultRecordContainer {
-  response: ResultRecordPayload;
+export interface ResultPayload {
+  response: Result;
 }
 
-export interface ResultRecordPayload {
+export interface Result {
+  _id: string;
   team: string;
   repo: string;
+  githubOutput: string;
   projectUrl: string;
   commitUrl: string;
   orgName: string;
@@ -21,7 +23,7 @@ export interface ResultRecordPayload {
   committer: string;
   timestamp: number;
   ref: string;
-  report: object;  // CommitReport; Need proper JSON schema for this.
+  report: ReportJSON;  // CommitReport; Need proper JSON schema for this.
   container: ContainerInfo;
   attachments: object[];
   gradeComment: string;
@@ -36,45 +38,107 @@ export interface ContainerInfo {
 }
 
 export interface ReportJSON {
-  
+  studentInfo: object;
+  deliverableInfo: object;
+  coverage: object;
+  tests: TestsObject;
+  item: string;
+  other: string;
+
+}
+
+export interface TestsObject {
+  testRunTitle: string;
+  testingSoftware: string;
+  testingSoftwareVersion: string;
+  overviewResults: string;
+  detailedResults: object[];
 }
 
 export default class ResultRecord {
   // Should match MongoDb result record because ResultRecord gradeRequested flags need to be updated 
   // in Repository using this schema.
-  _id: string;
-  team: string;
-  repo: string;
-  projectUrl: string;
-  commitUrl: string;
-  orgName: string;
-  deliverable: string;
-  openDate: number;
-  closeDate: number;
-  user: string;
-  committer: string;
-  timestamp: number;
-  ref: string;
-  report: object;  // CommitReport; Need proper JSON schema for this.
-  container: ContainerInfo;
-  attachments: object[];
-  gradeComment: string;
-  idStamp: string;
+  private __id: string;
+  private team: string;
+  private repo: string;
+  private projectUrl: string;
+  private commitUrl: string;
+  private githubOutput: string;
+  private orgName: string;
+  private deliverable: string;
+  private openDate: number;
+  private closeDate: number;
+  private user: string;
+  private committer: string;
+  private timestamp: number;
+  private ref: string;
+  private report: ReportJSON;  // CommitReport; Need proper JSON schema for this.
+  private container: ContainerInfo;
+  private attachments: object[];
+  private gradeComment: string;
+  private idStamp: string;
 
-  constructor() {
-    // 
+  constructor(result: Result) {
+    this._id = result._id;
+    this.team = result.team;
+    this.repo = result.repo;
+    this.githubOutput = result.githubOutput;
+    this.projectUrl = result.projectUrl;
+    this.commitUrl = result.commitUrl;
+    this.orgName = result.orgName;
+    this.deliverable = result.deliverable;
+    this.openDate = result.openDate;
+    this.closeDate = result.closeDate;
+    this.user = result.user;
+    this.committer = result.committer;
+    this.timestamp = result.timestamp;
+    this.ref = result.ref;
+    this.report = result.report;
+    this.container = result.container;
+    this.attachments = result.attachments;
+    this.gradeComment = result.gradeComment;
+    this.idStamp = result.idStamp;
   }
 
-  get id() {
+  get _id() {
     return this._id;
+  }
+
+  set _id(_id: string) {
+    this.__id;
+  }
+
+  public convertToJSON(): Result {
+    let doc: Result = {
+      _id: this._id,
+      team: this.team,
+      repo: this.repo,
+      githubOutput: this.githubOutput,
+      projectUrl: this.projectUrl,
+      commitUrl: this.commitUrl,
+      orgName: this.orgName,
+      deliverable: this.deliverable,
+      openDate: this.openDate,
+      closeDate: this.closeDate,
+      user: this.user,
+      committer: this.committer,
+      ref: this.ref, 
+      report: this.report,
+      container: this.container,
+      attachments: this.attachments,
+      gradeComment: this.gradeComment,
+      timestamp: this.timestamp,      
+      idStamp: this.idStamp
+    }
+
+    return doc;
   }
 
   public async getResultRecord(orgName: string, repoName: string, commit: string) { // should return Promsie<ResultREcord>
     // return ResultRecord with text output that is sent to the Github Comment area.
   }
 
-  public validateResultRecord(resultContainer: ResultRecordContainer) {
-    let resultRecord: ResultRecord = new ResultRecord();
+  public validateResultRecord(resultContainer: ResultPayload) {
   }
 
 }

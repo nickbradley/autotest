@@ -38,6 +38,7 @@ export interface DockerUserInfo {
 export interface DockerPushInfo {
   commit: string;
   branch: string;
+  timestamp: number;
   commitUrl: string;
   projectUrl: string;
   repo: string;
@@ -85,7 +86,7 @@ export default class DockerInput {
     try {
 
       let userInfo: DockerUserInfo = {username: null, csid: null, snum: null, profileUrl: null, fname: null, lname: null};
-      let pushInfo: DockerPushInfo = {branch: null, repo: null, commit: null, commitUrl: null, projectUrl: null};
+      let pushInfo: DockerPushInfo = {branch: null, repo: null, commit: null, commitUrl: null, projectUrl: null, timestamp: null};
       let deliverableInfo: DockerDeliverableInfo = {solutionsUrl: null, deliverableCommit: null, deliverableUrl: null, deliverableToMark: null};
       let dockerInput: DockerInputJSON = {
         userInfo, 
@@ -121,6 +122,7 @@ export default class DockerInput {
           dockerInput.pushInfo.commitUrl = this.pushRecord.commitUrl;
           dockerInput.pushInfo.projectUrl = this.pushRecord.projectUrl;
           dockerInput.pushInfo.repo = this.pushRecord.repo;
+          dockerInput.pushInfo.timestamp = this.pushRecord.timestamp;
           dockerInput.githubKey = this.config.getGithubToken();
           dockerInput.teamId = this.pushRecord.team;
           dockerInput.whitelistedServers = this.deliverable.whitelistedServers;

@@ -4,7 +4,7 @@ import PushController from '../controller/github/PushController';
 import {TestJob} from '../controller/TestJobController';
 import CommitCommentController from '../controller/github/CommitCommentController';
 import ResultRecordController from '../controller/ResultRecordController';
-import ResultRecord, {ResultRecordContainer, ResultRecordPayload} from '../model/results/ResultRecord';
+import ResultRecord, {ResultPayload} from '../model/results/ResultRecord';
 
 
 // import ResultController from '../controller/ResultController';
@@ -114,7 +114,6 @@ export default class RouteHandler {
    */
   public static resultSubmission(req: restify.Request, res: restify.Response, next: restify.Next) {
     let body = req.body;
-    console.log('body', body);
     let serverPort = RequestHelper.parseServerPort(req);
     let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
     let controller: ResultRecordController = new ResultRecordController(currentCourseNum, req.body);

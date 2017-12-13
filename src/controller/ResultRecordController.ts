@@ -6,7 +6,7 @@ import {Database} from '../model/Database';
 import TestRecord from '../model/results/TestRecord';
 import {TestJob} from './TestJobController';
 import TestRecordRepo from '../repos/TestRecordRepo';
-import ResultRecord, {ResultRecordContainer, ResultRecordPayload} from '../model/results/ResultRecord';
+import ResultRecord, {ResultPayload, Result} from '../model/results/ResultRecord';
 
 
 export default class ResultRecordController {
@@ -15,8 +15,10 @@ export default class ResultRecordController {
   private courseNum: number;
   private _resultRecord: ResultRecord;
 
-  constructor(courseNum: number, resultRecordContainer: ResultRecordContainer) { // resultRecord: ResultRecord
-    this._resultRecord = resultRecordContainer.response as ResultRecord;
+  constructor(courseNum: number, resultRecordContainer: ResultPayload) { // resultRecord: ResultRecord
+    this._resultRecord = new ResultRecord(resultRecordContainer.response);
+
+    console.log(this._resultRecord);
     this.config = new AppConfig();
     this.courseNum = courseNum;
   }
