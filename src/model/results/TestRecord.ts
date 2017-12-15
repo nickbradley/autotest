@@ -144,10 +144,10 @@ export default class TestRecord {
   // }
 
   public async generate(): Promise<TestStatus> {
-
+    // this.dockerInput input will be accessible in mounted volume of Docker container as /output/docker_SHA.json
     let tempDir = await tmp.dir({ dir: '/tmp', unsafeCleanup: true });
-    // JSON input will be accessible in mounted volume of Docker container
     await this.writeContainerInput(tempDir, this.dockerInput);    
+    
     console.log(JSON.stringify(this.dockerInput));
     let file: string = './docker/tester/run-test-container.sh';
     let args: string[] = [
@@ -164,6 +164,7 @@ export default class TestRecord {
         if (error) {
           console.log('Error', error);
           this.containerExitCode = error.code;
+          console.log(error.code);
           console.log('test Record RESULT SHOULD BE here on timeout', this.getTestRecord());
         }
 
@@ -300,6 +301,8 @@ export default class TestRecord {
   }
 
 public getTestRecord(): object {
+  Log.info(`TestRecord::getTestRecord() INFO - start`);
+  
   let that = this;
     this._id += this.suiteVersion;
     let container = {
@@ -310,9 +313,9 @@ public getTestRecord(): object {
     }
 
     function getStdio() {
-      if (that.stdio && that.stdio.length > this.maxStdioLength) {
-        let trimmedStdio = String(that.stdio).substring(0, this.maxStdioLength);
-        trimmedStdio += "\n\n\n STDIO FILE TRUNCATED AS OVER " + this.maxStdioLength + " CHARACTER SIZE LIMIT";
+      if (that.stdio && that.stdio.length > that.maxStdioLength) {
+        let trimmedStdio = String(that.stdio).substring(0, that.maxStdioLength);
+        trimmedStdio += "\n\n\n STDIO FILE TRUNCATED AS OVER " + that.maxStdioLength + " CHARACTER SIZE LIMIT";
         let attachment = {name: 'stdio.txt', data: trimmedStdio, content_type: 'application/plain'};
         return attachment;
       } else {
@@ -343,6 +346,8 @@ public getTestRecord(): object {
         'idStamp': new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable + '|' + this.username + '|' + this.repo,
         'dockerInput': this.dockerInput,
       }
+      Log.info(`TestRecord::getTestRecord() INFO - Created TestRecord for Timeout on commit ${this.commit} and user ${this.username}`);
+      // instead of returning, it should be entered into the Database.
       return doc;
     }
     catch(err) {

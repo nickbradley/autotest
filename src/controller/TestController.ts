@@ -1,9 +1,10 @@
 import cp = require('child_process');
 import tmp = require('tmp');
 import fs = require('fs');
+import Log from '../Util';
 import {IConfig, AppConfig} from '../Config';
 import {Database} from '../model/Database';
-import TestRecord from '../model/results/TestRecord';
+import TestRecord, {TestStatus} from '../model/results/TestRecord';
 import {TestJob} from './TestJobController';
 import TestRecordRepo from '../repos/TestRecordRepo';
 
@@ -20,7 +21,15 @@ export default class TestController {
   }
 
   public async exec() {
-    return this.result.generate();
+    return this.result.generate()
+      .then((testStatus: TestStatus) => {
+        if (testStatus.containerExitCode === 124) {
+          console.log('TestController::exec() This TIMED OUT successfully. ResultRecord should be saved in this case.');
+        } else {
+          console.log('TestController::exec() This did not TIME OUT. ResultRecord should not be saved in this case.');
+        }
+        return testStatus;        
+      });
   }
 
   public async store() {

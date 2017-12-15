@@ -113,7 +113,10 @@ export default class PushController {
                 deliverable: record.deliverable
               }
             // Log.info('PushController::process() - ' + record.team +'#'+ record.commit.short + ' enqueued to run against ' + repo.name + '.');
-          }
+          } 
+        } else {
+          throw 'Commit ' + record.commit.short + ' cannot be graded because it is not available for marking before ' + open +
+            ' and after ' + close;
         }
     promises.push(this.enqueue(testJob));          
     return promises;

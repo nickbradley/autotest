@@ -20,7 +20,7 @@ export default class PushRecord {
   private _commitUrl: string;
   private _user: string;
   private _commit: Commit;
-  private _deliverable?: string;
+  private _deliverable: string;
   private _commentHook: Url.Url;
   private _ref: string;
   private _githubOrg: string;
