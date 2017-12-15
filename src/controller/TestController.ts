@@ -25,8 +25,10 @@ export default class TestController {
 
   public async store() {
     let testRecordRepo: TestRecordRepo = new TestRecordRepo();
-    let result = await this.result.getTestRecord();
-    return testRecordRepo.insertTestRecord(result);
+    // This may be have to turned off and the TestController may have to perform this function when it throws a 
+    // timeout error from now on. --> Line 30: let result = await this.result.getTestRecord();
+    // let result = await this.result.getTestRecord();
+    // return testRecordRepo.insertTestRecord(result);
   }
 
 }

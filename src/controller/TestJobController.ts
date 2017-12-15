@@ -109,7 +109,7 @@ export default class TestJobController {
       });
     };
 
-    this.completed = async function(job: Job, result: TestStatus, opts: CallbackOpts) {
+    this.completed = async function(job: Job, result: any, opts: CallbackOpts) { // Result was TestStatus
       Log.info('JobQueue::completed() - ['+opts.qname+']' + job.jobId + '.');
       let jobData: TestJob = job.data as TestJob;
       let controller: PostbackController = new PostbackController(jobData.hook);
@@ -151,18 +151,7 @@ export default class TestJobController {
           case 124:
             msg = ':warning:**AutoTest Warning**: Test container forcefully terminated after executing for >5 minutes on **'+dl+'**. (Exit 124: Test cotnainer timeout exceeded).';
           break;
-          case 29:
-            msg = ':warning:**AutoTest Warning**: You are logging too many messages to the console. Before you can receive a grade for **'+dl+'**, you must reduce your output. (Exit 29: Test container stdio.txt exceeds 5MB).'
-          break;
-          case 30:
-            msg = ':warning:**AutoTest Warning**: Test container failed to emit stdio for **'+dl+'**. Try making another commit and, if it fails, post a comment on Piazza including your team and commit SHA. (Exit 30: Test container failed to emit stdio.txt).';
-          break;
-          case 31:
-            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed **your** tests for **'+dl+'**. Please make sure your tests run without error on your computer before committing to GitHub. (Exit 31: Test container failed to emit report.json).';
-          break;
-          case 32:
-            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed its test suite for **'+dl+'**. Please make sure you handle exceptions before committing to GitHub. (Exit 31: Test container failed to emit report.json).';
-          break;
+
         }
       } else if (pendingRequest) {
         Log.info('TestJobController:: Pending Request on commit ' + pendingRequest.commit + ' and ' 

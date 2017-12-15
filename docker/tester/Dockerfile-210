@@ -18,6 +18,7 @@ RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 
 RUN apt-get update
+RUN apt-get -y install yarn
 RUN apt-get -y install iptables
 RUN apt-get -y install zip
 
@@ -43,16 +44,12 @@ RUN pip3 install requests
 RUN pip3 install xmljson
 RUN pip3 install mako
 
-
 COPY pull-repo.sh /pull-repo.sh
 RUN chmod +x /pull-repo.sh
 COPY run-tests-210.sh /run-tests-210.sh
 RUN chmod +x /run-tests-210.sh
 
-RUN mkdir /container-io
-run mkdir /container-io/output
-RUN mkdir /container-io/input 
-RUN mkdir /container-io/temp
+RUN mkdir /output
 RUN /pull-repo.sh "https://${GITHUB_KEY}@github.ubc.ca/steca/cpsc210__bootstrap" "master" /cpsc210__bootstrap
 RUN cd /cpsc210__bootstrap/bootstrap/scripts && ./2_setup_gradle_for_tests.sh
 RUN cd /cpsc210__bootstrap/bootstrap/studentTests && ./gradlew clean build && rm -rf output/*

@@ -15,7 +15,7 @@ const RESULTS_COLLECTION = 'results';
 const DELIVERABLES_COLLECTION = 'deliverables';
 const OBJECT_ID_PROPERTY = '_id';
 
-export default class CommitCommentRepo {
+export default class ResultRecordRepo {
 
   private db: MongoDB;
 
@@ -77,7 +77,7 @@ export default class CommitCommentRepo {
               });
             });
           })
-          .then((results: ResultRecord[]) => {
+          .then((results: any[]) => {
             let resultIds = new Array();
             for (let result of results) {
               resultIds.push(result._id);

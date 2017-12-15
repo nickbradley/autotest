@@ -22,8 +22,16 @@ export interface DockerInputJSON {
   allowDNS: number;
   courseNum: number;
   teamId: string;
+  container: DockerContainerInfo;
   custom: object;
   githubKey: string; // to be removed instead of being logged in the DB.
+}
+
+export interface DockerContainerInfo {
+  scriptVersion: string,
+  suiteVersion: string,
+  image: string,
+  exitCode: number,
 }
 
 export interface DockerUserInfo {
@@ -87,10 +95,12 @@ export default class DockerInput {
 
       let userInfo: DockerUserInfo = {username: null, csid: null, snum: null, profileUrl: null, fname: null, lname: null};
       let pushInfo: DockerPushInfo = {branch: null, repo: null, commit: null, commitUrl: null, projectUrl: null, timestamp: null};
+      let container: DockerContainerInfo = {scriptVersion: null, suiteVersion: null, image: null, exitCode: null};
       let deliverableInfo: DockerDeliverableInfo = {solutionsUrl: null, deliverableCommit: null, deliverableUrl: null, deliverableToMark: null};
       let dockerInput: DockerInputJSON = {
         userInfo, 
         pushInfo, 
+        container,
         deliverableInfo,
         allowDNS: null,
         whitelistedServers: null,
@@ -123,6 +133,8 @@ export default class DockerInput {
           dockerInput.pushInfo.projectUrl = this.pushRecord.projectUrl;
           dockerInput.pushInfo.repo = this.pushRecord.repo;
           dockerInput.pushInfo.timestamp = this.pushRecord.timestamp;
+          dockerInput.container.image = this.deliverable.dockerImage;
+          dockerInput.container.scriptVersion = this.deliverable.dockerBuild;
           dockerInput.githubKey = this.config.getGithubToken();
           dockerInput.teamId = this.pushRecord.team;
           dockerInput.whitelistedServers = this.deliverable.whitelistedServers;

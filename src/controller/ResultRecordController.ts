@@ -17,8 +17,6 @@ export default class ResultRecordController {
 
   constructor(courseNum: number, resultRecordContainer: ResultPayload) { // resultRecord: ResultRecord
     this._resultRecord = new ResultRecord(resultRecordContainer.response);
-
-    console.log(this._resultRecord);
     this.config = new AppConfig();
     this.courseNum = courseNum;
   }
@@ -27,15 +25,15 @@ export default class ResultRecordController {
     //
   }
 
-  public get resultRecord() {
+  get resultRecord() {
     return JSON.stringify(this._resultRecord);
   }
 
   public async store() {
     let testRecordRepo: TestRecordRepo = new TestRecordRepo();
-    let angeboot = null;
-    // let result = await this.result.getTestRecord();
-    return testRecordRepo.insertTestRecord(angeboot);
+    let testRecordJSON = this._resultRecord.convertToJSON();
+    
+    return testRecordRepo.insertTestRecord(testRecordJSON);
   }
 
 }

@@ -9,7 +9,6 @@ export interface ResultPayload {
 }
 
 export interface Result {
-  _id: string;
   team: string;
   repo: string;
   githubOutput: string;
@@ -26,7 +25,6 @@ export interface Result {
   report: ReportJSON;  // CommitReport; Need proper JSON schema for this.
   container: ContainerInfo;
   attachments: object[];
-  gradeComment: string;
   idStamp: string;
 }
 
@@ -58,7 +56,6 @@ export interface TestsObject {
 export default class ResultRecord {
   // Should match MongoDb result record because ResultRecord gradeRequested flags need to be updated 
   // in Repository using this schema.
-  private __id: string;
   private team: string;
   private repo: string;
   private projectUrl: string;
@@ -75,11 +72,9 @@ export default class ResultRecord {
   private report: ReportJSON;  // CommitReport; Need proper JSON schema for this.
   private container: ContainerInfo;
   private attachments: object[];
-  private gradeComment: string;
   private idStamp: string;
 
   constructor(result: Result) {
-    this._id = result._id;
     this.team = result.team;
     this.repo = result.repo;
     this.githubOutput = result.githubOutput;
@@ -96,21 +91,11 @@ export default class ResultRecord {
     this.report = result.report;
     this.container = result.container;
     this.attachments = result.attachments;
-    this.gradeComment = result.gradeComment;
     this.idStamp = result.idStamp;
-  }
-
-  get _id() {
-    return this._id;
-  }
-
-  set _id(_id: string) {
-    this.__id;
   }
 
   public convertToJSON(): Result {
     let doc: Result = {
-      _id: this._id,
       team: this.team,
       repo: this.repo,
       githubOutput: this.githubOutput,
@@ -126,7 +111,6 @@ export default class ResultRecord {
       report: this.report,
       container: this.container,
       attachments: this.attachments,
-      gradeComment: this.gradeComment,
       timestamp: this.timestamp,      
       idStamp: this.idStamp
     }

@@ -116,9 +116,16 @@ export default class RouteHandler {
     let body = req.body;
     let serverPort = RequestHelper.parseServerPort(req);
     let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
-    let controller: ResultRecordController = new ResultRecordController(currentCourseNum, req.body);
-    res.json(202, { response: controller.resultRecord });
-
-    return next();
+    let controller: ResultRecordController = new ResultRecordController(currentCourseNum, req.body)
+    controller.store()
+      .then((result) => {
+        res.json(202, { response: result });        
+        return next();        
+      })
+      .catch((err) => {
+        res.json(500, { response: err });       
+        return next();
+        
+      });
   }
 }
