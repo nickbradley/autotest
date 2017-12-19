@@ -46,8 +46,8 @@ RUN pip3 install mako
 
 COPY pull-repo.sh /pull-repo.sh
 RUN chmod +x /pull-repo.sh
-COPY run-tests-210.sh /run-tests-210.sh
-RUN chmod +x /run-tests-210.sh
+COPY run-tests-210.sh /run-tests.sh
+RUN chmod +x /run-tests.sh
 
 RUN mkdir /output
 RUN /pull-repo.sh "https://${GITHUB_KEY}@github.ubc.ca/steca/cpsc210__bootstrap" "master" /cpsc210__bootstrap
@@ -58,5 +58,5 @@ RUN cd /cpsc210__bootstrap/bootstrap/studentTests && ./gradlew clean build && rm
 # Note: Maven repositories are still downloaded through allowed repo1.maven.org ipTable
 RUN mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
 
-CMD timeout 2m /run-tests-210.sh $PROJECT_URL $PROJECT_COMMIT >/output/stdio.txt 2>&1
+CMD timeout 2m /run-tests.sh >/output/stdio.txt 2>&1
 

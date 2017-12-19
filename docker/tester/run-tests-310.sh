@@ -30,14 +30,13 @@ printf "<INFO>\nproject url: %s\nbranch: %s\ncommit: %s\nscript version: %s\ntes
   "$( echo "${PROJECT_URL}" | sed 's/\(.*:\/\/\).*@\(.*\)/\1\2/' )" \
   "${PROJECT_BRANCH}" \
   "${PROJECT_COMMIT}" \
-  "${version}" \
   "${TESTSUITE_VERSION}" \
   "${date}"
 
 pushd /cpsc310__bootstrap
 printf 'Starting test scripts: \n'
 printf './runTests.sh'
-./runTests.sh 
+./runTests.sh
 
 # Zip the coverage directory and copy it and the mocha report to the output directory
 # http://stackoverflow.com/questions/18933975/zip-file-and-print-to-stdout

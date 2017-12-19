@@ -119,13 +119,13 @@ export default class RouteHandler {
     let controller: ResultRecordController = new ResultRecordController(currentCourseNum, req.body)
     controller.store()
       .then((result) => {
-        res.json(202, { response: result });        
+        res.json(202, { response: result });  
+        //      
         return next();        
       })
       .catch((err) => {
         res.json(500, { response: err });       
         return next();
-        
       });
   }
 }

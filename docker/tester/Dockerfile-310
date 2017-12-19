@@ -28,9 +28,9 @@ RUN pip install requests
 RUN apt-get -y install nano
 
 COPY pull-repo.sh /pull-repo.sh
-COPY run-tests-310.sh /run-tests-310.sh
+COPY run-tests-310.sh /run-tests.sh
 RUN chmod +x /pull-repo.sh
-RUN chmod +x /run-tests-310.sh
+RUN chmod +x /run-tests.sh
 RUN mkdir /output
 
 RUN yarn config set yarn-offline-mirror ./npm-packages-offline-cache
@@ -40,4 +40,4 @@ RUN /pull-repo.sh https://${GITHUB_KEY}@github.ubc.ca/steca/cpsc310__bootstrap "
 # RUN cd /cpsc310__bootstrap/cpsc310deliverablerepo/ && yarn install
 # RUN cd /cpsc310__bootstrap/cpsc310studentrepo/ && yarn install
 
-CMD timeout 15s /run-tests-310.sh >/container-io/output/stdio.txt 2>&1
+CMD timeout 10m /run-tests.sh >/output/stdio.txt 2>&1
