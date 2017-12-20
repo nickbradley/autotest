@@ -53,6 +53,7 @@ RUN mkdir /output
 RUN /pull-repo.sh "https://${GITHUB_KEY}@github.ubc.ca/steca/cpsc210__bootstrap" "master" /cpsc210__bootstrap
 RUN cd /cpsc210__bootstrap/bootstrap/scripts && ./2_setup_gradle_for_tests.sh
 RUN cd /cpsc210__bootstrap/bootstrap/studentTests && ./gradlew clean build && rm -rf output/*
+RUN cd /cpsc210__bootstrap/helpers && yarn install && yarn run build
 
 # Disable Grade Daemon, as causes runtime issue with IPTables
 # Note: Maven repositories are still downloaded through allowed repo1.maven.org ipTable

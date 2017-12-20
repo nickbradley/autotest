@@ -11,10 +11,9 @@ import { Deliverable } from '../model/settings/DeliverableRecord';
 import { Course } from '../model/settings/CourseRecord';
 
 const REQUESTS_COLLECTION = 'requests';
-const DELIVERABLES_COLLECTION = 'deliverables';
 const OBJECT_ID_PROPERTY = '_id';
 
-export default class CommitCommentRepo {
+export default class RequestRepo {
 
   private db: Database;
 
@@ -40,6 +39,29 @@ export default class CommitCommentRepo {
       }
       catch (err) {
         Log.error(`CommitCommentRepo::getLatestGradeRequest: ${err}`);
+        reject(err)
+      }
+    });
+  }
+
+    /**
+   * Retrieves the latest CommitComment where gradeRequested = true on repo and commit SHA.
+   * @param _user: username of the github account
+   * @param _repo: repo name of the repository
+   * @param _commit: long SHA commit.
+   * @return Promise<CommitComment> CommitComment interface object
+   */
+  public getLatestCommitGradeRequest(_user: string, _repo: string, _commit: string): Promise<CommitComment> {
+    let query: object = { user: _user, repo: _repo, commit: _commit, isRequest: true };
+
+    return new Promise<CommitComment>((fulfill, reject) => {
+      try {
+        db.getLatestRecord(REQUESTS_COLLECTION, query).then((latestCommitComment: CommitComment) => {
+          fulfill(latestCommitComment);
+        });
+      }
+      catch (err) {
+        Log.error(`CommitCommentRepo::getLatestCommitGradeRequest: ${err}`);
         reject(err)
       }
     });

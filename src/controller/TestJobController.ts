@@ -9,6 +9,7 @@ import {RedisUtil} from '../model/RedisUtil';
 import {Visibility} from '../model/settings/DeliverableRecord';
 import PostbackController from './github/PostbackController';
 import CommitCommentController from './github/CommitCommentController'
+import RequestRepo from '../repos/RequestRepo';
 import RedisManager from './RedisManager';
 import Server from '../../src/rest/Server'
 
@@ -20,6 +21,7 @@ export interface TestJobDeliverable {
   dockerBuild: string;
   stamp: string;
 }
+
 export interface TestJob {
   username: string;
   team: string;
@@ -52,7 +54,6 @@ interface Manager {
   qconcurrency: number;
   queue: JobQueue;
 }
-
 
 export default class TestJobController {
   private static instance: TestJobController;
@@ -90,7 +91,6 @@ export default class TestJobController {
 
     let that = this;
 
-
     this.process = function(job: Job, opts: CallbackOpts) {
       return new Promise((fulfill, reject) => {
         let testJob: TestJob = job.data as TestJob;
@@ -103,9 +103,9 @@ export default class TestJobController {
             reject(err);
           })
         }).catch(err => {
-          console.log('Error executing')
+          console.log('TestJobController:: Error executing Test Job')
           reject(err);
-        })
+        });
       });
     };
 
@@ -115,47 +115,35 @@ export default class TestJobController {
       let controller: PostbackController = new PostbackController(jobData.hook);
       let msg: string;
 
-
       let pendingRequest;
+      let pendingRequest2;
       let dl: string = jobData.test.deliverable;
 
       let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
 
       try {
         let redis: RedisManager = new RedisManager(that.redisPort);
+        let requestRepo = new RequestRepo();
         await redis.client.connect();
         pendingRequest = await redis.client.get(reqId);
+        
+        pendingRequest2 = await requestRepo.getLatestCommitGradeRequest(jobData.username, jobData.repo, jobData.commit);
+
+
+        // replace pendingRequest with 
         await redis.client.del(reqId);
+        await redis.client.disconnect();
       }
       catch(err) {
         Log.error('JobQueue::completed() - ERROR ' + err);
       }
 
-      if (result.studentBuildFailed) {
-        Log.info('JobQueue::completed() - ['+opts.qname+'] build failed for ' + job.jobId + '.');
-        msg = ':warning:**AutoTest Warning**: Unable to build project  **' +dl + '**.\n\n```' + result.studentBuildMsg + '\n```';
-      } else if (result.deliverableBuildFailed) {
-        Log.info('JobQueue::completed() - ['+opts.qname+'] build failed for deliverable tests againt student work for ' + job.jobId + '.');
-        msg = ':warning:**AutoTest Warning**: Unable to build project **' +dl + '**.\n\n```' + result.deliverableBuildMsg + '\n```';
-      } else if (result.deliverableRuntimeError) {
-        Log.info('JobQueue::completed() - ['+opts.qname+'] runtime error for deliverable tests againt student work for ' + job.jobId + '.');
-        let runtime210ErrMsg = 'The tests failed to terminate or encountered a runtime exception. Please ensure you have not installed any new libraries and ensure your code has been effectively tested.';
-        let runtime310ErrMsg = 'The tests failed to terminate or encountered a runtime exception. Please ensure you have not installed any new npm package and ensure your code has been effectively tested.';
-        let runtimeErrMsg = String(jobData.courseNum).indexOf('310') > -1 ? runtime310ErrMsg : runtime210ErrMsg;
-        msg = ':warning:**AutoTest Warning**: Unable to run project **' +dl + '**.\n\n`' + runtimeErrMsg + '\n`';  
-        }
-        else if (result.containerExitCode > 0) {
-        Log.info('JobQueue::completed() - ['+opts.qname+'] container exited with code ' + result.containerExitCode + ' for ' + job.jobId + '.');
-        msg = ':warning:**AutoTest Warning**: Unable to run tests for **' +dl+ '**. Exit ' + result.containerExitCode +'.';
-        switch(result.containerExitCode) {
-          case 124:
-            msg = ':warning:**AutoTest Warning**: Test container forcefully terminated after executing for >5 minutes on **'+dl+'**. (Exit 124: Test cotnainer timeout exceeded).';
-          break;
-
-        }
-      } else if (pendingRequest) {
-        Log.info('TestJobController:: Pending Request on commit ' + pendingRequest.commit + ' and ' 
-          + pendingRequest.team);
+      // Check if GradeRequested flag hit on commit. If so, Postback the githubComment property right away.   
+      
+      msg = "textplace holder for git commit comments to Github -- refactor in progress"
+      
+      if (pendingRequest2) {
+        Log.info('TestJobController:: Pending Request on commit ' + pendingRequest.commit + ' and ' + pendingRequest.team);
         let team: string = pendingRequest.team;
         let orgName: string = pendingRequest.orgName;
         let commit: string = pendingRequest.commit;
@@ -164,11 +152,10 @@ export default class TestJobController {
         // let githubGradeComment: GithubGradeComment = new GithubGradeComment(team, commit, deliverable, orgName, '');
         // await githubGradeComment.fetch();
         // msg = githubGradeComment.formatResult();
+        msg = JSON.stringify('pendingRequest2, ', pendingRequest2);
       }
-      msg = "textplace holder for git commit comments to Github -- refactor in progress"
       await controller.submit(msg);
     }
-
 
     this.failed = function(job: Job, error: Error, opts: CallbackOpts) {
       Log.error('JobQueue::failed() - [' + opts.qname + '] ' + job.jobId + '. ' + error);
@@ -176,8 +163,6 @@ export default class TestJobController {
     this.active = function(job: Job, jobPromise: JobPromise, opts: CallbackOpts) {
       Log.trace('JobQueue::active() - [' + opts.qname + '] ' + job.jobId + '.');
     }
-
-
 
     this.stdManager = {
       qname: stdQName,
@@ -194,8 +179,7 @@ export default class TestJobController {
 
   public static getInstance(courseNum: number): TestJobController {
 
-    // Ensures that Singleton exists and each Singleton returned for each port.
-    // (Yes, multiple Singletons)
+    // Instantiates and reuses a Singleton for each port/class, and keeps it stored in an array.
 
     let redisPort = RedisUtil.getRedisPort(courseNum);
     if (!TestJobController.instances) {
@@ -231,7 +215,8 @@ export default class TestJobController {
 
   /**
    * Remove the job from the standard queue and move it to the express queue. If
-   * the job is active in the standard queue, do nothing.
+   * the job is active in the standard queue, do not add to express queue, as we do 
+   * not want duplicate ResultRecords produced.
    *
    * @param id: the id of the job to prioritize.
    */

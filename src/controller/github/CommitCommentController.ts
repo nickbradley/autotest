@@ -15,7 +15,7 @@ import {Job} from '../../model/JobQueue';
 import {RedisUtil} from '../../model/RedisUtil';
 import RedisManager from '../RedisManager';
 import db from '../../db/MongoDB';
-import CommitCommentRecordRepo from '../../repos/CommitCommentRepo';
+import RequestRepo from '../../repos/RequestRepo';
 import ResultRecordRepo from '../../repos/ResultRecordRepo';
 import DeliverableRepo from '../../repos/DeliverableRepo';
 import {Deliverable} from '../../model/settings/DeliverableRecord';
@@ -55,156 +55,7 @@ export default class CommitCommentContoller {
     }
   }
 
-  async process(data: JSON) {
-
-    switch (this.courseNum) {
-      case COURSE_210:
-        return this.run210Logic(data);
-      case COURSE_310:
-        return this.run310Logic(data);
-    }
-  }
-
-  async run310Logic(data: JSON): Promise<GithubResponse> {
-    let that = this;
-    return new Promise<GithubResponse>(async (fulfill, reject) => {
-      try {
-        let redisPort = RedisUtil.getRedisPort(this.courseNum);
-        let redis: RedisManager = new RedisManager(redisPort);
-        let queue: TestJobController = TestJobController.getInstance(this.courseNum);
-        let record: CommitCommentRecord = new CommitCommentRecord(this.courseNum);
-        let response: GithubResponse;
-        let delivRepo: DeliverableRepo = new DeliverableRepo();
-        let deliv: Deliverable;
-
-        await delivRepo.getDeliverable(record.getDeliverable(), this.courseNum)
-          .then((_deliv: Deliverable) => {
-            deliv = _deliv;
-          });
-        await redis.client.connect();
-        await record.process(data);
-        this.record = record;
-
-        let isAdmin: boolean = await that.isAdmin(record.getUser());
-
-        if (record.getIsRequest()) {
-          let team: string = record.getTeam();
-          let user: string = record.getUser();
-          let orgName: string = record.getOrgName();
-          let commit: string = record.getCommit().short;
-          let deliverable: string = record.getDeliverable();
-          let reqId: string = team + '-' + commit + '-' + deliverable;
-
-          let req: PendingRequest = {
-            commit: commit,
-            team: team,
-            user: user,
-            orgName: orgName,
-            deliverable: deliverable,
-            hook: record.getHook().toString()
-          }
-
-          let hasPending: boolean = true;
-          let pendingRequest: PendingRequest
-          try {
-            pendingRequest = await redis.client.get(reqId);
-          } catch(err) {
-            hasPending = false;
-          }
-
-          if (hasPending) {
-            Log.info('CommitCommentController::process() - ['+ reqId +'] User has pending request.');
-            let body: string;
-            if (pendingRequest.commit === commit) {
-              body = 'You have already requested a grade for **'+deliverable+'** on this commit. Please wait for a response before making another request.';
-            } else {
-              body = 'You have a pending grade request for **'+deliverable+'** on commit ' + pendingRequest.commit + '. Please wait for a response before making another request.';
-            }
-            response = {
-              statusCode: 429,
-              body: body
-            }
-          } else {
-            let lastRequest: Date = await that.getLatestRequest(record.getUser(), record.getDeliverable());
-            let diff: number = +new Date() - +lastRequest;
-            if (diff > record.getDeliverableRate() || isAdmin) {
-              try {
-                let githubGradeComment: GithubGradeComment = new GithubGradeComment(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getOrgName(), this.record.getNote());
-                await githubGradeComment.fetch();
-                let body: string = githubGradeComment.formatResult();
-                response = {
-                  statusCode: 200,
-                  body: body
-                }
-              } catch(err) {
-                Log.info('CommitCommentContoller::process() - No results for request.');
-                record.setIsProcessed(false);
-                try {
-                  Log.info('CommitCommentController::process() - Checking if commit is queued.')
-                  let maxPos: number = await that.isQueued(deliv, record.getTeam(), record.getCommit());
-                  let body: string;
-                  try {
-                    let imageName = this.getImageName();
-                    let jobId: string = deliv.dockerImage + ':' + deliv.dockerBuild + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
-                    await redis.client.set(reqId, req);
-                    await queue.promoteJob(jobId);
-
-                    body = 'This commit is still queued for processing against **'+deliverable+'**. Your results will be posted here as soon as they are ready.' + (this.record.getNote() ? '\n_Note: ' + this.record.getNote() + '_' : '');// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
-                  } catch(err) {
-                    body = 'This commit is still queued for processing against **'+deliverable+'**. Please try again in a few minutes.';
-                  }
-                  response = {
-                    statusCode: 200,
-                    body: body
-                  }
-                } catch(err) {
-                  Log.error('CommitCommentContoller::process() - ERROR Unable to locate test results. ' + err);
-                  response = {
-                    statusCode: 404,
-                    body: 'We can\'t seem to find any results for **'+deliverable+'** on this commit. Please make a new commit and try again.' + (this.record.getNote() ? '\n_Note: ' + this.record.getNote() + '_' : '')
-                  }
-                }
-              }
-            } else {
-              Log.info('CommitCommentContoller::process() - Request rate exceeded.');
-              let waitTime: number = record.getDeliverableRate() - diff;
-              record.setIsProcessed(false);
-              response = {
-                statusCode: 429,
-                body: 'Sorry, you must wait ' + Moment.duration(waitTime).humanize() + ' before you make another request for '+deliverable+'.'
-              }
-            }
-          }
-          try {
-            let status: number = await that.postComment(record.getHook(), response.body);
-          } catch(err) {
-            Log.error('CommitCommentContoller::process() - ERROR. Failed to post result. ' + err);
-          }
-        } else {
-          //Log.info('CommitCommentContoller::process() - Not request.');
-          response = {
-            statusCode: 204,
-            body: ''
-          }
-        }
-
-
-        try {
-          await that.store(record);
-        } catch(err) {
-          Log.error('CommitCommentContoller::process() - ERROR. Failed to store result. ' + err);
-        }
-
-        //Log.info('CommitCommentContoller::process() - Request completed with status ' + response.statusCode + '.');
-        fulfill(response);
-
-      } catch(err) {
-        throw 'Failed to process commit comment. ' + err;
-      }
-    });
-  }
-
-  async run210Logic(data: JSON): Promise<GithubResponse> {
+  async process(data: JSON): Promise<GithubResponse> {
     let that = this;
     return new Promise<GithubResponse>(async (fulfill, reject) => {
       try {
@@ -248,7 +99,9 @@ export default class CommitCommentContoller {
           let pendingRequest: PendingRequest
           try {
             pendingRequest = await redis.client.get(reqId);
+            await redis.client.disconnect();
           } catch(err) {
+            Log.error(`CommitCommentController::process() Could not get reqId and disconnect successfully from Redis`);
             hasPending = false;
           }
 
@@ -265,7 +118,7 @@ export default class CommitCommentContoller {
               body: body
             }
           } else {
-            let lastRequest: Date = await that.getLatestRequest(record.getUser(), record.getDeliverable());
+            let lastRequest: Date = await that.getLatestRequest(record.getUser(), record.getRepo(), record.getDeliverable());
             let diff: number = +new Date() - +lastRequest;
             if (diff > record.getDeliverableRate() || isAdmin) {
               try {
@@ -324,7 +177,7 @@ export default class CommitCommentContoller {
           //Log.info('CommitCommentContoller::process() - Not request.');
           response = {
             statusCode: 204,
-            body: ''
+            body: 'Test to see if empty strings are not posted back onto Github'
           }
         }
 
@@ -427,12 +280,12 @@ export default class CommitCommentContoller {
    * @param user - GitHub username.
    * @param deliverable - Deliverable identifier (i.e. d1, d2, etc.).
    */
-  private async getLatestRequest(user: string, deliverable: string): Promise<Date> {
-    let commitCommentRepo: CommitCommentRecordRepo = new CommitCommentRecordRepo();
+  private async getLatestRequest(user: string, repo: string, deliverable: string): Promise<Date> {
+    let requestRepo: RequestRepo = new RequestRepo();
     let that = this;
     return new Promise<Date>(async (fulfill, reject) => {
       try {
-        let latestCommitComment: CommitComment = await commitCommentRepo.getLatestGradeRequest(user, deliverable)
+        let latestCommitComment: CommitComment = await requestRepo.getLatestGradeRequest(user, deliverable);
         let latestDate: Date = new Date(0);
         if (latestCommitComment) {
           latestDate = new Date(latestCommitComment.timestamp)
@@ -481,7 +334,7 @@ export default class CommitCommentContoller {
    * @param record - the record to insert into the database.
    */
   private async store(record: CommitCommentRecord) {
-    let commitCommentRepo: CommitCommentRecordRepo = new CommitCommentRecordRepo();
+    let commitCommentRepo: RequestRepo = new RequestRepo();
     
     return commitCommentRepo.insertCommitComment(record.convertToJSON())
       .then((fulfilledResponse) => {

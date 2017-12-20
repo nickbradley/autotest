@@ -12,7 +12,7 @@ export class GithubUtil {
   }
 
   public static parseDeliverable(fullRepoName: string): string {
-    let deliverable = fullRepoName.match(/\_(.*)\_/);
+    let deliverable = fullRepoName.match(/^[^_]+(?=_)/);
     if (deliverable) {
       return deliverable.pop();
     }

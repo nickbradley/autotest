@@ -17,6 +17,7 @@ interface FetchedDeliverable {
 export interface CommitComment {
   isRequest: boolean;
   isProcessed: boolean;
+  repo: string;
   deliverable: string;
   team: string;
   user: string;
@@ -215,7 +216,8 @@ export default class CommitCommentRecord {
       isRequest: this.isRequest,
       isProcessed: this.isProcessed,
       deliverable: this.deliverable,
-      team: this.team, 
+      repo: this.repo,
+      team: this.team,
       user: this.user, 
       orgName: this.orgName,
       commit: this.commit.toString(), 
