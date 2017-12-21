@@ -4,9 +4,13 @@ import fs = require('fs');
 import {IConfig, AppConfig} from '../../Config';
 import {Commit} from '../GithubUtil';
 import {CouchDatabase,Database, DatabaseRecord, InsertResponse} from '../Database';
+import {Result} from '../results/ResultRecord';
 import {TestJob, TestJobDeliverable} from '../../controller/TestJobController';
 import {Report} from '../../model/results/ReportRecord';
 import Log from '../../Util';
+
+const GITHUB_TIMEOUT_MSG = 'Your assignment has timed out while being marked. Please check for infinite loops ' + 
+  ' and slow runtime functions.';
 
 interface TestOutput {
   testStats: TestStats;
@@ -41,10 +45,10 @@ export interface CoverageStats {
 
 export interface ProcessedTag {
   content: any;
-  exitcode: number;
+  exitCode: number;
 }
 
-export interface TestStatus {
+export interface TestInfo {
   containerExitCode: number,
   processErrors: string[]
 }
@@ -66,6 +70,9 @@ export default class TestRecord {
   private courseNum: number;
   private testReport: any;
   private commit: string;
+  private openDate: number;
+  private closeDate: number;
+  private resultRecord: Result;
   private commitUrl: string;
   private projectUrl: string;
   private committer: string;
@@ -91,6 +98,8 @@ export default class TestRecord {
     this.commit = testJob.commit;
     this.committer = testJob.username;
     this.ref = testJob.ref;
+    this.openDate = testJob.openDate,
+    this.closeDate = testJob.closeDate,
     this.timestamp = testJob.timestamp;
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
     this.githubOrg = testJob.githubOrg;
@@ -106,7 +115,7 @@ export default class TestRecord {
     return this.commit;
   }
 
-  public getExitCode(): number {
+  public getexitCode(): number {
     return this.containerExitCode;
   }
 
@@ -143,7 +152,7 @@ export default class TestRecord {
   //   }
   // }
 
-  public async generate(): Promise<TestStatus> {
+  public async generate(): Promise<TestInfo> {
     // this.dockerInput input will be accessible in mounted volume of Docker container as /output/docker_SHA.json
     let tempDir = await tmp.dir({ dir: '/tmp', unsafeCleanup: true });
     await this.writeContainerInput(tempDir, this.dockerInput);    
@@ -159,7 +168,7 @@ export default class TestRecord {
       encoding: 'utf8'
     }
 
-    return new Promise<TestStatus>((fulfill, reject) => {
+    return new Promise<TestInfo>((fulfill, reject) => {
       cp.execFile(file, args, options, (error: any, stdout, stderr) => {
         if (error) {
           console.log('Error', error);
@@ -219,12 +228,13 @@ export default class TestRecord {
         promises.push(readTranscript);
 
         Promise.all(promises).then((err) => {
-          let testStatus: TestStatus = {
+          let testInfo: TestInfo = {
             containerExitCode: this.containerExitCode,
             processErrors: err
           }
+
           tempDir.cleanup();
-          fulfill(testStatus);
+          fulfill(testInfo);
         }).catch(err => {
           Log.error('TestRecord::generate() - ERROR processing container output. ' + err);
           if (this.containerExitCode == 0) this.containerExitCode = 39;
@@ -236,7 +246,7 @@ export default class TestRecord {
 
   public processInfoTag(stdout: string): any {
     try {
-      let infoTagRegex: RegExp = /^<INFO>\nproject url: (.+)\nbranch: (.+)\ncommit: (.+)\nscript version: (.+)\ntest suite version: (.+)\n<\/INFO exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
+      let infoTagRegex: RegExp = /^<INFO>\nproject url: (.+)\nbranch: (.+)\ncommit: (.+)\nscript version: (.+)\ntest suite version: (.+)\n<\/INFO exitCode=(\d+), completed=(.+), duration=(\d+)s>$/gm
       //let infoMsgRegex: RegExp = /^(npm.*)$/gm;
       let matches: string[] = infoTagRegex.exec(stdout);
       let processed: any = {
@@ -251,12 +261,12 @@ export default class TestRecord {
 
   public processStudentProjectBuildTag(stdout: string): ProcessedTag {
     try {
-      let buildTagRegex: RegExp = /^<BUILD_STUDENT_TESTS>\n([\s\S]*)<\/BUILD_STUDENT_TESTS exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
+      let buildTagRegex: RegExp = /^<BUILD_STUDENT_TESTS>\n([\s\S]*)<\/BUILD_STUDENT_TESTS exitCode=(\d+), completed=(.+), duration=(\d+)s>$/gm
       let buildMsgRegex: RegExp = /^(npm.*)$/gm;
       let matches: string[] = buildTagRegex.exec(stdout);
       let processed: ProcessedTag = {
         content: matches[1].replace(buildMsgRegex, '').trim(),
-        exitcode: +matches[2]
+        exitCode: +matches[2]
       };
       return processed;
     } catch (err) {
@@ -266,18 +276,18 @@ export default class TestRecord {
 
   public processCoverageTag(stdout: string): ProcessedTag {
     try {
-      let coverageTagRegex: RegExp = /^<PROJECT_COVERAGE>([\s\S]*)<\/PROJECT_COVERAGE exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm;
+      let coverageTagRegex: RegExp = /^<PROJECT_COVERAGE>([\s\S]*)<\/PROJECT_COVERAGE exitCode=(\d+), completed=(.+), duration=(\d+)s>$/gm;
       let matches: string[] = coverageTagRegex.exec(stdout);
-      let exitcode: number = +matches[2];
-      if (exitcode == 0)
-        return {content:'', exitcode:0};
+      let exitCode: number = +matches[2];
+      if (exitCode == 0)
+        return {content:'', exitCode:0};
 
 
       let content: string = matches[1];
       let failedTestsRegex: RegExp = /^  (\d+\)|  throw) [\s\S]*$/gm;
       let failedTests: string[] = failedTestsRegex.exec(content);
 
-      return {content: failedTests[0], exitcode: exitcode};
+      return {content: failedTests[0], exitCode: exitCode};
     } catch(err) {
       throw 'Failed to process <PROJECT_COVERAGE> tag. ' + err;
     }
@@ -300,7 +310,7 @@ export default class TestRecord {
     });
   }
 
-public getTestRecord(): object {
+public getTestRecord(): Result {
   Log.info(`TestRecord::getTestRecord() INFO - start`);
   
   let that = this;
@@ -309,7 +319,7 @@ public getTestRecord(): object {
       scriptVersion: this.scriptVersion,
       suiteVersion: this.suiteVersion,
       image: this.deliverable.dockerImage,
-      exitcode: this.containerExitCode
+      exitCode: this.containerExitCode
     }
 
     function getStdio() {
@@ -324,14 +334,26 @@ public getTestRecord(): object {
       }
     }
 
+    function getDockerInput() {
+      if (that.dockerInput) {
+        let attachment = {name: 'docker_SHA.json', data: that.dockerInput, content_type: 'application/json'};
+        return attachment;
+      } 
+      return null;
+    }
+    
+    let doc: Result;
+
     try {
-       let doc = {
+       doc = {
         'team': this.team,
         'repo': this.repo,
         'projectUrl': this.projectUrl,
         'commitUrl': this.commitUrl,
         'courseNum': this.courseNum,
         'orgName': this.githubOrg,
+        'openDate': this.openDate,
+        'closeDate': this.closeDate,
         'deliverable': this.deliverable.deliverable,
         'user': this.username,
         'report': null,
@@ -340,18 +362,18 @@ public getTestRecord(): object {
         'timestamp': this.timestamp,
         'container': container,
         'gradeRequested': false,
+        'githubOutput': GITHUB_TIMEOUT_MSG,
         'gradeRequestedTimestamp': -1,
         'ref': this.ref,
-        'attachments': [getStdio()],
+        'attachments': [getStdio(), getDockerInput()],
         'idStamp': new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable + '|' + this.username + '|' + this.repo,
-        'dockerInput': this.dockerInput,
       }
       Log.info(`TestRecord::getTestRecord() INFO - Created TestRecord for Timeout on commit ${this.commit} and user ${this.username}`);
       // instead of returning, it should be entered into the Database.
-      return doc;
     }
     catch(err) {
       Log.error(`TestRecord::getTestRecord() - ERROR ${err}`)
     }
+    return doc;
   }
 }

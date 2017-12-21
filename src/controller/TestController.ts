@@ -4,7 +4,7 @@ import fs = require('fs');
 import Log from '../Util';
 import {IConfig, AppConfig} from '../Config';
 import {Database} from '../model/Database';
-import TestRecord, {TestStatus} from '../model/results/TestRecord';
+import TestRecord, {TestInfo} from '../model/results/TestRecord';
 import {TestJob} from './TestJobController';
 import TestRecordRepo from '../repos/TestRecordRepo';
 
@@ -12,28 +12,31 @@ export default class TestController {
   private config: IConfig;
   private resultsDB: Database;
   private testJob: TestJob
-  private result: TestRecord;
+  private testRecord: TestRecord;
 
   constructor(testJob: TestJob) {
     this.config = new AppConfig();
-    this.result = new TestRecord(this.config.getGithubToken(), testJob);
+    this.testRecord = new TestRecord(this.config.getGithubToken(), testJob);
     this.testJob = testJob;
   }
 
   public async exec() {
-    return this.result.generate()
-      .then((testStatus: TestStatus) => {
-        if (testStatus.containerExitCode === 124) {
+    return this.testRecord.generate()
+      .then((testInfo: TestInfo) => {
+        if (testInfo.containerExitCode === 124) {
+          this.store(this.testRecord.getTestRecord());
           console.log('TestController::exec() This TIMED OUT successfully. ResultRecord should be saved in this case.');
         } else {
+          this.store(this.testRecord.getTestRecord());
           console.log('TestController::exec() This did not TIME OUT. ResultRecord should not be saved in this case.');
         }
-        return testStatus;        
+        return testInfo;        
       });
   }
 
-  public async store() {
+  public async store(testRecord) {
     let testRecordRepo: TestRecordRepo = new TestRecordRepo();
+    testRecordRepo.insertTestRecord(testRecord);
     // This may be have to turned off and the TestController may have to perform this function when it throws a 
     // timeout error from now on. --> Line 30: let result = await this.result.getTestRecord();
     // let result = await this.result.getTestRecord();

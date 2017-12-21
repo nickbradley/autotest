@@ -14,10 +14,14 @@ export interface Result {
   githubOutput: string;
   projectUrl: string;
   commitUrl: string;
+  courseNum: number;
   orgName: string;
   deliverable: string;
   openDate: number;
+  commit: string;
   closeDate: number;
+  gradeRequested: boolean;
+  gradeRequestedTimestamp: number;
   user: string;
   committer: string;
   timestamp: number;
@@ -61,6 +65,10 @@ export default class ResultRecord {
   private projectUrl: string;
   private commitUrl: string;
   private githubOutput: string;
+  private courseNum: number;
+  private commit: string;
+  private gradeRequested: boolean;
+  private gradeRequestedTimestamp: number;
   private orgName: string;
   private deliverable: string;
   private openDate: number;
@@ -80,7 +88,11 @@ export default class ResultRecord {
     this.githubOutput = result.githubOutput;
     this.projectUrl = result.projectUrl;
     this.commitUrl = result.commitUrl;
+    this.courseNum = result.courseNum;
+    this.gradeRequested = result.gradeRequested,
+    this.gradeRequestedTimestamp = result.gradeRequestedTimestamp,
     this.orgName = result.orgName;
+    this.commit = result.commit;
     this.deliverable = result.deliverable;
     this.openDate = result.openDate;
     this.closeDate = result.closeDate;
@@ -104,9 +116,13 @@ export default class ResultRecord {
       orgName: this.orgName,
       deliverable: this.deliverable,
       openDate: this.openDate,
+      commit: this.commit,
+      gradeRequested: this.gradeRequested,
+      gradeRequestedTimestamp: this.gradeRequestedTimestamp,
       closeDate: this.closeDate,
       user: this.user,
       committer: this.committer,
+      courseNum: this.courseNum,
       ref: this.ref, 
       report: this.report,
       container: this.container,

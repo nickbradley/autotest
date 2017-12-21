@@ -113,6 +113,28 @@ export default class RouteHandler {
    *  - req should container ResultRecord container with payload
    */
   public static resultSubmission(req: restify.Request, res: restify.Response, next: restify.Next) {
+    Log.info('RouteHandler::resultSubmission route hit');
+    let body = req.body;
+    let serverPort = RequestHelper.parseServerPort(req);
+    let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
+    let controller: ResultRecordController = new ResultRecordController(currentCourseNum, req.body)
+    controller.store()
+      .then((result) => {
+        res.json(202, { response: result });  
+        //      
+        return next();        
+      })
+      .catch((err) => {
+        res.json(500, { response: err });       
+        return next();
+      });
+  }
+
+      /**
+   * Handles ResultRecord objects sent from container
+   *  - req should container ResultRecord container with payload
+   */
+  public static staticHtml(req: restify.Request, res: restify.Response, next: restify.Next) {
     let body = req.body;
     let serverPort = RequestHelper.parseServerPort(req);
     let currentCourseNum = RequestHelper.parseCourseNum(serverPort);

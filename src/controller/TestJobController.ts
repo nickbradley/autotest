@@ -2,7 +2,7 @@ import Log from '../Util';
 import {JobQueue, ProcessJobCallback, ActiveJobCallback, CompletedJobCallback, FailedJobCallback, Job,JobOpts,JobPromise, CallbackOpts} from '../model/JobQueue';
 import {IConfig, AppConfig} from '../Config';
 import TestController from './TestController';
-import {TestStatus} from '../model/results/TestRecord';
+import {TestInfo} from '../model/results/TestRecord';
 import * as Url from 'url';
 import {GithubUsername, Commit} from '../model/GithubUtil';
 import {RedisUtil} from '../model/RedisUtil';
@@ -96,9 +96,9 @@ export default class TestJobController {
         let testJob: TestJob = job.data as TestJob;
         let controller: TestController = new TestController(testJob);
         controller.exec().then((result) => {
-          let testStatus: TestStatus = result;
-          controller.store().then(() => {
-            fulfill(testStatus);
+          let testInfo: TestInfo = result;
+          controller.store(testInfo).then(() => {
+            fulfill(testInfo);
           }).catch(err => {
             reject(err);
           })
