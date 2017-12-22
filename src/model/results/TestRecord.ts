@@ -12,6 +12,12 @@ import Log from '../../Util';
 const GITHUB_TIMEOUT_MSG = 'Your assignment has timed out while being marked. Please check for infinite loops ' + 
   ' and slow runtime functions.';
 
+export interface Attachment {
+  name: string;
+  data: any;
+  content_type: string;
+}
+
 interface TestOutput {
   testStats: TestStats;
 }
@@ -49,6 +55,7 @@ export interface ProcessedTag {
 }
 
 export interface TestInfo {
+  testRecord: Result,
   containerExitCode: number,
   processErrors: string[]
 }
@@ -158,6 +165,7 @@ export default class TestRecord {
     await this.writeContainerInput(tempDir, this.dockerInput);    
     
     console.log(JSON.stringify(this.dockerInput));
+    let that = this;
     let file: string = './docker/tester/run-test-container.sh';
     let args: string[] = [
       this.deliverable.dockerImage + ':' + this.deliverable.dockerBuild,
@@ -171,10 +179,8 @@ export default class TestRecord {
     return new Promise<TestInfo>((fulfill, reject) => {
       cp.execFile(file, args, options, (error: any, stdout, stderr) => {
         if (error) {
-          console.log('Error', error);
+          Log.error('TestRecord::execFile() ERROR ' + error);
           this.containerExitCode = error.code;
-          console.log(error.code);
-          console.log('test Record RESULT SHOULD BE here on timeout', this.getTestRecord());
         }
 
         let promises: Promise<string>[] = [];
@@ -212,13 +218,6 @@ export default class TestRecord {
               this.scriptVersion = infoTag.scriptVersion;
               this.suiteVersion = infoTag.suiteVersion;
 
-              // Process the project build tags for Student and Deliverable repos, respectively
-              let studentBuildTag: ProcessedTag = this.processStudentProjectBuildTag(data);
-
-              // Process the coverage tag
-              // let coverageTag: ProcessedTag = this.processCoverageTag(data);
-              // this.failedCoverage = coverageTag.content;
-
               fulfill();
             } catch(err) {
               fulfill(err);
@@ -229,6 +228,7 @@ export default class TestRecord {
 
         Promise.all(promises).then((err) => {
           let testInfo: TestInfo = {
+            testRecord: that.getTestRecord(),
             containerExitCode: this.containerExitCode,
             processErrors: err
           }
@@ -256,40 +256,6 @@ export default class TestRecord {
       return processed;
     } catch (err) {
       throw 'Failed to process <INFO> tag. ' + err;
-    }
-  }
-
-  public processStudentProjectBuildTag(stdout: string): ProcessedTag {
-    try {
-      let buildTagRegex: RegExp = /^<BUILD_STUDENT_TESTS>\n([\s\S]*)<\/BUILD_STUDENT_TESTS exitCode=(\d+), completed=(.+), duration=(\d+)s>$/gm
-      let buildMsgRegex: RegExp = /^(npm.*)$/gm;
-      let matches: string[] = buildTagRegex.exec(stdout);
-      let processed: ProcessedTag = {
-        content: matches[1].replace(buildMsgRegex, '').trim(),
-        exitCode: +matches[2]
-      };
-      return processed;
-    } catch (err) {
-      throw 'Failed to process <BUILD_STUDENT_TESTS> tag. ' + err;
-    }
-  }
-
-  public processCoverageTag(stdout: string): ProcessedTag {
-    try {
-      let coverageTagRegex: RegExp = /^<PROJECT_COVERAGE>([\s\S]*)<\/PROJECT_COVERAGE exitCode=(\d+), completed=(.+), duration=(\d+)s>$/gm;
-      let matches: string[] = coverageTagRegex.exec(stdout);
-      let exitCode: number = +matches[2];
-      if (exitCode == 0)
-        return {content:'', exitCode:0};
-
-
-      let content: string = matches[1];
-      let failedTestsRegex: RegExp = /^  (\d+\)|  throw) [\s\S]*$/gm;
-      let failedTests: string[] = failedTestsRegex.exec(content);
-
-      return {content: failedTests[0], exitCode: exitCode};
-    } catch(err) {
-      throw 'Failed to process <PROJECT_COVERAGE> tag. ' + err;
     }
   }
 
@@ -365,8 +331,8 @@ public getTestRecord(): Result {
         'githubOutput': GITHUB_TIMEOUT_MSG,
         'gradeRequestedTimestamp': -1,
         'ref': this.ref,
+        'stdioRef': new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable + '|' + this.username + '|' + this.repo,
         'attachments': [getStdio(), getDockerInput()],
-        'idStamp': new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable + '|' + this.username + '|' + this.repo,
       }
       Log.info(`TestRecord::getTestRecord() INFO - Created TestRecord for Timeout on commit ${this.commit} and user ${this.username}`);
       // instead of returning, it should be entered into the Database.

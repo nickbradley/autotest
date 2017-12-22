@@ -40,6 +40,6 @@ printf "./build-210-container.sh ${GITHUB_KEY} cpsc210__bootstrap master d1 "ska
 
 #### BUILDING Course #310 Containers
 printf "./build-310-container.sh ${GITHUB_KEY} cpsc310__bootstrap master d1 "skaha.cs.ubc.ca:11316" "portal.cs.ubc.ca:8525" "localhost:4321""
-./build-310-container.sh $GITHUB_KEY cpsc310__bootstrap master d1 "skaha.cs.ubc.ca:11316" "portal.cs.ubc.ca:8525" "localhost:4321"
+#./build-310-container.sh $GITHUB_KEY cpsc310__bootstrap master d1 "skaha.cs.ubc.ca:11316" "portal.cs.ubc.ca:8525" "localhost:4321"
 
 

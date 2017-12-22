@@ -7,6 +7,8 @@ import {Database} from '../model/Database';
 import TestRecord, {TestInfo} from '../model/results/TestRecord';
 import {TestJob} from './TestJobController';
 import TestRecordRepo from '../repos/TestRecordRepo';
+import StdioRepo from '../repos/StdioRecordRepo';
+
 
 export default class TestController {
   private config: IConfig;
@@ -24,10 +26,11 @@ export default class TestController {
     return this.testRecord.generate()
       .then((testInfo: TestInfo) => {
         if (testInfo.containerExitCode === 124) {
-          this.store(this.testRecord.getTestRecord());
+          console.log('TestController:: exec() testRecord.getTestRecord()', this.testRecord.getTestRecord());
+          // this.store(this.testRecord.getTestRecord());
           console.log('TestController::exec() This TIMED OUT successfully. ResultRecord should be saved in this case.');
         } else {
-          this.store(this.testRecord.getTestRecord());
+          // this.store(this.testRecord.getTestRecord());
           console.log('TestController::exec() This did not TIME OUT. ResultRecord should not be saved in this case.');
         }
         return testInfo;        

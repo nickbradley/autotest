@@ -10,8 +10,10 @@ import {Visibility} from '../model/settings/DeliverableRecord';
 import PostbackController from './github/PostbackController';
 import CommitCommentController from './github/CommitCommentController'
 import RequestRepo from '../repos/RequestRepo';
+import StdioRecordRepo, {StdioRecord} from '../repos/StdioRecordRepo';
 import RedisManager from './RedisManager';
 import Server from '../../src/rest/Server'
+import {Result} from '../model/results/ResultRecord';
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
@@ -30,6 +32,7 @@ export interface TestJob {
   openDate: number;
   projectUrl: string;
   commitUrl: string;
+  postbackOnComplete: boolean;
   commit: string;
   hook: Url.Url;
   timestamp: number;
@@ -65,6 +68,7 @@ export default class TestJobController {
   private _redisAddress: Url.Url;
   private process: ProcessJobCallback;
   private completed: CompletedJobCallback;
+  private postbackOnComplete: any;
   private failed: FailedJobCallback;
   private active: ActiveJobCallback;
   private testQueue: JobQueue;
@@ -112,49 +116,56 @@ export default class TestJobController {
     this.completed = async function(job: Job, result: any, opts: CallbackOpts) { // Result was TestStatus
       Log.info('JobQueue::completed() - ['+opts.qname+']' + job.jobId + '.');
       let jobData: TestJob = job.data as TestJob;
-      let controller: PostbackController = new PostbackController(jobData.hook);
-      let msg: string;
+      let postbackController: PostbackController = new PostbackController(jobData.hook);
 
       let pendingRequest;
       let pendingRequest2;
       let dl: string = jobData.test.deliverable;
 
       let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
-
+      let redis: RedisManager = new RedisManager(that.redisPort);
+      
       try {
-        let redis: RedisManager = new RedisManager(that.redisPort);
-        let requestRepo = new RequestRepo();
+        
         await redis.client.connect();
         pendingRequest = await redis.client.get(reqId);
-        
-        pendingRequest2 = await requestRepo.getLatestCommitGradeRequest(jobData.username, jobData.repo, jobData.commit);
-
-
-        // replace pendingRequest with 
         await redis.client.del(reqId);
-        await redis.client.disconnect();
+        // replace pendingRequest with 
       }
       catch(err) {
         Log.error('JobQueue::completed() - ERROR ' + err);
+        if (jobData.postbackOnComplete) {
+          this.postbackOnComplete(pendingRequest, jobData);
+        }
+        await redis.client.disconnect();
       }
+      await redis.client.disconnect();
+      
+
 
       // Check if GradeRequested flag hit on commit. If so, Postback the githubComment property right away.   
       
+    }
+
+    this.postbackOnComplete = async function(pendingRequest: any, jobData: TestJob) {
+      let msg: string;
+      let postbackController: PostbackController = new PostbackController(jobData.hook);
+      
       msg = "textplace holder for git commit comments to Github -- refactor in progress"
       
-      if (pendingRequest2) {
         Log.info('TestJobController:: Pending Request on commit ' + pendingRequest.commit + ' and ' + pendingRequest.team);
         let team: string = pendingRequest.team;
         let orgName: string = pendingRequest.orgName;
         let commit: string = pendingRequest.commit;
         let deliverable: string = pendingRequest.deliverable;
         let controller: CommitCommentController = new CommitCommentController(this.courseNum);
+        
         // let githubGradeComment: GithubGradeComment = new GithubGradeComment(team, commit, deliverable, orgName, '');
         // await githubGradeComment.fetch();
         // msg = githubGradeComment.formatResult();
-        msg = JSON.stringify('pendingRequest2, ', pendingRequest2);
-      }
-      await controller.submit(msg);
+        msg = JSON.stringify('this is in the pending request area pendingRequest2, ');
+        console.log('This is a pending request, and the item has therefore been ')
+        await postbackController.submit(msg);
     }
 
     this.failed = function(job: Job, error: Error, opts: CallbackOpts) {

@@ -42,6 +42,7 @@ printf "<INFO>\nproject url: %s\nbranch: %s\ncommit: %s\nscript version: %s\ntes
   "$( echo "${PROJECT_URL}" | sed 's/\(.*:\/\/\).*@\(.*\)/\1\2/' )" \
   "${PROJECT_BRANCH}" \
   "${PROJECT_COMMIT}" \
+  "${version}" \
   "${bootstrapName}: ${TESTSUITE_VERSION}" \
   "${date}"
 

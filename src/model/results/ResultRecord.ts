@@ -1,7 +1,7 @@
 import Log from '../../Util';
 import {IConfig, AppConfig} from '../../Config';
 import {Database, QueryParameters, ViewResponse} from '../../model/Database';
-import TestRecord from '../../model/results/TestRecord'
+import TestRecord, {Attachment} from '../../model/results/TestRecord'
 import TestRecordRepo from '../../repos/TestRecordRepo';
 
 export interface ResultPayload {
@@ -28,8 +28,8 @@ export interface Result {
   ref: string;
   report: ReportJSON;  // CommitReport; Need proper JSON schema for this.
   container: ContainerInfo;
-  attachments: object[];
-  idStamp: string;
+  attachments: Attachment[];
+  stdioRef: string;
 }
 
 export interface ContainerInfo {
@@ -79,8 +79,8 @@ export default class ResultRecord {
   private ref: string;
   private report: ReportJSON;  // CommitReport; Need proper JSON schema for this.
   private container: ContainerInfo;
-  private attachments: object[];
-  private idStamp: string;
+  private attachments: Attachment[];
+  private stdioRef: string;
 
   constructor(result: Result) {
     this.team = result.team;
@@ -103,7 +103,7 @@ export default class ResultRecord {
     this.report = result.report;
     this.container = result.container;
     this.attachments = result.attachments;
-    this.idStamp = result.idStamp;
+    this.stdioRef = result.stdioRef;
   }
 
   public convertToJSON(): Result {
@@ -128,7 +128,7 @@ export default class ResultRecord {
       container: this.container,
       attachments: this.attachments,
       timestamp: this.timestamp,      
-      idStamp: this.idStamp
+      stdioRef: this.stdioRef
     }
 
     return doc;

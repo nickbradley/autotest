@@ -21,6 +21,7 @@ export interface Deliverable {
   projectCount: number;
   teamsInSameLab: boolean;
   teamsAllowed: boolean;
+  postbackOnComplete: boolean;
   maxTeamSize: number;
   minTeamSize: number;
   dockerImage: string;
