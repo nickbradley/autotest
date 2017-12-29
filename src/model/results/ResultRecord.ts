@@ -11,7 +11,7 @@ export interface ResultPayload {
 export interface Result {
   team: string;
   repo: string;
-  githubOutput: string;
+  message: string;
   projectUrl: string;
   commitUrl: string;
   courseNum: number;
@@ -19,7 +19,9 @@ export interface Result {
   deliverable: string;
   openDate: number;
   commit: string;
+  state: string;
   closeDate: number;
+  requestor: string;
   gradeRequested: boolean;
   gradeRequestedTimestamp: number;
   user: string;
@@ -63,9 +65,11 @@ export default class ResultRecord {
   private team: string;
   private repo: string;
   private projectUrl: string;
+  private state: string;
   private commitUrl: string;
-  private githubOutput: string;
+  private message: string;
   private courseNum: number;
+  private requestor: string;
   private commit: string;
   private gradeRequested: boolean;
   private gradeRequestedTimestamp: number;
@@ -85,7 +89,9 @@ export default class ResultRecord {
   constructor(result: Result) {
     this.team = result.team;
     this.repo = result.repo;
-    this.githubOutput = result.githubOutput;
+    this.message = result.message;
+    this.state = result.state;
+    this.requestor = result.requestor,
     this.projectUrl = result.projectUrl;
     this.commitUrl = result.commitUrl;
     this.courseNum = result.courseNum;
@@ -109,8 +115,10 @@ export default class ResultRecord {
   public convertToJSON(): Result {
     let doc: Result = {
       team: this.team,
+      requestor: this.requestor === '' ? '' : this.requestor,
       repo: this.repo,
-      githubOutput: this.githubOutput,
+      message: this.message,
+      state: this.state,
       projectUrl: this.projectUrl,
       commitUrl: this.commitUrl,
       orgName: this.orgName,

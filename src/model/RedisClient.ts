@@ -102,6 +102,32 @@ export default class RedisClient {
     });
   }
 
+  /**
+   * Assigns the value to the key. If the key exists, its value is overwritten.
+   *
+   * @param {string} key The new key.
+   * @param {Object} value The value to associate with the key.
+   * @returns {Promise<boolean>}
+   */
+  public async updateJobState(key: string, newState: string): Promise<boolean> {
+    let that = this;
+    if (!this._isConnected) {
+      Log.error('RedisClient::updateJobState() - ERROR Client not connected.');
+      throw new Error('Client not connected');
+    }
+    return new Promise<boolean>((fulfill, reject) => {
+      this.client.smembers(key, (err: Error, results: any[]) => {
+        if (err)
+          reject(err);
+        else if(results)
+          that.set(key, results[0]);
+        else
+          reject(new Error('Failed to update job state ' + key));
+      });
+    });
+  }
+
+
 
   /**
    * Assigns the value to the key. If the key exists, its value is overwritten.

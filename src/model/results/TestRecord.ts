@@ -9,7 +9,7 @@ import {TestJob, TestJobDeliverable} from '../../controller/TestJobController';
 import {Report} from '../../model/results/ReportRecord';
 import Log from '../../Util';
 
-const GITHUB_TIMEOUT_MSG = 'Your assignment has timed out while being marked. Please check for infinite loops ' + 
+const GITHUB_TIMEOUT_MSG = 'Your assignment has timed out while being marked. Please check for infinite loops' + 
   ' and slow runtime functions.';
 
 export interface Attachment {
@@ -66,6 +66,8 @@ export default class TestRecord {
   private shaSize: number;
   private stdio: string;
   private report: string;
+  private requestor: string;
+  private state: string;
   private repo: string;
   private reportSize: number;
   private stdioSize: number;
@@ -98,7 +100,9 @@ export default class TestRecord {
     this.courseNum = testJob.courseNum;
     this.githubToken = githubToken;
     this.team = testJob.team;
+    this.requestor = testJob.requestor,
     this.repo = testJob.repo;
+    this.state = testJob.state;
     this.projectUrl = testJob.projectUrl;
     this.commitUrl = testJob.commitUrl;
     this.deliverable = testJob.test;
@@ -314,6 +318,7 @@ public getTestRecord(): Result {
        doc = {
         'team': this.team,
         'repo': this.repo,
+        'state': this.state,
         'projectUrl': this.projectUrl,
         'commitUrl': this.commitUrl,
         'courseNum': this.courseNum,
@@ -327,11 +332,12 @@ public getTestRecord(): Result {
         'committer': this.committer,
         'timestamp': this.timestamp,
         'container': container,
+        'requestor': this.requestor,
         'gradeRequested': false,
-        'githubOutput': GITHUB_TIMEOUT_MSG,
+        'message': GITHUB_TIMEOUT_MSG,
         'gradeRequestedTimestamp': -1,
         'ref': this.ref,
-        'stdioRef': new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable + '|' + this.username + '|' + this.repo,
+        'stdioRef': new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable.deliverable + '|' + this.username + '|' + this.repo,
         'attachments': [getStdio(), getDockerInput()],
       }
       Log.info(`TestRecord::getTestRecord() INFO - Created TestRecord for Timeout on commit ${this.commit} and user ${this.username}`);

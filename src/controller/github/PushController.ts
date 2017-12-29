@@ -13,6 +13,7 @@ import DeliverableRepo from '../../repos/DeliverableRepo';
 import DockerHelper, {DockerInputJSON} from '../../model/docker/DockerInput';
 
 const BOT_USERNAME = 'autobot';
+export const INIT_STATE = 'INIT';
 
 export default class PushController {
   private config: IConfig;
@@ -93,6 +94,9 @@ export default class PushController {
         if (open <= currentDate && close >= currentDate) {
             testJob = {
               githubOrg: record.githubOrg,
+              requestor: '',
+              state: INIT_STATE,
+              pendingRequest: false,
               repo: record.repo,
               projectUrl: record.projectUrl,
               commitUrl: record.commitUrl,

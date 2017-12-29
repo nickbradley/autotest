@@ -12,12 +12,13 @@ import Log from '../Util';
 import { IConfig, AppConfig } from '../Config';
 import mongodb = require('mongodb');
 import db, {Database, InsertOneResponse} from '../db/MongoDB';
+import {Attachment} from '../model/results/TestRecord';
 
-const STDIO_COLLECTION = 'stdio';
+const STDIO_COLLECTION = 'stdios';
 const MONGO_ID_PROPERTY = '_id';
 
 export interface StdioRecord {
-  stdio: string;
+  stdio: Attachment;
   idStamp: string;
 }
 

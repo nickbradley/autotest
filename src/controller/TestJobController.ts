@@ -13,6 +13,7 @@ import RequestRepo from '../repos/RequestRepo';
 import StdioRecordRepo, {StdioRecord} from '../repos/StdioRecordRepo';
 import RedisManager from './RedisManager';
 import Server from '../../src/rest/Server'
+let redis = require("redis");
 import {Result} from '../model/results/ResultRecord';
 
 // types are basic because queue strips out functions
@@ -28,9 +29,12 @@ export interface TestJob {
   username: string;
   team: string;
   repo: string;
+  pendingRequest: boolean;
+  requestor: string;
   closeDate: number;
   openDate: number;
   projectUrl: string;
+  state: string;
   commitUrl: string;
   postbackOnComplete: boolean;
   commit: string;
@@ -63,9 +67,9 @@ export default class TestJobController {
   private static instances: TestJobController[];
   private stdManager: Manager;
   private expManager: Manager;
-
   private redisPort: number;
   private _redisAddress: Url.Url;
+  private redisManager: RedisManager;
   private process: ProcessJobCallback;
   private completed: CompletedJobCallback;
   private postbackOnComplete: any;
@@ -86,6 +90,8 @@ export default class TestJobController {
     this._redisAddress = config.getRedisAddress();
     this._redisAddress.port = redisPort.toString();
     this.redisPort = redisPort;
+    this.redisManager = new RedisManager(this.redisPort);
+
 
     let stdQName: string = 'autotest-testqueue-std';
     let stdQPool: number = 1;
@@ -149,6 +155,7 @@ export default class TestJobController {
 
     this.postbackOnComplete = async function(pendingRequest: any, jobData: TestJob) {
       let msg: string;
+      console.log('TestJobController::postbackOnComplete() jobData: TestJob object',jobData);
       let postbackController: PostbackController = new PostbackController(jobData.hook);
       
       msg = "textplace holder for git commit comments to Github -- refactor in progress"
@@ -240,6 +247,7 @@ export default class TestJobController {
         await this.expManager.queue.add(job.data, job.opts);
         Log.info('TestJobController::promoteJob() - The job ' + id + ' was successfully moved to the express queue.');
       } else if (jobState === 'active') {
+        this.redisManager.client.updateJobState(id, 'REQUESTED');
         Log.info('TestJobController::promoteJob() - The job ' + id + ' cannot be promoted because it is already ' + jobState);        
       } else {
         Log.info('TestJobController::promoteJob() - The job ' + id + ' was not be promoted because it is ' + jobState);
