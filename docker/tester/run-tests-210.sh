@@ -38,14 +38,6 @@ testsCmd="yarn run autotest"
 
 date=$(date --utc +%FT%T.%3NZ)
 
-printf "<INFO>\nproject url: %s\nbranch: %s\ncommit: %s\nscript version: %s\ntest suite version: %s\n</INFO exitcode=0, completed=%s, duration=0s>\n\n\n" \
-  "$( echo "${PROJECT_URL}" | sed 's/\(.*:\/\/\).*@\(.*\)/\1\2/' )" \
-  "${PROJECT_BRANCH}" \
-  "${PROJECT_COMMIT}" \
-  "${version}" \
-  "${bootstrapName}: ${TESTSUITE_VERSION}" \
-  "${date}"
-
 printf "pushd /cpsc210__bootstrap/"
 pushd /cpsc210__bootstrap/
 
@@ -53,7 +45,7 @@ pushd /cpsc210__bootstrap/
 git pull
 
 printf "./runTests.sh"
-./runTests.sh
+. ./runTests.sh
 
 # Clone the specified student repo into the projectDir
 # Exit if unable to clone the student's repo

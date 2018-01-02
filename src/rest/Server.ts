@@ -93,6 +93,9 @@ export default class Server {
               // Docker container ResultRecord submission
               that.rest.post('/result', restify.bodyParser(), RouteHandler.resultSubmission);
 
+              // Host Static HTML contained in zipFileContainer
+              that.rest.post('/staticHtml', restify.bodyParser(), RouteHandler.staticHtml);
+
 /*
               // Serves static files for the UI.
               that.rest.get("/public/.*", restify.serveStatic({

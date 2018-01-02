@@ -32,7 +32,9 @@
   "dependencies": {
     "@types/mongodb": "^2.2.7",
     "bull": "^2.0.0",
+    "extract-zip": "^1.6.6",
     "forever": "^0.15.3",
+    "jszip": "^3.1.5",
     "mongodb": "^2.2.30",
     "nano": "^6.2.0",
     "node-env-file": "^0.1.8",

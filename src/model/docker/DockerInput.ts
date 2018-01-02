@@ -17,6 +17,7 @@ export interface DockerInputJSON {
   userInfo: DockerUserInfo;  
   pushInfo: DockerPushInfo;
   deliverableInfo: DockerDeliverableInfo;
+  dockerImage: string;
   githubOrg: string;
   whitelistedServers: string;
   allowDNS: number;
@@ -28,7 +29,7 @@ export interface DockerInputJSON {
 }
 
 export interface DockerContainerInfo {
-  scriptVersion: string,
+  branch: string,
   suiteVersion: string,
   image: string,
   exitCode: number,
@@ -95,13 +96,15 @@ export default class DockerInput {
 
       let userInfo: DockerUserInfo = {username: null, csid: null, snum: null, profileUrl: null, fname: null, lname: null};
       let pushInfo: DockerPushInfo = {branch: null, repo: null, commit: null, commitUrl: null, projectUrl: null, timestamp: null};
-      let container: DockerContainerInfo = {scriptVersion: null, suiteVersion: null, image: null, exitCode: null};
+      let container: DockerContainerInfo = {branch: null, suiteVersion: null, image: null, exitCode: null};
+      let dockerImage: '';
       let deliverableInfo: DockerDeliverableInfo = {solutionsUrl: null, deliverableCommit: null, deliverableUrl: null, deliverableToMark: null};
       let dockerInput: DockerInputJSON = {
         userInfo, 
         pushInfo, 
         container,
         deliverableInfo,
+        dockerImage,
         allowDNS: null,
         whitelistedServers: null,
         githubKey: null,
@@ -134,8 +137,9 @@ export default class DockerInput {
           dockerInput.pushInfo.repo = this.pushRecord.repo;
           dockerInput.pushInfo.timestamp = this.pushRecord.timestamp;
           dockerInput.container.image = this.deliverable.dockerImage;
-          dockerInput.container.scriptVersion = this.deliverable.dockerBuild;
+          dockerInput.container.branch = this.deliverable.dockerBuild;
           dockerInput.githubKey = this.config.getGithubToken();
+          dockerInput.dockerImage = this.deliverable.dockerImage + ':' + this.deliverable.dockerBuild;
           dockerInput.teamId = this.pushRecord.team;
           dockerInput.whitelistedServers = this.deliverable.whitelistedServers;
           dockerInput.allowDNS = this.deliverable.allowDNS;

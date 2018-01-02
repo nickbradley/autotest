@@ -176,6 +176,8 @@ export default class TestRecord {
       tempDir.path
     ];
 
+    console.log('args', args);
+
     let options = {
       encoding: 'utf8'
     }

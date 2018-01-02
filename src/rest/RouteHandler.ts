@@ -4,6 +4,7 @@ import PushController from '../controller/github/PushController';
 import {TestJob} from '../controller/TestJobController';
 import CommitCommentController from '../controller/github/CommitCommentController';
 import ResultRecordController from '../controller/ResultRecordController';
+import StaticHtmlController from '../controller/StaticHtmlController';
 import ResultRecord, {ResultPayload} from '../model/results/ResultRecord';
 
 
@@ -138,15 +139,15 @@ export default class RouteHandler {
     let body = req.body;
     let serverPort = RequestHelper.parseServerPort(req);
     let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
-    let controller: ResultRecordController = new ResultRecordController(currentCourseNum, req.body)
-    controller.store()
-      .then((result) => {
-        res.json(202, { response: result });  
+    let controller: StaticHtmlController = new StaticHtmlController(req.body);
+    controller.extractZipToDir()
+      .then((confirmation) => {
+        res.json(202, { response: { htmlStaticPath: confirmation } });  
         //      
         return next();        
       })
       .catch((err) => {
-        res.json(500, { response: err });       
+        res.json(500, { response: { error: err } });       
         return next();
       });
   }

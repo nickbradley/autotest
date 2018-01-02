@@ -99,7 +99,7 @@ export default class CommitCommentContoller {
           let pendingRequest: PendingRequest
           try {
             pendingRequest = await redis.client.get(reqId);
-            await redis.client.disconnect();
+            // await redis.client.disconnect();
           } catch(err) {
             Log.error(`CommitCommentController::process() Could not get reqId and disconnect successfully from Redis`);
             hasPending = false;
