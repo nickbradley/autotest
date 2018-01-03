@@ -9,7 +9,7 @@ import {TestJob} from './TestJobController';
 import TestRecordRepo from '../repos/TestRecordRepo';
 import ResultRecord, {ResultPayload, Result} from '../model/results/ResultRecord';
 
-const JSZip = require('JSZip');
+const JSZip = require('jszip');
 const STATIC_HOST_PATH = '/var/www/classportal-ui-next/app/html/staticHtml/';
 const extract = require('extract-zip');
 
