@@ -29,6 +29,12 @@ export default class StaticHtml {
   private zipFile: ZipFile;
   private newDirPath: string;
 
+  /**
+   * zipFileContainer includes:
+   * @param zipFile: ZipFile object with base64 encoded buffer zip file in .data property
+   * @param randomStaticDirPath string of your choice (make it long but a workable FS directory)
+   */
+  //**
   constructor(zipFileContainer: ZipFileContainer) {
     this.zipFile = zipFileContainer.zipFile;
     this.newDirPath = zipFileContainer.newDirPath;

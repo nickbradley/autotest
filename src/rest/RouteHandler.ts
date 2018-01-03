@@ -132,8 +132,8 @@ export default class RouteHandler {
   }
 
       /**
-   * Handles ResultRecord objects sent from container
-   *  - req should container ResultRecord container with payload
+   * Handles StaticHtml Zip files that are sent and included
+   * @return response with success status and HTML static link or error message
    */
   public static staticHtml(req: restify.Request, res: restify.Response, next: restify.Next) {
     let body = req.body;
