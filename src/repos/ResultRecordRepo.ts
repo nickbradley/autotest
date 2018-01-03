@@ -116,4 +116,34 @@ export default class ResultRecordRepo {
       throw `CommitCommentRepo::insertCommitComment: ${err}.`
     }
   }
+
+  public async insertResultRecord(testRecord: Object): Promise<InsertOneResponse> {
+    return new Promise<InsertOneResponse>((fulfill, reject) => {
+      db.insertRecord(RESULTS_COLLECTION, testRecord).then( (insertedResponse: InsertOneResponse) => {
+        if(insertedResponse.insertedCount < 1) {
+          throw `TestRecordRepo::insertTestRecord() Could not insert ${testRecord}: ${insertedResponse}`;
+        }
+        fulfill(insertedResponse);
+      });
+    });
+  }
+
+  public async getLatestResultRecord(_team: string, _commit: string, _deliverable: string, _orgName: string): Promise<ResultRecord> {
+    return new Promise<ResultRecord>((fulfill, reject) => {
+      let query: any = { commit: _commit, deliverable: _deliverable , team: _team, orgName: _orgName};
+
+      db.getLatestRecord(RESULTS_COLLECTION, query).then((resultRecord: ResultRecord) => {
+        try {
+          if (!resultRecord) {
+            throw `Could not find ${_orgName}, ${_team}, ${_commit}, and ${_deliverable}`;
+          }
+          fulfill(resultRecord);
+        }
+        catch (err) {
+          Log.error(`TestRecordRepo::getLatestTestRecord() ${err}`);
+          reject(err);
+        }
+      })
+    });
+  }
 }

@@ -34,7 +34,7 @@ export default class StdioRecordRepo {
     return new Promise<InsertOneResponse>((fulfill, reject) => {
       db.insertRecord(STDIO_COLLECTION, stdioRecord).then( (insertedResponse: InsertOneResponse) => {
         if(insertedResponse.insertedCount < 1) {
-          throw `TestRecordRepo::insertTestRecord() Could not insert Stdio Record for ${stdioRecord.idStamp}: ${insertedResponse}`;
+          throw `TestRecordRepo::insertStdioRecord() Could not insert Stdio Record for ${stdioRecord.idStamp}: ${insertedResponse}`;
         }
         fulfill(insertedResponse);
       })

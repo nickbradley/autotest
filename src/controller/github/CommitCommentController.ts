@@ -119,16 +119,17 @@ export default class CommitCommentContoller {
               body: body
             }
           } else {
+            // Is a grade request that is not already being waited for.
             let lastRequest: Date = await that.getLatestRequest(record.getUser(), record.getRepo(), record.getDeliverable());
             let diff: number = +new Date() - +lastRequest;
             if (diff > record.getDeliverableRate() || isAdmin) {
               try {
                 let githubGradeComment: GithubGradeComment = new GithubGradeComment(record.getTeam(), record.getCommit().short, record.getDeliverable(), this.record.getOrgName(), this.record.getNote());
                 await githubGradeComment.fetch();
-                let body: string = await githubGradeComment.formatResult();
+                let githubFeedback: string = await githubGradeComment.formatResult();
                 response = {
                   statusCode: 200,
-                  body: body
+                  body: githubFeedback
                 }
               } catch(err) {
                 Log.info('CommitCommentContoller::process() - No results for request.');

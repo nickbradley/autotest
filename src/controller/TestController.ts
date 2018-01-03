@@ -6,7 +6,7 @@ import {IConfig, AppConfig} from '../Config';
 import {Database} from '../model/Database';
 import TestRecord, {TestInfo} from '../model/results/TestRecord';
 import {TestJob} from './TestJobController';
-import TestRecordRepo from '../repos/TestRecordRepo';
+import ResultRecordRepo from '../repos/ResultRecordRepo';
 import StdioRepo from '../repos/StdioRecordRepo';
 import StdioRecordRepo, {StdioRecord} from '../repos/StdioRecordRepo';
 
@@ -33,7 +33,7 @@ export default class TestController {
   public async store(testInfo: TestInfo) {
 
     let stdioRepo = new StdioRecordRepo();
-    let testRecordRepo: TestRecordRepo = new TestRecordRepo();
+    let resultRecordRepo: ResultRecordRepo = new ResultRecordRepo();
     let stdioRecord: StdioRecord = {stdio: null, idStamp: null};
 
     try {
@@ -46,12 +46,12 @@ export default class TestController {
       stdioRepo.insertStdioRecord(stdioRecord);
       Log.info('TestController::exec() INFO Test ' + testInfo.testRecord.commit +
        ' exit code 124 TIMEOUT; ResultRecord saved by AutoTest.');
-       testRecordRepo.insertTestRecord(testInfo.testRecord);
+       resultRecordRepo.insertResultRecord(testInfo.testRecord);
     } else if (testInfo.containerExitCode === 125) {
       stdioRepo.insertStdioRecord(stdioRecord);
       Log.error('TestController::exec() ERROR Test ' + testInfo.testRecord.commit +
        ' exit code 125 RUN COMMAND FAILED; ResultRecord saved by AutoTest');
-       testRecordRepo.insertTestRecord(testInfo.testRecord);
+       resultRecordRepo.insertResultRecord(testInfo.testRecord);
     } else {
       stdioRepo.insertStdioRecord(stdioRecord);
       Log.info('TestController::exec() INFO Test exit code:' + testInfo.containerExitCode +  ' commit: ' +

@@ -131,7 +131,7 @@ export default class DockerInput {
           dockerInput.deliverableInfo.deliverableToMark = this.pushRecord.deliverable;  
           dockerInput.deliverableInfo.solutionsUrl = this.deliverable.solutionsUrl;
           dockerInput.pushInfo.branch = this.pushRecord.ref;
-          dockerInput.pushInfo.commit = this.pushRecord.commit.toString();
+          dockerInput.pushInfo.commit = this.pushRecord.commit.short;
           dockerInput.pushInfo.commitUrl = this.pushRecord.commitUrl;
           dockerInput.pushInfo.projectUrl = this.pushRecord.projectUrl;
           dockerInput.pushInfo.repo = this.pushRecord.repo;

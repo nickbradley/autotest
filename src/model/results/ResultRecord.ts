@@ -11,7 +11,7 @@ export interface ResultPayload {
 export interface Result {
   team: string;
   repo: string;
-  message: string;
+  githubFeedback: string;
   projectUrl: string;
   commitUrl: string;
   courseNum: number;
@@ -67,7 +67,7 @@ export default class ResultRecord {
   private projectUrl: string;
   private state: string;
   private commitUrl: string;
-  private message: string;
+  private githubFeedback: string;
   private courseNum: number;
   private requestor: string;
   private commit: string;
@@ -89,7 +89,7 @@ export default class ResultRecord {
   constructor(result: Result) {
     this.team = result.team;
     this.repo = result.repo;
-    this.message = result.message;
+    this.githubFeedback = result.githubFeedback;
     this.state = result.state;
     this.requestor = result.requestor,
     this.projectUrl = result.projectUrl;
@@ -117,7 +117,7 @@ export default class ResultRecord {
       team: this.team,
       requestor: this.requestor === '' ? '' : this.requestor,
       repo: this.repo,
-      message: this.message,
+      githubFeedback: this.githubFeedback,
       state: this.state,
       projectUrl: this.projectUrl,
       commitUrl: this.commitUrl,

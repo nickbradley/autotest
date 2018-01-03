@@ -5,7 +5,7 @@ import {IConfig, AppConfig} from '../Config';
 import {Database} from '../model/Database';
 import TestRecord from '../model/results/TestRecord';
 import {TestJob} from './TestJobController';
-import TestRecordRepo from '../repos/TestRecordRepo';
+import ResultRecordRepo from '../repos/ResultRecordRepo';
 import ResultRecord, {ResultPayload, Result} from '../model/results/ResultRecord';
 
 
@@ -30,10 +30,10 @@ export default class ResultRecordController {
   }
 
   public async store() {
-    let testRecordRepo: TestRecordRepo = new TestRecordRepo();
-    let testRecordJSON = this._resultRecord.convertToJSON();
+    let resultRecordRepo: ResultRecordRepo = new ResultRecordRepo();
+    let resultRecordJSON = this._resultRecord.convertToJSON();
     
-    return testRecordRepo.insertTestRecord(testRecordJSON);
+    return resultRecordRepo.insertResultRecord(resultRecordJSON);
   }
 
 }

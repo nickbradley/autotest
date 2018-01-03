@@ -336,7 +336,7 @@ public getTestRecord(): Result {
         'container': container,
         'requestor': this.requestor,
         'gradeRequested': false,
-        'message': GITHUB_TIMEOUT_MSG,
+        'githubFeedback': GITHUB_TIMEOUT_MSG,
         'gradeRequestedTimestamp': -1,
         'ref': this.ref,
         'stdioRef': new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable.deliverable + '|' + this.username + '|' + this.repo,
