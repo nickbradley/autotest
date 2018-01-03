@@ -63,7 +63,7 @@ export default class GithubGradeComment {
     try {
 
       let output: string = this.resultRecord.githubFeedback;
-      output += '\n\n<sub>suite: ' + this.resultRecord.container.image + '  |  script: ' + this.resultRecord.container.suiteVersion + '.</sub>';
+      output += '\n\n<sub>suite: ' + this.resultRecord.container.image + '  |  script: ' + 'W2.0' + '.</sub>';
 
       return output;
     }
