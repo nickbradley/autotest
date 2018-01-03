@@ -3,7 +3,7 @@ import {IConfig, AppConfig} from '../../Config';
 import {Database, QueryParameters, ViewResponse} from '../../model/Database';
 // import TestRecord from '../../model/results/TestRecord'
 import ResultRecordRepo from '../../repos/ResultRecordRepo';
-import ResultRecord from './ResultRecord';
+import ResultRecord, {Result} from './ResultRecord';
 
 
 export default class GithubGradeComment {
@@ -13,7 +13,7 @@ export default class GithubGradeComment {
   private deliverable: string;
   private note: string;
   private orgName: string;
-  private resultRecord: ResultRecord;
+  private resultRecord: Result;
 
   constructor(team: string, shortCommit: string, deliverable: string, orgName: string, note: string) {
     this.config = new AppConfig();
@@ -35,11 +35,11 @@ export default class GithubGradeComment {
    * @param commit - The GitHub commit SHA that the tests were run against.
    * @param deliverable - Deliverable identifier (i.e. d1, d2, etc.).
    */
-  private async getResult(): Promise<ResultRecord> {
+  private async getResult(): Promise<Result> {
     let resultRecordRepo = new ResultRecordRepo();
 
     let that = this;
-    return new Promise<ResultRecord>(async (fulfill, reject) => {
+    return new Promise<Result>(async (fulfill, reject) => {
       try {
         // important: this query has to be done in descending order to get the latest result.
 
@@ -62,8 +62,8 @@ export default class GithubGradeComment {
   public formatResult(): string {
     try {
 
-      let output: string = this.resultRecord.convertToJSON().githubFeedback;
-      output += '\n\n<sub>suite: ' + 'test12' + '  |  script: ' + 'test21' + '.</sub>';
+      let output: string = this.resultRecord.githubFeedback;
+      output += '\n\n<sub>suite: ' + this.resultRecord.container.image + '  |  script: ' + this.resultRecord.container.suiteVersion + '.</sub>';
 
       return output;
     }

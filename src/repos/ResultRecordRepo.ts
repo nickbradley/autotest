@@ -7,7 +7,7 @@ import { IConfig, AppConfig } from '../Config';
 import mongodb = require('mongodb');
 import db, {MongoDB, InsertOneResponse} from '../db/MongoDB';
 import CommitCommentRecord, {CommitComment} from '../model/requests/CommitComment';
-import ResultRecord from '../model/results/ResultRecord';
+import ResultRecord, {Result} from '../model/results/ResultRecord';
 import { Deliverable } from '../model/settings/DeliverableRecord';
 import { Course } from '../model/settings/CourseRecord';
 
@@ -128,11 +128,11 @@ export default class ResultRecordRepo {
     });
   }
 
-  public async getLatestResultRecord(_team: string, _commit: string, _deliverable: string, _orgName: string): Promise<ResultRecord> {
-    return new Promise<ResultRecord>((fulfill, reject) => {
+  public async getLatestResultRecord(_team: string, _commit: string, _deliverable: string, _orgName: string): Promise<Result> {
+    return new Promise<Result>((fulfill, reject) => {
       let query: any = { commit: _commit, deliverable: _deliverable , team: _team, orgName: _orgName};
 
-      db.getLatestRecord(RESULTS_COLLECTION, query).then((resultRecord: ResultRecord) => {
+      db.getLatestRecord(RESULTS_COLLECTION, query).then((resultRecord: Result) => {
         try {
           if (!resultRecord) {
             throw `Could not find ${_orgName}, ${_team}, ${_commit}, and ${_deliverable}`;
