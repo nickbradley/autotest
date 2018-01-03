@@ -50,7 +50,7 @@ COPY run-tests-210.sh /run-tests.sh
 RUN chmod +x /run-tests.sh
 
 RUN mkdir /output
-RUN /pull-repo.sh "https://${GITHUB_KEY}@github.ubc.ca/steca/cpsc210__bootstrap" "master" /cpsc210__bootstrap
+RUN /pull-repo.sh "https://${GITHUB_KEY}@github.ugrad.cs.ubc.ca/steca/cpsc210__bootstrap" "master" /cpsc210__bootstrap
 RUN cd /cpsc210__bootstrap/bootstrap/scripts && ./2_setup_gradle_for_tests.sh
 RUN cd /cpsc210__bootstrap/bootstrap/studentTests && ./gradlew clean build && rm -rf output/*
 RUN cd /cpsc210__bootstrap/helpers && yarn install && yarn run build

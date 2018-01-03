@@ -114,18 +114,22 @@ export default class RouteHandler {
    *  - req should container ResultRecord container with payload
    */
   public static resultSubmission(req: restify.Request, res: restify.Response, next: restify.Next) {
-    Log.info('RouteHandler::resultSubmission route hit');
     let body = req.body;
     let serverPort = RequestHelper.parseServerPort(req);
     let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
     let controller: ResultRecordController = new ResultRecordController(currentCourseNum, req.body)
+    let resultPayload: ResultPayload = req.body as ResultPayload;
     controller.store()
       .then((result) => {
+        Log.info('RouteHandler::resultSubmission() SUCCESS Saved result ' + resultPayload.response.commit + ' and ' +
+          resultPayload.response.committer);
         res.json(202, { response: result });  
         //      
         return next();        
       })
       .catch((err) => {
+        Log.error('RouteHandler::resultSubmission() ERROR saving ResultRecord' + resultPayload.response.commit + ' for ' + 
+          resultPayload.response.commitUrl);
         res.json(500, { response: err });       
         return next();
       });

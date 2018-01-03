@@ -116,7 +116,10 @@ export default class RedisClient {
       throw new Error('Client not connected');
     }
     return new Promise<boolean>((fulfill, reject) => {
+      key = 'autotest-testqueue-std';
+      console.log('smember key', key);
       this.client.smembers(key, (err: Error, results: any[]) => {
+        console.log('redis key results', results);
         if (err)
           reject(err);
         else if(results)

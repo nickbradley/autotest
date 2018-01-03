@@ -247,6 +247,7 @@ export default class TestJobController {
         await this.expManager.queue.add(job.data, job.opts);
         Log.info('TestJobController::promoteJob() - The job ' + id + ' was successfully moved to the express queue.');
       } else if (jobState === 'active') {
+        console.log('promoteJob() id', id);
         this.redisManager.client.updateJobState(id, 'REQUESTED');
         Log.info('TestJobController::promoteJob() - The job ' + id + ' cannot be promoted because it is already ' + jobState);        
       } else {

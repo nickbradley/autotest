@@ -98,6 +98,7 @@ export default class CommitCommentContoller {
           let hasPending: boolean = true;
           let pendingRequest: PendingRequest
           try {
+            await redis.client.connect();
             pendingRequest = await redis.client.get(reqId);
             // await redis.client.disconnect();
           } catch(err) {
