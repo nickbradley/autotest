@@ -51,7 +51,6 @@ else
 fi
 
 docker build -f Dockerfile-210 --tag autotest/${repoName}:${testsuiteCommit} \
- --network="host" \
  --build-arg testsuiteUrl=https://${githubKey}@github.ubc.ca/steca/${repoName}.git \
  --build-arg testsuiteCommit=${testsuiteCommit} \
  --build-arg allowDNS=${allowDNS} \

@@ -29,8 +29,7 @@ set -o nounset  # exit if undeclared variable is used
 testImage=${1}
 tempDir=${2}
 
-docker run --net host \
-           --cap-add=NET_ADMIN \
+docker run --cap-add=NET_ADMIN \
            --volume "${tempDir}":/output \
            --rm \
            ${testImage}
