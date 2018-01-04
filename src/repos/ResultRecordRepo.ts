@@ -82,7 +82,7 @@ export default class ResultRecordRepo {
             for (let result of results) {
               resultIds.push(result._id);
             }
-            context.collection(RESULTS_COLLECTION).updateMany({_id: {$in: resultIds}}, {$set: {gradeRequsted: true}})
+            context.collection(RESULTS_COLLECTION).updateMany({_id: {$in: resultIds}}, {$set: {gradeRequested: true, gradeRequestedTimestamp: new Date().getTime()}})
               .then((onfulfilled: mongodb.UpdateWriteOpResult) => {
                 Log.info('ResultRecordrepo:: updateResultRecords() Updated ' + onfulfilled.modifiedCount + ' records');
                 fulfill(onfulfilled);
