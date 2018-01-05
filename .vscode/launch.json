@@ -9,6 +9,10 @@
       "type": "node",
       "request": "launch",
       "name": "Launch Program",
+      "env": {
+        "IS_CONTAINER_LIVE": "0",
+        "NODE_ENV": "development"
+      },
       "program": "${workspaceRoot}/src/App.js",
       "outFiles": [
         "${workspaceRoot}/out/**/*.js"

@@ -76,7 +76,7 @@ export default class PushController {
         });
     }
     catch (err) {
-      Log.error(`PushController::getCourseLogic() Failed to retrieve business logic for Course ${this.courseNum}: ${err}`);
+      Log.error(`PushController::getDeliverableLogic() Failed to retrieve business logic for Course ${this.courseNum}: ${err}`);
     }
   }
 

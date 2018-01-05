@@ -173,9 +173,11 @@ export default class TestRecord {
     let file: string = './docker/tester/run-test-container.sh';
     let args: string[] = [
       this.deliverable.dockerImage + ':' + this.deliverable.dockerBuild,
-      tempDir.path
+      tempDir.path,
+      process.env.NODE_ENV === 'development' ? '--env IS_CONTAINER_LIVE="1"' : ''
     ];
 
+    process.env.NODE_ENV === 'development' ? console.log('developmendsfsddt') : console.log(process.env.NODE_ENV);
     console.log('args', args);
 
     let options = {
