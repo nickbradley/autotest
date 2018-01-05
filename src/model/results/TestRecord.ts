@@ -6,6 +6,7 @@ import {Commit} from '../GithubUtil';
 import {CouchDatabase,Database, DatabaseRecord, InsertResponse} from '../Database';
 import {Result} from '../results/ResultRecord';
 import {TestJob, TestJobDeliverable} from '../../controller/TestJobController';
+import DockerInput, { DockerInputJSON } from '../../model/docker/DockerInput';
 import {Report} from '../../model/results/ReportRecord';
 import Log from '../../Util';
 
@@ -93,7 +94,7 @@ export default class TestRecord {
   private ref: string;
   private githubOrg: string;
   private username: string;
-  private dockerInput: object;
+  private dockerInput: DockerInputJSON;
   private idStamp: string;
 
   constructor(githubToken: string, testJob: TestJob) {
@@ -341,7 +342,8 @@ public getTestRecord(): Result {
         'githubFeedback': GITHUB_TIMEOUT_MSG,
         'gradeRequestedTimestamp': -1,
         'ref': this.ref,
-        'stdioRef': new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable.deliverable + '|' + this.username + '|' + this.repo,
+        'idStamp': new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable.deliverable + '|' + this.username + '|' + this.repo,
+        'stdioRef': that.dockerInput.stdioRef,
         'attachments': [getStdio(), getDockerInput()],
       }
       Log.info(`TestRecord::getTestRecord() INFO - Created TestRecord for Timeout on commit ${this.commit} and user ${this.username}`);

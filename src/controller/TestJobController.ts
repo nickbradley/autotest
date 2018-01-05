@@ -6,6 +6,7 @@ import {TestInfo} from '../model/results/TestRecord';
 import * as Url from 'url';
 import {GithubUsername, Commit} from '../model/GithubUtil';
 import {RedisUtil} from '../model/RedisUtil';
+import { DockerInputJSON } from '../model/docker/DockerInput';
 import {Visibility} from '../model/settings/DeliverableRecord';
 import PostbackController from './github/PostbackController';
 import CommitCommentController from './github/CommitCommentController'
@@ -18,7 +19,7 @@ import {Result} from '../model/results/ResultRecord';
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
-  dockerInput: object;
+  dockerInput: DockerInputJSON;
   deliverable: string;
   dockerImage: string;
   dockerBuild: string;
@@ -154,11 +155,11 @@ export default class TestJobController {
     }
 
     this.postbackOnComplete = async function(pendingRequest: any, jobData: TestJob) {
-      let msg: string;
-      console.log('TestJobController::postbackOnComplete() jobData: TestJob object',jobData);
-      let postbackController: PostbackController = new PostbackController(jobData.hook);
-      
-      msg = "textplace holder for git commit comments to Github -- refactor in progress"
+        let msg: string;
+        console.log('TestJobController::postbackOnComplete() jobData: TestJob object',jobData);
+        let postbackController: PostbackController = new PostbackController(jobData.hook);
+        
+        msg = "textplace holder for git commit comments to Github -- refactor in progress"
       
         Log.info('TestJobController:: Pending Request on commit ' + pendingRequest.commit + ' and ' + pendingRequest.team);
         let team: string = pendingRequest.team;

@@ -113,6 +113,7 @@ export default class DockerInput {
         custom: null, 
         teamId: null,
         courseNum: null,
+        // stdioRef matches container input so that we can always join objects easily and uniquely
         stdioRef:  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
       };
 
