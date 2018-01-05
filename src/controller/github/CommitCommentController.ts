@@ -36,6 +36,14 @@ interface PendingRequest {
   hook: string;
 }
 
+export interface JobIdData {
+  dockerImage: string;
+  dockerBuild: string;
+  deliverable: string;
+  team: string;
+  commit: string;
+}
+
 export default class CommitCommentContoller {
   private config: IConfig;
   private record: CommitCommentRecord;
@@ -140,9 +148,16 @@ export default class CommitCommentContoller {
                   let body: string;
                   try {
                     let imageName = this.getImageName();
+                    let jobIdData: JobIdData = { 
+                        dockerImage: deliv.dockerImage,
+                        dockerBuild: deliv.dockerBuild,
+                        deliverable: req.deliverable,
+                        team: req.team,
+                        commit: req.commit
+                      };
                     let jobId: string = deliv.dockerImage + ':' + deliv.dockerBuild + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);
-                    await queue.promoteJob(jobId);
+                    await queue.promoteJob(jobId, jobIdData, redis.client);
 
                     body = 'This commit is still queued for processing against **'+deliverable+'**. Your results will be posted here as soon as they are ready.' + (this.record.getNote() ? '\n_Note: ' + this.record.getNote() + '_' : '');// There are ' + maxPos + (maxPos > 1 ? ' jobs' : ' job') + ' queued.';
                   } catch(err) {

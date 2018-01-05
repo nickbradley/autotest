@@ -121,7 +121,7 @@ export default class RouteHandler {
     let resultPayload: ResultPayload = req.body as ResultPayload;
     controller.store()
       .then((result) => {
-        Log.info('RouteHandler::resultSubmission() SUCCESS Saved result ' + resultPayload.response.commit + ' and ' +
+        Log.info('RouteHandler::resultSubmission() SUCCESS Saved result ' + resultPayload.response.commit + ' for ' +
           resultPayload.response.committer);
         res.json(202, { response: result });  
         //      

@@ -109,7 +109,7 @@ export default class PushController {
               commit: record.commit.short,
               hook: record.commentHook,
               ref: record.ref,
-              postbackOnComplete: deliverable.postbackOnComplete,
+              postbackOnComplete: deliverable.postbackOnComplete || false,
               test: {
                 dockerInput: this.dockerInput,
                 dockerImage: dockerImage,

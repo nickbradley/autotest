@@ -3,6 +3,7 @@ import {JobQueue, ProcessJobCallback, ActiveJobCallback, CompletedJobCallback, F
 import {IConfig, AppConfig} from '../Config';
 import TestController from './TestController';
 import {TestInfo} from '../model/results/TestRecord';
+import {JobIdData} from '../controller/github/CommitCommentController';
 import * as Url from 'url';
 import {GithubUsername, Commit} from '../model/GithubUtil';
 import {RedisUtil} from '../model/RedisUtil';
@@ -16,6 +17,7 @@ import RedisManager from './RedisManager';
 import Server from '../../src/rest/Server'
 let redis = require("redis");
 import {Result} from '../model/results/ResultRecord';
+import RedisClient from '../model/RedisClient';
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
@@ -239,17 +241,18 @@ export default class TestJobController {
    *
    * @param id: the id of the job to prioritize.
    */
-  public async promoteJob(id: string) {
+  public async promoteJob(id: string, jobIdData: JobIdData, redisClient: RedisClient) {
     try {
       let job: Job = await this.stdManager.queue.getJob(id);
       let jobState: string = await job.getState();
+      let searchKey: string = `*${jobIdData.dockerImage}:${jobIdData.dockerBuild}*${jobIdData.team}#${jobIdData.commit}`;
       if (jobState !== 'active' && jobState !== 'failed') {
         await this.stdManager.queue.remove(job.jobId);
         await this.expManager.queue.add(job.data, job.opts);
+        await redisClient.updateJobState(searchKey, 'REQUESTED');
         Log.info('TestJobController::promoteJob() - The job ' + id + ' was successfully moved to the express queue.');
       } else if (jobState === 'active') {
-        console.log('promoteJob() id', id);
-        this.redisManager.client.updateJobState(id, 'REQUESTED');
+        await redisClient.updateJobState(searchKey, 'REQUESTED');
         Log.info('TestJobController::promoteJob() - The job ' + id + ' cannot be promoted because it is already ' + jobState);        
       } else {
         Log.info('TestJobController::promoteJob() - The job ' + id + ' was not be promoted because it is ' + jobState);

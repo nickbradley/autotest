@@ -71,9 +71,8 @@ export default class ResultRecordRepo {
                 .toArray((err: Error, results: ResultRecord[]) => {
                   if (results.length > 0) {
                   fulfill(results);
-                  return;
                   }
-                  reject(`No ResultRecords for ${_commit} and username ${_username} to update gradeRequested property.`);
+                  Log.info(`ResultRecordRepo:: Adding Grade Requested Property: No ResultRecords for ${_commit} and username ${_username} to update.`);
               });
             });
           })
@@ -84,14 +83,14 @@ export default class ResultRecordRepo {
             }
             context.collection(RESULTS_COLLECTION).updateMany({_id: {$in: resultIds}}, {$set: {gradeRequested: true, gradeRequestedTimestamp: new Date().getTime()}})
               .then((onfulfilled: mongodb.UpdateWriteOpResult) => {
-                Log.info('ResultRecordrepo:: updateResultRecords() Updated ' + onfulfilled.modifiedCount + ' records');
+                Log.info('ResultRecordRepo:: Adding Grade Requested Property: Updated ' + onfulfilled.modifiedCount + ' records');
                 fulfill(onfulfilled);
               });
           });
         });
     }
     catch (err) {
-      Log.info(`ResultRecordRepo::updateResultRecords(): ${err}.`);
+      Log.info(`ResultRecordRepo:: Adding Grade Requested Property: ${err}.`);
     }
   }
 

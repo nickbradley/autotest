@@ -14,7 +14,7 @@ import DeliverableRepo from '../../repos/DeliverableRepo';
 const BOT_USERNAME = 'autobot';
 
 export interface DockerInputJSON {
-  userInfo: DockerUserInfo;  
+  userInfo: DockerUserInfo;
   pushInfo: DockerPushInfo;
   deliverableInfo: DockerDeliverableInfo;
   dockerImage: string;
@@ -27,6 +27,7 @@ export interface DockerInputJSON {
   container: DockerContainerInfo;
   custom: object;
   githubKey: string; // to be removed instead of being logged in the DB.
+  postbackOnComplete: boolean;
 }
 
 export interface DockerContainerInfo {
@@ -113,6 +114,7 @@ export default class DockerInput {
         custom: null, 
         teamId: null,
         courseNum: null,
+        postbackOnComplete: null,
         // stdioRef matches container input so that we can always join objects easily and uniquely
         stdioRef:  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
       };
@@ -149,6 +151,7 @@ export default class DockerInput {
           dockerInput.custom = this.deliverable.custom;
           dockerInput.courseNum = this.courseNum;          
           dockerInput.githubOrg = this.pushRecord.githubOrg;
+          dockerInput.postbackOnComplete = this.deliverable.postbackOnComplete;
           that._DockerInputJSON = dockerInput;
           return this._DockerInputJSON;          
         });
