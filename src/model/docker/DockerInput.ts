@@ -22,6 +22,7 @@ export interface DockerInputJSON {
   whitelistedServers: string;
   allowDNS: number;
   courseNum: number;
+  stdioRef: string;
   teamId: string;
   container: DockerContainerInfo;
   custom: object;
@@ -112,6 +113,7 @@ export default class DockerInput {
         custom: null, 
         teamId: null,
         courseNum: null,
+        stdioRef:  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
       };
 
       return this.getUserInfo()
