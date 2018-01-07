@@ -18,6 +18,8 @@ import Server from '../../src/rest/Server'
 let redis = require("redis");
 import {Result} from '../model/results/ResultRecord';
 import RedisClient from '../model/RedisClient';
+import ResultRecordRepo from '../repos/ResultRecordRepo';
+import { UpdateWriteOpResult } from 'mongodb';
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
@@ -47,7 +49,7 @@ export interface TestJob {
   ref: string;
   test: TestJobDeliverable;
   courseNum: number;
-  githubOrg: string;
+  orgName: string;
 }
 
 export interface TestQueueStats {
@@ -132,7 +134,6 @@ export default class TestJobController {
       let dl: string = jobData.test.deliverable;
 
       let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
-      console.log('redis port', that.redisPort);
       let redis: RedisManager = new RedisManager(that.redisPort);
       try {
         await redis.client.connect();
@@ -146,10 +147,20 @@ export default class TestJobController {
         await redis.client.disconnect();
       }
       
+      let resultRecordRepo = new ResultRecordRepo();
+      let resultRecord = await resultRecordRepo.getLatestResultRecord(jobData.team, jobData.commit, jobData.deliverable, jobData.orgName);
+      console.log('TestJobController:: completed() retrieved result record test', resultRecord);
+      resultRecord.githubFeedback;
       console.log('jobData.postbackOnComplete', jobData.postbackOnComplete);
 
-      if (pendingRequest || jobData.postbackOnComplete) {
+      if (pendingRequest || resultRecord.postbackOnComplete) {
           that.postbackOnComplete(pendingRequest, jobData);
+      }
+      if (pendingRequest) {
+        resultRecordRepo.addGradeRequestedInfo(jobData.commitUrl, jobData.requestor)
+          .catch((err) => {
+            Log.error(`TestJobController:: completed() ERROR updating gradeRequested details on ${jobData.commitUrl} for ${jobData.requestor}`);
+          });
       }
 
       await redis.client.disconnect();
@@ -160,7 +171,7 @@ export default class TestJobController {
       
     }
 
-    this.postbackOnComplete = async function(pendingRequest: any, jobData: TestJob) {
+    this.postbackOnComplete = async function(pendingRequest: any, jobData: TestJob, resultRecord: Result) {
         let msg: string;
         console.log('TestJobController::postbackOnComplete() jobData: TestJob object',jobData);
         let postbackController: PostbackController = new PostbackController(jobData.hook);
@@ -174,10 +185,11 @@ export default class TestJobController {
         let deliverable: string = pendingRequest.deliverable;
         let controller: CommitCommentController = new CommitCommentController(this.courseNum);
         
+
         // let githubGradeComment: GithubGradeComment = new GithubGradeComment(team, commit, deliverable, orgName, '');
         // await githubGradeComment.fetch();
         // msg = githubGradeComment.formatResult();
-        msg = JSON.stringify('This is a pending request, and the item has therefore been Postbacked on completion.');
+        msg = resultRecord.githubFeedback;
         await postbackController.submit(msg);
     }
 

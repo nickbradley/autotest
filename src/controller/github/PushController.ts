@@ -94,7 +94,7 @@ export default class PushController {
         let testJob: TestJob;
         if (open <= currentDate && close >= currentDate) {
             testJob = {
-              githubOrg: record.githubOrg,
+              orgName: record.githubOrg,
               requestor: '',
               state: INIT_STATE,
               deliverable: that.deliverable.name,

@@ -70,6 +70,7 @@ export default class TestRecord {
   private requestor: string;
   private state: string;
   private repo: string;
+  private postbackOnComplete: boolean;
   private reportSize: number;
   private stdioSize: number;
   private coverageZip: Buffer;
@@ -92,7 +93,7 @@ export default class TestRecord {
   private suiteVersion: string;
   private failedCoverage: string;
   private ref: string;
-  private githubOrg: string;
+  private orgName: string;
   private username: string;
   private dockerInput: DockerInputJSON;
   private idStamp: string;
@@ -104,6 +105,7 @@ export default class TestRecord {
     this.requestor = testJob.requestor,
     this.repo = testJob.repo;
     this.state = testJob.state;
+    this.postbackOnComplete = testJob.postbackOnComplete;
     this.projectUrl = testJob.projectUrl;
     this.commitUrl = testJob.commitUrl;
     this.deliverable = testJob.test;
@@ -114,7 +116,7 @@ export default class TestRecord {
     this.closeDate = testJob.closeDate,
     this.timestamp = testJob.timestamp;
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
-    this.githubOrg = testJob.githubOrg;
+    this.orgName = testJob.orgName;
     this.username = testJob.username;
     this.dockerInput = testJob.test.dockerInput;
   }
@@ -147,23 +149,6 @@ export default class TestRecord {
     return this.testReport;
   }
 
-  // private createResultRecord() {
-  //   let testJobRecord: TestRecord = {
-  //     courseNum: this.courseNum,
-  //     team: this.team,
-  //     projectUrl: this.projectUrl,
-  //     commitUrl: this.commitUrl,
-  //     deliverable: this.deliverable.deliverable,
-  //     commit: this.commit,
-  //     ref: this.ref,
-  //     timestamp: this.timestamp,
-  //     githubOrg: this.githubOrg,
-  //     username: this.username,
-  //     dockerInput: this.dockerInput,
-  //     idStamp: new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable + '|' + this.username + '|' + this.repo
-  //   }
-  // }
-
   public async generate(): Promise<TestInfo> {
     // this.dockerInput input will be accessible in mounted volume of Docker container as /output/docker_SHA.json
     let tempDir = await tmp.dir({ dir: '/tmp', unsafeCleanup: true });
@@ -177,9 +162,7 @@ export default class TestRecord {
       tempDir.path,
       process.env.NODE_ENV === 'development' ? '--env IS_CONTAINER_LIVE="0"' : '--env IS_CONTAINER_LIVE="1"'
     ];
-
-    process.env.NODE_ENV === 'development' ? console.log('developmendsfsddt') : console.log(process.env.NODE_ENV);
-    console.log('args', args);
+    Log.info('TestRecord:: generate() Test Arguments' + JSON.stringify(args));
 
     let options = {
       encoding: 'utf8'
@@ -327,7 +310,7 @@ public getTestRecord(): Result {
         'projectUrl': this.projectUrl,
         'commitUrl': this.commitUrl,
         'courseNum': this.courseNum,
-        'orgName': this.githubOrg,
+        'orgName': this.orgName,
         'openDate': this.openDate,
         'closeDate': this.closeDate,
         'deliverable': this.deliverable.deliverable,
@@ -336,6 +319,7 @@ public getTestRecord(): Result {
         'commit': this.commit,
         'committer': this.committer,
         'timestamp': this.timestamp,
+        'postbackOnComplete': this.postbackOnComplete,
         'container': container,
         'requestor': this.requestor,
         'gradeRequested': false,

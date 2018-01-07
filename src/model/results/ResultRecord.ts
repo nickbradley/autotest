@@ -12,6 +12,7 @@ export interface Result {
   team: string;
   repo: string;
   githubFeedback: string;
+  postbackOnComplete: boolean;
   projectUrl: string;
   commitUrl: string;
   courseNum: number;
@@ -68,6 +69,7 @@ export default class ResultRecord {
   private projectUrl: string;
   private state: string;
   private commitUrl: string;
+  private postbackOnComplete: boolean;
   private githubFeedback: string;
   private courseNum: number;
   private requestor: string;
@@ -95,6 +97,7 @@ export default class ResultRecord {
     this.state = result.state;
     this.requestor = result.requestor,
     this.projectUrl = result.projectUrl;
+    this.postbackOnComplete = result.postbackOnComplete;
     this.commitUrl = result.commitUrl;
     this.courseNum = result.courseNum;
     this.gradeRequested = result.gradeRequested,
@@ -123,6 +126,7 @@ export default class ResultRecord {
       githubFeedback: this.githubFeedback,
       state: this.state,
       projectUrl: this.projectUrl,
+      postbackOnComplete: this.postbackOnComplete,
       commitUrl: this.commitUrl,
       orgName: this.orgName,
       deliverable: this.deliverable,
