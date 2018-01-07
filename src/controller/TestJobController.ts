@@ -132,14 +132,12 @@ export default class TestJobController {
       let dl: string = jobData.test.deliverable;
 
       let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
+      console.log('redis port', that.redisPort);
       let redis: RedisManager = new RedisManager(that.redisPort);
-      console.log(' jobData State', jobData.state);
-      console.log('result stuff', result);
       try {
         await redis.client.connect();
-        let jobState: string = await redis.client.getJobState(jobSearchKey);
-        console.log('jobState', jobState);
-        pendingRequest = jobState === 'REQUESTED';
+        pendingRequest = await redis.client.get(reqId);
+        console.log('is pending request', pendingRequest);
         await redis.client.del(reqId);
         // replace pendingRequest with
       }
@@ -147,11 +145,11 @@ export default class TestJobController {
         Log.error('JobQueue::completed() - ERROR ' + err);
         await redis.client.disconnect();
       }
+      
+      console.log('jobData.postbackOnComplete', jobData.postbackOnComplete);
 
-      if (pendingRequest) {
-        if (jobData.postbackOnComplete) {
-          this.postbackOnComplete(pendingRequest, jobData);
-        }
+      if (pendingRequest || jobData.postbackOnComplete) {
+          that.postbackOnComplete(pendingRequest, jobData);
       }
 
       await redis.client.disconnect();
@@ -209,6 +207,7 @@ export default class TestJobController {
 
     let redisPort = RedisUtil.getRedisPort(courseNum);
     if (!TestJobController.instances) {
+      console.log('TestJobController::getInstance() ' + redisPort);
       let testJobController: TestJobController = new TestJobController(redisPort);
       TestJobController.instances = new Array();
       TestJobController.instance = testJobController;
