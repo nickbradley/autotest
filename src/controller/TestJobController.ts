@@ -37,6 +37,7 @@ export interface TestJob {
   closeDate: number;
   openDate: number;
   projectUrl: string;
+  deliverable: string;
   state: string;
   commitUrl: string;
   postbackOnComplete: boolean;
@@ -125,29 +126,34 @@ export default class TestJobController {
     this.completed = async function(job: Job, result: any, opts: CallbackOpts) { // Result was TestStatus
       Log.info('JobQueue::completed() - ['+opts.qname+']' + job.jobId + '.');
       let jobData: TestJob = job.data as TestJob;
+      let jobSearchKey: string = '*' + jobData.courseNum + '*' + jobData.deliverable + '-' + jobData.team + '#' + jobData.commit;
       let postbackController: PostbackController = new PostbackController(jobData.hook);
-
-      let pendingRequest;
-      let pendingRequest2;
+      let pendingRequest: boolean;
       let dl: string = jobData.test.deliverable;
 
       let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
       let redis: RedisManager = new RedisManager(that.redisPort);
-      
+      console.log(' jobData State', jobData.state);
+      console.log('result stuff', result);
       try {
-        
         await redis.client.connect();
-        pendingRequest = await redis.client.get(reqId);
+        let jobState: string = await redis.client.getJobState(jobSearchKey);
+        console.log('jobState', jobState);
+        pendingRequest = jobState === 'REQUESTED';
         await redis.client.del(reqId);
-        // replace pendingRequest with 
+        // replace pendingRequest with
       }
       catch(err) {
         Log.error('JobQueue::completed() - ERROR ' + err);
+        await redis.client.disconnect();
+      }
+
+      if (pendingRequest) {
         if (jobData.postbackOnComplete) {
           this.postbackOnComplete(pendingRequest, jobData);
         }
-        await redis.client.disconnect();
       }
+
       await redis.client.disconnect();
       
 
@@ -173,8 +179,7 @@ export default class TestJobController {
         // let githubGradeComment: GithubGradeComment = new GithubGradeComment(team, commit, deliverable, orgName, '');
         // await githubGradeComment.fetch();
         // msg = githubGradeComment.formatResult();
-        msg = JSON.stringify('this is in the pending request area pendingRequest2, ');
-        console.log('This is a pending request, and the item has therefore been ')
+        msg = JSON.stringify('This is a pending request, and the item has therefore been Postbacked on completion.');
         await postbackController.submit(msg);
     }
 
@@ -238,6 +243,11 @@ export default class TestJobController {
    * Remove the job from the standard queue and move it to the express queue. If
    * the job is active in the standard queue, do not add to express queue, as we do 
    * not want duplicate ResultRecords produced.
+   * 
+   * ###############
+   * Promoted jobs need a REQUESTED state field, as the grade has been requested by the student
+   * through Github.
+   * ###############
    *
    * @param id: the id of the job to prioritize.
    */
@@ -247,13 +257,13 @@ export default class TestJobController {
       let jobState: string = await job.getState();
       let searchKey: string = `*${jobIdData.dockerImage}:${jobIdData.dockerBuild}*${jobIdData.team}#${jobIdData.commit}`;
       if (jobState !== 'active' && jobState !== 'failed') {
+        Log.info('TestJobController::promoteJob() - The job ' + id + ' is' + jobState + '. Moving to the express queue. Updating job.state to REQUESTED.');
         await this.stdManager.queue.remove(job.jobId);
         await this.expManager.queue.add(job.data, job.opts);
         await redisClient.updateJobState(searchKey, 'REQUESTED');
-        Log.info('TestJobController::promoteJob() - The job ' + id + ' was successfully moved to the express queue.');
       } else if (jobState === 'active') {
+        Log.info('TestJobController::promoteJob() - The job ' + id + ' is already active. Updating job.state to REQUESTED.');
         await redisClient.updateJobState(searchKey, 'REQUESTED');
-        Log.info('TestJobController::promoteJob() - The job ' + id + ' cannot be promoted because it is already ' + jobState);        
       } else {
         Log.info('TestJobController::promoteJob() - The job ' + id + ' was not be promoted because it is ' + jobState);
       }

@@ -49,11 +49,11 @@ export default class ResultRecordRepo {
   /**
    * Update ResultRecords with gradeRequested boolean flag based on isProcessed 
    * && isRequest == true in RequestRecord.
-   * @param _commitComment CommitComment object that is being stored
+   * @param _commitUrl Unique reference to a particular commit to search out ResultRecord by
+   * @param _requestor The username of the person who made the grade request.
    * @return <InsertOneResponse> that includes number of successful DB entries
    */
-  public updateResultRecords(_username: string, _commit: string, 
-    _gradeRequested: boolean): Promise<mongodb.UpdateWriteOpResult> {
+  public addGradeRequestedInfo(_commitUrl: string, _requestor: string): Promise<mongodb.UpdateWriteOpResult> {
     let context: mongodb.Db; 
     try {
       return new Promise<mongodb.UpdateWriteOpResult>((fulfill, reject) => {
@@ -67,12 +67,13 @@ export default class ResultRecordRepo {
           })
           .then(() => {
             return new Promise<ResultRecord[]>((fulfill, reject) => {
-              context.collection(RESULTS_COLLECTION).find({user: _username, commit: _commit})
+              context.collection(RESULTS_COLLECTION).find({commitUrl: _commitUrl})
                 .toArray((err: Error, results: ResultRecord[]) => {
                   if (results.length > 0) {
                   fulfill(results);
+                  } else {
+                    Log.info(`ResultRecordRepo:: adding gradeRequested property: No ResultRecords under URL ${_commitUrl} to update.`);
                   }
-                  Log.info(`ResultRecordRepo:: Adding Grade Requested Property: No ResultRecords for ${_commit} and username ${_username} to update.`);
               });
             });
           })
@@ -81,16 +82,17 @@ export default class ResultRecordRepo {
             for (let result of results) {
               resultIds.push(result._id);
             }
-            context.collection(RESULTS_COLLECTION).updateMany({_id: {$in: resultIds}}, {$set: {gradeRequested: true, gradeRequestedTimestamp: new Date().getTime()}})
+            context.collection(RESULTS_COLLECTION).updateMany({_id: {$in: resultIds}}, 
+              {$set: {gradeRequested: true, gradeRequestedTimestamp: new Date().getTime(), requestor: _requestor}})
               .then((onfulfilled: mongodb.UpdateWriteOpResult) => {
-                Log.info('ResultRecordRepo:: Adding Grade Requested Property: Updated ' + onfulfilled.modifiedCount + ' records');
+                Log.info('ResultRecordRepo:: Adding gradeRequested property: Updated ' + onfulfilled.modifiedCount + ' records');
                 fulfill(onfulfilled);
               });
           });
         });
     }
     catch (err) {
-      Log.info(`ResultRecordRepo:: Adding Grade Requested Property: ${err}.`);
+      Log.info(`ResultRecordRepo:: ERROR adding gradeRequested property: ${err}.`);
     }
   }
 

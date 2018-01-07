@@ -110,7 +110,7 @@ export default class CommitCommentContoller {
             pendingRequest = await redis.client.get(reqId);
             // await redis.client.disconnect();
           } catch(err) {
-            Log.error(`CommitCommentController::process() Could not get reqId and disconnect successfully from Redis`);
+            Log.info(`CommitCommentController:: INFO CommentComment requested. No prior pending request found for ` + err);
             hasPending = false;
           }
 
@@ -324,17 +324,18 @@ export default class CommitCommentContoller {
 
   private async addGradeRequestedStatus(_record: CommitCommentRecord) {
     let commit: string = _record.getCommit().short;
-    let gradeRequested: boolean = false;
+    let commitUrl: string = _record.getCommitCommentUrl().split('#')[0];
+    let gradeRequested: boolean = true;
+    let requestor: string = this.record.getUser();
     let resultRecordRepo: ResultRecordRepo = new ResultRecordRepo();    
     
     if (_record.getIsProcessed() && _record.getIsRequest()) {
       
-      gradeRequested = true;
 
-      return resultRecordRepo.updateResultRecords(_record.getUser(), commit, gradeRequested)
+      return resultRecordRepo.addGradeRequestedInfo(commitUrl, requestor)
       .then((fulfilledResponse) => {
         // If results found, update ResultRecords with true/false isProcessed and isRequest statuses
-        Log.info(`CommitCommentController::addGradeRequestedStatus Succesfully updated ${fulfilledResponse.result} record.`)
+        Log.info(`CommitCommentController::addGradeRequestedStatus Succesfully updated ${fulfilledResponse.result.nModified} record.`)
         return;
         // throw `CommitCommentController:: addGradeRequestedStatus() No ResultRecords could be found for Commit ${commit}`;
       });

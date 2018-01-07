@@ -23,6 +23,7 @@ export interface CommitComment {
   user: string;
   commit: string;
   orgName: string;
+  commitCommentUrl: string;
   body: string;
   type: string;
   timestamp: number;
@@ -43,7 +44,7 @@ export default class CommitCommentRecord {
   private commit: Commit;
   private message: string;
   private timestamp: number;
-
+  private commitCommentUrl: string;
   private deliverable: string;
   private deliverableRate: number;
   private isRequest: boolean;
@@ -73,6 +74,7 @@ export default class CommitCommentRecord {
         that.team = GithubUtil.getTeamOrProject(payload.repository.name);
         that.user = String(payload.comment.user.login).toLowerCase();
         that.orgName = payload.organization.login;
+        that.commitCommentUrl = payload.comment.html_url;
         that.repo = payload.repository.name;
         that.hook = Url.parse(payload.repository.commits_url.replace('{/sha}', '/' + this.commit) + '/comments');
         that.message = payload.comment.body;
@@ -168,6 +170,11 @@ export default class CommitCommentRecord {
   public getCommit(): Commit {
     return this.commit;
   }
+
+  public getCommitCommentUrl(): string {
+    return this.commitCommentUrl;
+  }
+
   public getHook(): Url.Url {
     return this.hook;
   }
@@ -213,6 +220,7 @@ export default class CommitCommentRecord {
     let comment = JSON.stringify(this.payload);
     let docName = this.timestamp + '_' + this.team + ':' + this.user + (this.deliverable ? '_' + this.deliverable : '');
     let doc: CommitComment = {
+      commitCommentUrl: this.commitCommentUrl,
       isRequest: this.isRequest,
       isProcessed: this.isProcessed,
       deliverable: this.deliverable,

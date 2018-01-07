@@ -81,6 +81,7 @@ export default class PushController {
   }
 
   private markDeliverable(): Promise<Job>[] {
+    let that = this;
     let promises: Promise<Job>[] = [];
     let currentDate: Date = new Date();
     let record: PushRecord = this.record;
@@ -96,6 +97,7 @@ export default class PushController {
               githubOrg: record.githubOrg,
               requestor: '',
               state: INIT_STATE,
+              deliverable: that.deliverable.name,
               pendingRequest: false,
               repo: record.repo,
               projectUrl: record.projectUrl,
