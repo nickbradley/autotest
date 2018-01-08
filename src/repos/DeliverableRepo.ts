@@ -66,18 +66,4 @@ export default class DeliverableRepo {
       });
     });
   }
-
-  public getDeliverableSettings(courseNum: number): Promise<DeliverableRecord> {
-    let courseQuery = { courseId: courseNum.toString() };
-
-    return new Promise<DeliverableRecord>((fulfill, reject) => {
-      db.getRecord(COURSE_COLLECTION, courseQuery)
-        .then((course: Course) => {
-          if (!course) {
-            throw `DeliverableRepo::getDeliverables() Could not find ${courseNum}`;
-          }
-        fulfill(new DeliverableRecord(course.settings.deliverables))
-        });
-    });
-  }
 }

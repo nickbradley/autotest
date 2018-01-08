@@ -143,7 +143,7 @@ export default class CommitCommentContoller {
                   body: githubFeedback
                 }
               } catch(err) {
-                Log.info('CommitCommentContoller::process() - No results for request.');
+                Log.info('CommitCommentController::process() - No results for request.');
                 record.setIsProcessed(false)
                 try {
                   Log.info('CommitCommentController::process() - Checking if commit is queued.')

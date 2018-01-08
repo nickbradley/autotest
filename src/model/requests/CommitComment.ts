@@ -129,7 +129,7 @@ export default class CommitCommentRecord {
                 fetchedDeliverables.push({key: key, deliverable: deliv});
               }
             }
-          // The key refers to a vaild deliverable that has been released but have been closed
+          // The key refers to a vaild deliverable that has been released but has been closed
           // Get all such deliverables
           } else if (new Date(deliverable.open) <= now && new Date(deliverable.close) >= now) {
             let date = Moment(deliverable.close).format('MMMM Do YYYY, h:mm:ss a');
