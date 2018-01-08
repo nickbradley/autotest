@@ -150,8 +150,6 @@ export default class TestJobController {
       
       let resultRecordRepo = new ResultRecordRepo();
       let resultRecord = await resultRecordRepo.getLatestResultRecord(jobData.team, jobData.commit, jobData.deliverable, jobData.orgName);
-      resultRecord.githubFeedback;
-      console.log('jobData.postbackOnComplete', jobData.postbackOnComplete);
 
       if (pendingRequest || resultRecord.postbackOnComplete) {
           that.postbackOnComplete(pendingRequest, jobData, resultRecord);
@@ -174,10 +172,6 @@ export default class TestJobController {
     this.postbackOnComplete = async function(pendingRequest: any, jobData: TestJob, resultRecord: Result) {
         let msg: string;
         let postbackController: PostbackController = new PostbackController(jobData.hook);      
-        let team: string = pendingRequest.team;
-        let orgName: string = pendingRequest.orgName;
-        let commit: string = pendingRequest.commit;
-        let deliverable: string = pendingRequest.deliverable;
         let controller: CommitCommentController = new CommitCommentController(this.courseNum);
         
         msg = resultRecord.githubFeedback;
