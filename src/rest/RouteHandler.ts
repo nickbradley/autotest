@@ -27,7 +27,7 @@ export default class RouteHandler {
       let controller: TestJobController = TestJobController.getInstance(currentCourseNum);
       controller.getStats().then(stats => {
         let lenExpQueue: number = stats[1].waiting + stats[1].paused;
-        Log.info('RouteHandler::queueStats() - <200> Number of waiting or paused jobs: ' + lenExpQueue + '.');
+        Log.info('RouteHandler::queueStats() - <200> Number of waiting or paused express jobs: ' + lenExpQueue + '.');
         res.json(200, {body: stats});
       }).catch(err => {
         Log.error('RouteHandler::queueStats() - <400> ERROR getting stats: ' + err);
