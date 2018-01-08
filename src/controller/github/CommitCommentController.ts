@@ -27,7 +27,8 @@ const COURSE_310: number = 310;
 const IMAGE_NAME_310: string = 'cpsc310__bootstrap';
 const IMAGE_NAME_210: string = 'cpsc210__bootstrap';
 
-interface PendingRequest {
+export interface PendingRequest {
+  requestor: string;
   commit: string;
   team: string;
   user: string;
@@ -89,12 +90,14 @@ export default class CommitCommentContoller {
         if (record.getIsRequest()) {
           let team: string = record.getTeam();
           let user: string = record.getUser();
+          let requestor: string = record.getRequestor();
           let orgName: string = record.getOrgName();
           let commit: string = record.getCommit().short;
           let deliverable: string = record.getDeliverable();
           let reqId: string = team + '-' + commit + '-' + deliverable;
 
           let req: PendingRequest = {
+            requestor: requestor,
             commit: commit,
             team: team,
             user: user,

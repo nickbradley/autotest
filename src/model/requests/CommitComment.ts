@@ -16,6 +16,7 @@ interface FetchedDeliverable {
 
 export interface CommitComment {
   isRequest: boolean;
+  requestor: string;
   isProcessed: boolean;
   repo: string;
   deliverable: string;
@@ -35,6 +36,7 @@ export default class CommitCommentRecord {
 
   private config: IConfig;
   private payload: JSON;
+  private requestor: string;
   private courseNum: number;
   private team: string;
   private user: string;
@@ -72,6 +74,7 @@ export default class CommitCommentRecord {
         that.commit = new Commit(payload.comment.commit_id);
         that.htmlUrl = payload.comment.html_url;
         that.team = GithubUtil.getTeamOrProject(payload.repository.name);
+        that.requestor = String(payload.comment.user.login).toLowerCase();
         that.user = String(payload.comment.user.login).toLowerCase();
         that.orgName = payload.organization.login;
         that.commitCommentUrl = payload.comment.html_url;
@@ -183,6 +186,10 @@ export default class CommitCommentRecord {
     return this.note;
   }
 
+  public getRequestor(): string {
+    return this.requestor;
+  }
+
   public getIsRequest(): boolean {
     return this.isRequest;
   }
@@ -220,6 +227,7 @@ export default class CommitCommentRecord {
     let comment = JSON.stringify(this.payload);
     let docName = this.timestamp + '_' + this.team + ':' + this.user + (this.deliverable ? '_' + this.deliverable : '');
     let doc: CommitComment = {
+      requestor: this.requestor,
       commitCommentUrl: this.commitCommentUrl,
       isRequest: this.isRequest,
       isProcessed: this.isProcessed,

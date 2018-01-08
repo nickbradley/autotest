@@ -10,7 +10,7 @@ import {RedisUtil} from '../model/RedisUtil';
 import { DockerInputJSON } from '../model/docker/DockerInput';
 import {Visibility} from '../model/settings/DeliverableRecord';
 import PostbackController from './github/PostbackController';
-import CommitCommentController from './github/CommitCommentController'
+import CommitCommentController, {PendingRequest} from './github/CommitCommentController'
 import RequestRepo from '../repos/RequestRepo';
 import StdioRecordRepo, {StdioRecord} from '../repos/StdioRecordRepo';
 import RedisManager from './RedisManager';
@@ -130,15 +130,16 @@ export default class TestJobController {
       let jobData: TestJob = job.data as TestJob;
       let jobSearchKey: string = '*' + jobData.courseNum + '*' + jobData.deliverable + '-' + jobData.team + '#' + jobData.commit;
       let postbackController: PostbackController = new PostbackController(jobData.hook);
-      let pendingRequest: boolean;
+      let pendingRequest: PendingRequest;
       let dl: string = jobData.test.deliverable;
 
       let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
       let redis: RedisManager = new RedisManager(that.redisPort);
       try {
         await redis.client.connect();
-        pendingRequest = await redis.client.get(reqId);
+        pendingRequest = await redis.client.get(reqId) as PendingRequest;
         console.log('is pending request', pendingRequest);
+        console.log('request made by ', pendingRequest.requestor);
         await redis.client.del(reqId);
         // replace pendingRequest with
       }
@@ -156,7 +157,7 @@ export default class TestJobController {
           that.postbackOnComplete(pendingRequest, jobData, resultRecord);
       }
       if (pendingRequest) {
-        resultRecordRepo.addGradeRequestedInfo(jobData.commitUrl, jobData.requestor)
+        resultRecordRepo.addGradeRequestedInfo(jobData.commitUrl, pendingRequest.requestor)
           .catch((err) => {
             Log.error(`TestJobController:: completed() ERROR updating gradeRequested details on ${jobData.commitUrl} for ${jobData.requestor}`);
           });
