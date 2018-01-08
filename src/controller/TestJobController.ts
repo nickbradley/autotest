@@ -126,7 +126,7 @@ export default class TestJobController {
       });
     };
 
-    this.completed = async function(job: Job, result: any, opts: CallbackOpts) { // Result was TestStatus
+    this.completed = async function(job: Job, result: any, opts: CallbackOpts) {
       Log.info('JobQueue::completed() - ['+opts.qname+']' + job.jobId + '.');
       let jobData: TestJob = job.data as TestJob;
       let jobSearchKey: string = '*' + jobData.courseNum + '*' + jobData.deliverable + '-' + jobData.team + '#' + jobData.commit;
@@ -161,6 +161,7 @@ export default class TestJobController {
         // Save CommitComment record with updated isProcessed flag && Add GradeRequested info to the ResultRecord
         let commitCommentRepo: RequestRepo = new RequestRepo();
         let commitComment: CommitComment = JSON.parse(pendingRequest.commitComment) as CommitComment;
+        
         commitComment.isProcessed = true;
         commitCommentRepo.insertCommitComment(commitComment)
           .then((fulfilledResponse) => {

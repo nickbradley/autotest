@@ -111,6 +111,7 @@ export default class CommitCommentContoller {
           let hasPending: boolean = true;
           let pendingRequest: PendingRequest
           try {
+            await redis.client.isReady
             await redis.client.connect();
             pendingRequest = await redis.client.get(reqId);
             // await redis.client.disconnect();
@@ -212,6 +213,7 @@ export default class CommitCommentContoller {
 
         //Log.info('CommitCommentContoller::process() - Request completed with status ' + response.statusCode + '.');
         fulfill(response);
+        redis.client.disconnect();
 
       } catch(err) {
         throw 'Failed to process commit comment. ' + err;
