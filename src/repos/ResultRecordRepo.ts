@@ -122,7 +122,7 @@ export default class ResultRecordRepo {
     return new Promise<InsertOneResponse>((fulfill, reject) => {
       db.insertRecord(RESULTS_COLLECTION, testRecord).then( (insertedResponse: InsertOneResponse) => {
         if(insertedResponse.insertedCount < 1) {
-          throw `TestRecordRepo::insertTestRecord() Could not insert ${testRecord}: ${insertedResponse}`;
+          throw `ResultRecordRepo::insertResultRecord() Could not insert ${testRecord}: ${insertedResponse}`;
         }
         fulfill(insertedResponse);
       });
@@ -141,7 +141,7 @@ export default class ResultRecordRepo {
           fulfill(resultRecord);
         }
         catch (err) {
-          Log.error(`TestRecordRepo::getLatestTestRecord() ${err}`);
+          Log.error(`ResultRecordRepo::getLatestResultRecord() ${err}`);
           reject(err);
         }
       })

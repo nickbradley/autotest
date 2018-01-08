@@ -149,12 +149,11 @@ export default class TestJobController {
       
       let resultRecordRepo = new ResultRecordRepo();
       let resultRecord = await resultRecordRepo.getLatestResultRecord(jobData.team, jobData.commit, jobData.deliverable, jobData.orgName);
-      console.log('TestJobController:: completed() retrieved result record test', resultRecord);
       resultRecord.githubFeedback;
       console.log('jobData.postbackOnComplete', jobData.postbackOnComplete);
 
       if (pendingRequest || resultRecord.postbackOnComplete) {
-          that.postbackOnComplete(pendingRequest, jobData);
+          that.postbackOnComplete(pendingRequest, jobData, resultRecord);
       }
       if (pendingRequest) {
         resultRecordRepo.addGradeRequestedInfo(jobData.commitUrl, jobData.requestor)
@@ -173,22 +172,13 @@ export default class TestJobController {
 
     this.postbackOnComplete = async function(pendingRequest: any, jobData: TestJob, resultRecord: Result) {
         let msg: string;
-        console.log('TestJobController::postbackOnComplete() jobData: TestJob object',jobData);
-        let postbackController: PostbackController = new PostbackController(jobData.hook);
-        
-        msg = "textplace holder for git commit comments to Github -- refactor in progress"
-      
-        Log.info('TestJobController:: Pending Request on commit ' + pendingRequest.commit + ' and ' + pendingRequest.team);
+        let postbackController: PostbackController = new PostbackController(jobData.hook);      
         let team: string = pendingRequest.team;
         let orgName: string = pendingRequest.orgName;
         let commit: string = pendingRequest.commit;
         let deliverable: string = pendingRequest.deliverable;
         let controller: CommitCommentController = new CommitCommentController(this.courseNum);
         
-
-        // let githubGradeComment: GithubGradeComment = new GithubGradeComment(team, commit, deliverable, orgName, '');
-        // await githubGradeComment.fetch();
-        // msg = githubGradeComment.formatResult();
         msg = resultRecord.githubFeedback;
         await postbackController.submit(msg);
     }
