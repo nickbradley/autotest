@@ -100,7 +100,7 @@ export default class TestJobController {
 
 
     let stdQName: string = 'autotest-testqueue-std';
-    let stdQPool: number = 1;
+    let stdQPool: number = 2;
 
     let expQName: string = 'autotest-testqueue-exp';
     let expQPool: number = 2;

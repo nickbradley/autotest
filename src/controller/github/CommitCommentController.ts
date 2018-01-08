@@ -197,7 +197,7 @@ export default class CommitCommentContoller {
           //Log.info('CommitCommentContoller::process() - Not request.');
           response = {
             statusCode: 204,
-            body: 'Test to see if empty strings are not posted back onto Github'
+            body: 'Error: AutoTest has encountered an error commenting on Github.'
           }
         }
 
