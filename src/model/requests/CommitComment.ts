@@ -73,6 +73,7 @@ export default class CommitCommentRecord {
         that.payload = JSON.parse(JSON.stringify(payload));
         that.commit = new Commit(payload.comment.commit_id);
         that.htmlUrl = payload.comment.html_url;
+        that.deliverable = GithubUtil.parseDeliverable(payload.repository.name);
         that.team = GithubUtil.getTeamOrProject(payload.repository.name);
         that.requestor = String(payload.comment.user.login).toLowerCase();
         that.user = String(payload.comment.user.login).toLowerCase();
