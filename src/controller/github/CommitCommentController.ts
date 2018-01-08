@@ -35,6 +35,7 @@ export interface PendingRequest {
   orgName: string;
   deliverable: string;
   hook: string;
+  commitComment: string // must be converted to string for redis and converted back to CommitComment type;
 }
 
 export interface JobIdData {
@@ -103,6 +104,7 @@ export default class CommitCommentContoller {
             user: user,
             orgName: orgName,
             deliverable: deliverable,
+            commitComment: JSON.stringify(that.record.convertToJSON()),
             hook: record.getHook().toString()
           }
 
@@ -156,7 +158,7 @@ export default class CommitCommentContoller {
                         dockerBuild: deliv.dockerBuild,
                         deliverable: req.deliverable,
                         team: req.team,
-                        commit: req.commit
+                        commit: req.commit,
                       };
                     let jobId: string = deliv.dockerImage + ':' + deliv.dockerBuild + '|' + req.deliverable + '-' + req.team+ '#' + req.commit;
                     await redis.client.set(reqId, req);

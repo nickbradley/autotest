@@ -9,6 +9,7 @@ import {GithubUsername, Commit} from '../model/GithubUtil';
 import {RedisUtil} from '../model/RedisUtil';
 import { DockerInputJSON } from '../model/docker/DockerInput';
 import {Visibility} from '../model/settings/DeliverableRecord';
+import {CommitComment} from '../model/requests/CommitComment';
 import PostbackController from './github/PostbackController';
 import CommitCommentController, {PendingRequest} from './github/CommitCommentController'
 import RequestRepo from '../repos/RequestRepo';
@@ -151,10 +152,26 @@ export default class TestJobController {
       let resultRecordRepo = new ResultRecordRepo();
       let resultRecord = await resultRecordRepo.getLatestResultRecord(jobData.team, jobData.commit, jobData.deliverable, jobData.orgName);
 
+      console.log('resultRecord.postbackOnComplete', resultRecord.postbackOnComplete);
+
       if (pendingRequest || resultRecord.postbackOnComplete) {
           that.postbackOnComplete(pendingRequest, jobData, resultRecord);
       }
       if (pendingRequest) {
+        // Save CommitComment record with updated isProcessed flag && Add GradeRequested info to the ResultRecord
+        let commitCommentRepo: RequestRepo = new RequestRepo();
+        let commitComment: CommitComment = JSON.parse(pendingRequest.commitComment) as CommitComment;
+        commitComment.isProcessed = true;
+        commitCommentRepo.insertCommitComment(commitComment)
+          .then((fulfilledResponse) => {
+            if (fulfilledResponse.insertedCount > 0) {
+              Log.info('TestJobController:: Inserting isProcessed = true CommitComment Requests record');
+            }
+          })
+          .catch((err) => {
+            Log.error('TestJobController:: Could not insert isProcessed = true CommitComment Requests record ' + err);
+          });
+
         resultRecordRepo.addGradeRequestedInfo(jobData.commitUrl, pendingRequest.requestor)
           .catch((err) => {
             Log.error(`TestJobController:: completed() ERROR updating gradeRequested details on ${jobData.commitUrl} for ${jobData.requestor}`);
