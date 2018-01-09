@@ -16,6 +16,7 @@ const BOT_USERNAME = 'autobot';
 export interface DockerInputJSON {
   userInfo: DockerUserInfo;
   pushInfo: DockerPushInfo;
+  githubKeys: DockerGithubKeys;
   deliverableInfo: DockerDeliverableInfo;
   dockerImage: string;
   githubOrg: string;
@@ -26,8 +27,13 @@ export interface DockerInputJSON {
   teamId: string;
   container: DockerContainerInfo;
   custom: object;
-  githubKey: string; // to be removed instead of being logged in the DB.
   postbackOnComplete: boolean;
+}
+
+export interface DockerGithubKeys {
+  solutionsKey: string;
+  delivKey: string;
+  orgKey: string;
 }
 
 export interface DockerContainerInfo {
@@ -76,10 +82,6 @@ export default class DockerInput {
     this.config = new AppConfig();
   }
 
-  private parseDockerInput() {
-
-  }
-
   private getUserInfo(): Promise<User> {
     let userRepo = new UserRepo();
     return userRepo.getUser(this.pushRecord.user)
@@ -92,6 +94,14 @@ export default class DockerInput {
       });
   }
 
+  private getCourseInfo(): Promise<Course> {
+    let courseRepo = new CourseRepo();
+    return courseRepo.getCourse(this.courseNum)
+      .then((course: Course) => {
+        return course;
+      });
+  }
+
   public async createDockerInputJSON() {
     let that = this;
     try {
@@ -99,6 +109,7 @@ export default class DockerInput {
       let userInfo: DockerUserInfo = {username: null, csid: null, snum: null, profileUrl: null, fname: null, lname: null};
       let pushInfo: DockerPushInfo = {branch: null, repo: null, commit: null, commitUrl: null, projectUrl: null, timestamp: null};
       let container: DockerContainerInfo = {branch: null, suiteVersion: null, image: null, exitCode: null};
+      let githubKeys: DockerGithubKeys = {solutionsKey: null, delivKey: null, orgKey: null};
       let dockerImage: '';
       let deliverableInfo: DockerDeliverableInfo = {solutionsUrl: null, deliverableCommit: null, deliverableUrl: null, deliverableToMark: null};
       let dockerInput: DockerInputJSON = {
@@ -109,7 +120,7 @@ export default class DockerInput {
         dockerImage,
         allowDNS: null,
         whitelistedServers: null,
-        githubKey: null,
+        githubKeys: null,
         githubOrg: null, 
         custom: null, 
         teamId: null,
@@ -131,6 +142,14 @@ export default class DockerInput {
           }
         })
         .then(() => {
+          return that.getCourseInfo()
+            .then((course: Course) => {
+              dockerInput.githubKeys.delivKey = course.delivKey;
+              dockerInput.githubKeys.solutionsKey = course.solutionsKey;
+              dockerInput.githubKeys.orgKey = this.config.getGithubToken();
+            })
+        })
+        .then(() => {
           dockerInput.deliverableInfo.deliverableCommit = this.deliverable.commit;
           dockerInput.deliverableInfo.deliverableUrl = this.deliverable.url;
           dockerInput.deliverableInfo.deliverableToMark = this.pushRecord.deliverable;  
@@ -143,7 +162,6 @@ export default class DockerInput {
           dockerInput.pushInfo.timestamp = this.pushRecord.timestamp;
           dockerInput.container.image = this.deliverable.dockerImage;
           dockerInput.container.branch = this.deliverable.dockerBuild;
-          dockerInput.githubKey = this.config.getGithubToken();
           dockerInput.dockerImage = this.deliverable.dockerImage + ':' + this.deliverable.dockerBuild;
           dockerInput.teamId = this.pushRecord.team;
           dockerInput.whitelistedServers = this.deliverable.whitelistedServers;

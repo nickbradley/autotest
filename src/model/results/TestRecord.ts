@@ -10,8 +10,8 @@ import DockerInput, { DockerInputJSON } from '../../model/docker/DockerInput';
 import {Report} from '../../model/results/ReportRecord';
 import Log from '../../Util';
 
-const GITHUB_TIMEOUT_MSG = 'Your assignment has timed out while being marked. Please check for infinite loops' + 
-  ' and slow runtime functions.';
+const GITHUB_TIMEOUT_MSG = 'Your assignment has timed out while being tested. Please check for infinite loops' + 
+  ' and slow runtime methods.';
 
 export interface Attachment {
   name: string;
@@ -63,7 +63,7 @@ export interface TestInfo {
 
 export default class TestRecord {
   private maxStdioSize: number = 1 * 500000;  // 500 KB
-  private maxStdioLength: number = 300000; // characters
+  private maxStdioLength: number = 500000; // characters
   private shaSize: number;
   private stdio: string;
   private report: string;

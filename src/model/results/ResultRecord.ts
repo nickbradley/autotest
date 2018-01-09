@@ -149,12 +149,4 @@ export default class ResultRecord {
 
     return doc;
   }
-
-  public async getResultRecord(orgName: string, repoName: string, commit: string) { // should return Promsie<ResultREcord>
-    // return ResultRecord with text output that is sent to the Github Comment area.
-  }
-
-  public validateResultRecord(resultContainer: ResultPayload) {
-  }
-
 }

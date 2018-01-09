@@ -152,8 +152,6 @@ export default class TestJobController {
       let resultRecordRepo = new ResultRecordRepo();
       let resultRecord = await resultRecordRepo.getLatestResultRecord(jobData.team, jobData.commit, jobData.deliverable, jobData.orgName);
 
-      console.log('resultRecord.postbackOnComplete', resultRecord.postbackOnComplete);
-
       if (pendingRequest || resultRecord.postbackOnComplete) {
           that.postbackOnComplete(pendingRequest, jobData, resultRecord);
       }

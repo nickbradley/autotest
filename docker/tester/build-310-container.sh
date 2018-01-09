@@ -50,22 +50,13 @@ else
   externalServers=""
 fi
 
-docker build -f Dockerfile-310 --tag autotest/${repoName}:${commit} \
- --build-arg testsuiteUrl=https://${githubKey}@github.ubc.ca/steca/${repoName}.git \
- --build-arg testsuiteCommit=${commit} \
- --build-arg allowDNS=${allowDNS} \
- --build-arg externalServers="${externalServers}" \
- --build-arg isContainerLive=1 \
- --build-arg deliverable="${deliverable}" \
- --build-arg githubKey="${githubKey}" \
- --no-cache \
- "${dockerDir}"
+git clone https://${GITHUB_KEY}@github.ubc.ca/cpsc310/cpsc310container.git
+cd ./cpsc310container/
+
+docker build -f Dockerfile-310 -t autotest/cpsc310__bootstrap:master .
 
 ## Tag based on Deliverables that exist for each course to run when markByBatch flag is true.
-docker tag $(docker images -q autotest/cpsc310__bootstrap:master) autotest/d0-cpsc310__bootstrap
-docker tag $(docker images -q autotest/cpsc310__bootstrap:master) autotest/d1-cpsc310__bootstrap
-docker tag $(docker images -q autotest/cpsc310__bootstrap:master) autotest/d2-cpsc310__bootstrap
-docker tag $(docker images -q autotest/cpsc310__bootstrap:master) autotest/d3-cpsc310__bootstrap
+docker tag $(docker images -q autotest/cpsc310__bootstrap:master) autotest/cpsc310__bootstrap:latest
 
 
 

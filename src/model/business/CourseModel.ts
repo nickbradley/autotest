@@ -8,6 +8,8 @@ export class Course {
   maxTeamSize: number;
   modules: string[];
   customData: any;
+  solutionsKey: string;
+  delivKey: string;
   classList: Object[];
   batchDeliverables: Object[];
   deliverables: Object[];
