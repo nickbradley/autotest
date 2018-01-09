@@ -95,8 +95,9 @@ export default class DockerInput {
   }
 
   private getCourseInfo(): Promise<Course> {
+    let that = this;
     let courseRepo = new CourseRepo();
-    return courseRepo.getCourse(this.courseNum)
+    return courseRepo.getCourse(that.courseNum)
       .then((course: Course) => {
         return course;
       });
@@ -118,9 +119,9 @@ export default class DockerInput {
         container,
         deliverableInfo,
         dockerImage,
+        githubKeys,
         allowDNS: null,
         whitelistedServers: null,
-        githubKeys: null,
         githubOrg: null, 
         custom: null, 
         teamId: null,
@@ -147,7 +148,7 @@ export default class DockerInput {
               dockerInput.githubKeys.delivKey = course.delivKey;
               dockerInput.githubKeys.solutionsKey = course.solutionsKey;
               dockerInput.githubKeys.orgKey = this.config.getGithubToken();
-            })
+            });
         })
         .then(() => {
           dockerInput.deliverableInfo.deliverableCommit = this.deliverable.commit;
