@@ -1,5 +1,6 @@
 import cp = require('child_process');
 import tmp = require('tmp');
+import Log from '../Util';
 import fs = require('fs');
 import {IConfig, AppConfig} from '../Config';
 import {Database} from '../model/Database';
@@ -33,7 +34,10 @@ export default class ResultRecordController {
     let resultRecordRepo: ResultRecordRepo = new ResultRecordRepo();
     let resultRecordJSON = this._resultRecord.convertToJSON();
     
-    return resultRecordRepo.insertResultRecord(resultRecordJSON);
+    return resultRecordRepo.insertResultRecord(resultRecordJSON)
+      .catch((err) => {
+        Log.error('ResultRecordController:: store() ERROR ' + err);
+      });
   }
 
 }

@@ -130,7 +130,7 @@ export default class RouteHandler {
       .catch((err) => {
         Log.error('RouteHandler::resultSubmission() ERROR saving ResultRecord' + resultPayload.response.commit + ' for ' + 
           resultPayload.response.commitUrl);
-        res.json(500, { response: err });       
+        res.json(500, { response: err });
         return next();
       });
   }

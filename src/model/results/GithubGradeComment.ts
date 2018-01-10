@@ -10,6 +10,7 @@ export default class GithubGradeComment {
   private config: IConfig;
   private team: string;
   private commit: string;
+  private postbackOnComplete: boolean;
   private deliverable: string;
   private note: string;
   private orgName: string;
@@ -26,6 +27,11 @@ export default class GithubGradeComment {
 
   public async fetch() {
     this.resultRecord = await this.getResult();
+    this.postbackOnComplete = this.resultRecord.postbackOnComplete;
+  }
+
+  public getPostbackOnComplete(): boolean {
+    return this.postbackOnComplete;
   }
 
   /**

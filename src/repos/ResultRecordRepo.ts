@@ -100,7 +100,7 @@ export default class ResultRecordRepo {
    * Insert a CommitComment to the 'requests' collection on MongoDB
    * @param _commitComment CommitComment object that is being stored
    * @return <InsertOneResponse> that includes number of successful DB entries
-   */cd 
+   */
   public insertCommitComment(_commitComment: CommitComment): Promise<InsertOneResponse> {
     try {
       return new Promise<InsertOneResponse>((fulfill, reject) => {
@@ -108,8 +108,9 @@ export default class ResultRecordRepo {
           .then((response: InsertOneResponse) => {
             if (response.insertedCount > 0) {
               fulfill(response);
+            } else {
+              reject(response);
             }
-            reject(response);
         });
       });
     }
@@ -122,7 +123,7 @@ export default class ResultRecordRepo {
     return new Promise<InsertOneResponse>((fulfill, reject) => {
       db.insertRecord(RESULTS_COLLECTION, testRecord).then( (insertedResponse: InsertOneResponse) => {
         if(insertedResponse.insertedCount < 1) {
-          throw `ResultRecordRepo::insertResultRecord() Could not insert ${testRecord}: ${insertedResponse}`;
+          reject(testRecord);
         }
         fulfill(insertedResponse);
       });

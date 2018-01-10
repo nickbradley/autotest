@@ -153,7 +153,7 @@ export default class DockerInput {
         .then(() => {
           dockerInput.deliverableInfo.deliverableCommit = this.deliverable.commit;
           dockerInput.deliverableInfo.deliverableUrl = this.deliverable.url;
-          dockerInput.deliverableInfo.deliverableToMark = this.pushRecord.deliverable;  
+          dockerInput.deliverableInfo.deliverableToMark = this.pushRecord.deliverable;
           dockerInput.deliverableInfo.solutionsUrl = this.deliverable.solutionsUrl;
           dockerInput.pushInfo.branch = this.pushRecord.ref;
           dockerInput.pushInfo.commit = this.pushRecord.commit.short;

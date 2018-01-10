@@ -193,6 +193,10 @@ export default class TestJobController {
         
         msg = resultRecord.githubFeedback;
         await postbackController.submit(msg)
+          .then((status) => {
+            Log.info('TestJobController:: postbackOnComplete() INFO Response Status: ' + status + ' for ' + resultRecord.commit + 
+            ' and ' + resultRecord.user);
+          })
           .catch((err) => {
             Log.error('TestJobController:: postbackOnComplete() ERROR ' + err);
           });
