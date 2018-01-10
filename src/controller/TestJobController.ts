@@ -154,7 +154,7 @@ export default class TestJobController {
       let resultRecord = await resultRecordRepo.getLatestResultRecord(jobData.team, jobData.commit, jobData.deliverable, jobData.orgName);
 
       if (pendingRequest || resultRecord.postbackOnComplete) {
-          that.postbackOnComplete(pendingRequest, jobData, resultRecord);
+        that.postbackOnComplete(pendingRequest, jobData, resultRecord);
       }
       if (pendingRequest && !resultRecord.postbackOnComplete) {
         // Save CommitComment record with updated isProcessed flag && Add GradeRequested info to the ResultRecord
@@ -192,7 +192,10 @@ export default class TestJobController {
         let controller: CommitCommentController = new CommitCommentController(this.courseNum);
         
         msg = resultRecord.githubFeedback;
-        await postbackController.submit(msg);
+        await postbackController.submit(msg)
+          .catch((err) => {
+            Log.error('TestJobController:: postbackOnComplete() ERROR ' + err);
+          });
     }
 
     this.failed = function(job: Job, error: Error, opts: CallbackOpts) {
