@@ -149,13 +149,14 @@ export default class TestJobController {
         await redis.client.disconnect();
       }
       
+      // Fixj this error when a result record does not exist. It should throw an error but needs a major error message
       let resultRecordRepo = new ResultRecordRepo();
       let resultRecord = await resultRecordRepo.getLatestResultRecord(jobData.team, jobData.commit, jobData.deliverable, jobData.orgName);
 
       if (pendingRequest || resultRecord.postbackOnComplete) {
           that.postbackOnComplete(pendingRequest, jobData, resultRecord);
       }
-      if (pendingRequest) {
+      if (pendingRequest && !resultRecord.postbackOnComplete) {
         // Save CommitComment record with updated isProcessed flag && Add GradeRequested info to the ResultRecord
         let commitCommentRepo: RequestRepo = new RequestRepo();
         let commitComment: CommitComment = JSON.parse(pendingRequest.commitComment) as CommitComment;

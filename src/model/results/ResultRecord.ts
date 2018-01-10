@@ -141,7 +141,7 @@ export default class ResultRecord {
       ref: this.ref, 
       report: this.report,
       container: this.container,
-      attachments: this.attachments,
+      attachments: this.attachments, 
       timestamp: this.timestamp,     
       idStamp: this.idStamp, 
       stdioRef: this.stdioRef
