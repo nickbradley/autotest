@@ -120,7 +120,7 @@ export default class TestJobController {
             reject(err);
           })
         }).catch(err => {
-          console.log('TestJobController:: Error executing Test Job')
+          console.log('TestJobController:: Error executing Test Job ' + err);
           reject(err);
         });
       });
