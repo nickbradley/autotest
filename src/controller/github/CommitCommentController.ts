@@ -77,20 +77,11 @@ export default class CommitCommentContoller {
         let delivRepo: DeliverableRepo = new DeliverableRepo();
         let deliv: Deliverable;
 
-        try {
-          await redis.client.connect();
-          await record.process(data);
-          this.record = record;
-        }
-        catch (err) {
-          console.log('any major errors', err);
-        }
+        await redis.client.connect();
+        await record.process(data);
+        this.record = record;
 
-        await delivRepo.getDeliverable(record.getDeliverable(), this.courseNum)
-        .then((_deliv: Deliverable) => {
-          console.log('delivRepo.getDeliverable()', _deliv);
-          deliv = _deliv;
-        });
+        await delivRepo.getDeliverable(record.getDeliverable(), this.courseNum);
 
         let isAdmin: boolean = await that.isAdmin(record.getUser())
           .catch((err) => {
@@ -272,6 +263,8 @@ export default class CommitCommentContoller {
         let adminRecords = await db.getObjectIds('users', '_id', adminRecordsIds)
 
         adminRecords.map((adminObject: Admin) => {
+
+          console.log('adminObject', adminObject);
           let adminRecord = new AdminRecord(adminObject);
           
           if (adminRecord.getUsername().toLowerCase().indexOf(user) > -1) {
