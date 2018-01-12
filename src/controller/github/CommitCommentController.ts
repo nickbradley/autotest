@@ -77,12 +77,18 @@ export default class CommitCommentContoller {
         let delivRepo: DeliverableRepo = new DeliverableRepo();
         let deliv: Deliverable;
 
-        await redis.client.connect();
-        await record.process(data);
-        this.record = record;
+        try {
+          await redis.client.connect();
+          await record.process(data);
+          this.record = record;
+        }
+        catch (err) {
+          console.log('any major errors', err);
+        }
 
         await delivRepo.getDeliverable(record.getDeliverable(), this.courseNum)
         .then((_deliv: Deliverable) => {
+          console.log('delivRepo.getDeliverable()', _deliv);
           deliv = _deliv;
         });
 
@@ -108,15 +114,19 @@ export default class CommitCommentContoller {
             hook: record.getHook().toString()
           }
 
+          console.log('debuggin req', req);
+
           let hasPending: boolean = true;
           let pendingRequest: PendingRequest
           try {
             await redis.client.isReady
             await redis.client.connect();
+            console.log('made it to connect');
             pendingRequest = await redis.client.get(reqId)
               .catch((err) => {
                 Log.error(`CommitCommentController: Pending Request error`);
               });
+            console.log('pendingRequest state', pendingRequest);
             // await redis.client.disconnect();
           } catch(err) {
             Log.info(`CommitCommentController:: INFO CommentComment requested. No prior pending request found for ` + err);
