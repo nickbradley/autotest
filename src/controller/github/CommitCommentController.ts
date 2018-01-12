@@ -81,14 +81,17 @@ export default class CommitCommentContoller {
         await record.process(data);
         this.record = record;
 
-        await delivRepo.getDeliverable(record.getDeliverable(), this.courseNum);
+        await delivRepo.getDeliverable(record.getDeliverable(), this.courseNum)
+          .then((_deliv: Deliverable) => {
+            deliv = _deliv;
+          });
 
         let isAdmin: boolean = await that.isAdmin(record.getUser())
           .catch((err) => {
             Log.error(`CommitCommentController:: isAdmin ERROR ` + err);
             return null;
           });
-        console.log('is admin', isAdmin);
+
         if (record.getIsRequest()) {
           let team: string = record.getTeam();
           let user: string = record.getUser();
@@ -261,7 +264,6 @@ export default class CommitCommentContoller {
 
         adminRecords.map((adminObject: Admin) => {
 
-          console.log('adminObject', adminObject);
           let adminRecord = new AdminRecord(adminObject);
           
           if (adminRecord.getUsername().toLowerCase().indexOf(user) > -1) {

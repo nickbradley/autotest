@@ -63,7 +63,7 @@ export interface TestInfo {
 
 export default class TestRecord {
   private maxStdioSize: number = 1 * 500000;  // 500 KB
-  private maxStdioLength: number = 500000; // characters
+  private maxStdioLength: number = 1000000; // characters
   private shaSize: number;
   private stdio: string;
   private report: string;
