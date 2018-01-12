@@ -92,8 +92,12 @@ export default class CommitCommentContoller {
           deliv = _deliv;
         });
 
-        let isAdmin: boolean = await that.isAdmin(record.getUser());
-
+        let isAdmin: boolean = await that.isAdmin(record.getUser())
+          .catch((err) => {
+            Log.error(`CommitCommentController:: isAdmin ERROR ` + err);
+            return null;
+          });
+        console.log('is admin', isAdmin);
         if (record.getIsRequest()) {
           let team: string = record.getTeam();
           let user: string = record.getUser();
