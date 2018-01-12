@@ -117,10 +117,7 @@ export default class CommitCommentContoller {
             await redis.client.isReady
             await redis.client.connect();
             console.log('made it to connect');
-            pendingRequest = await redis.client.get(reqId)
-              .catch((err) => {
-                Log.error(`CommitCommentController: Pending Request error`);
-              });
+            pendingRequest = await redis.client.get(reqId);
             console.log('pendingRequest state', pendingRequest);
             // await redis.client.disconnect();
           } catch(err) {

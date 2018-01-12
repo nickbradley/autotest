@@ -224,10 +224,8 @@ export default class RedisClient {
     }
     return new Promise<any>((fulfill, reject) => {
       this.client.hgetall(key, (err: Error, reply: string) => {
-        if (err) {
-          console.log('RedisClient:: get() internal redis error' + err);
+        if (err)
           reject(err);
-        }
         else if (reply)
           fulfill(reply);
         else
