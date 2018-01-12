@@ -42,7 +42,7 @@ export default class TestController {
       Log.error('TestController:: Unable to create stdioRecord ERROR ' + err);
     }
 
-    if (testInfo.containerExitCode === 124) {
+    if (testInfo.containerExitCode === 124 || testInfo.containerExitCode === 143) {
       stdioRepo.insertStdioRecord(stdioRecord);
       Log.info('TestController::exec() INFO Test ' + testInfo.testRecord.commit +
        ' exit code 124 TIMEOUT; ResultRecord saved by AutoTest.');
