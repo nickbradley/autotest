@@ -113,7 +113,10 @@ export default class CommitCommentContoller {
           try {
             await redis.client.isReady
             await redis.client.connect();
-            pendingRequest = await redis.client.get(reqId);
+            pendingRequest = await redis.client.get(reqId)
+              .catch((err) => {
+                Log.error(`CommitCommentController: Pending Request error`);
+              });
             // await redis.client.disconnect();
           } catch(err) {
             Log.info(`CommitCommentController:: INFO CommentComment requested. No prior pending request found for ` + err);

@@ -62,7 +62,7 @@ export default class RedisClient {
           reject(err);
         });
         this.client.on('ready', () => {
-          Log.info('RedisClient::connect() - ready');
+          Log.info('RedisClient::connect() - ready on port ' + this.options.port);
           this._isReady = true;
         });
         this.client.on('connect', () => {
@@ -224,8 +224,10 @@ export default class RedisClient {
     }
     return new Promise<any>((fulfill, reject) => {
       this.client.hgetall(key, (err: Error, reply: string) => {
-        if (err)
+        if (err) {
+          console.log('RedisClient:: get() internal redis error' + err);
           reject(err);
+        }
         else if (reply)
           fulfill(reply);
         else
