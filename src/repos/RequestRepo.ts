@@ -27,13 +27,14 @@ export default class RequestRepo {
    * @param _deliverable: the abbreivation, ie. d1, d2, of the Deliverable.
    * @return Promise<CommitComment> CommitComment interface object
    */
-  public getLatestGradeRequest(_user: string, _deliverable: string): Promise<CommitComment> {
+  public getLatestGradeRequest(_user: string, _deliverable: string, _repo: string, _orgName: string): Promise<CommitComment> {
     const PROCESSED = true;
-    let query: object = { user: _user, deliverable: _deliverable, isProcessed: true };
-
+    let query: object = { user: _user, deliverable: _deliverable, repo: _repo, orgName: _orgName, isProcessed: true };
+    console.log(query);
     return new Promise<CommitComment>((fulfill, reject) => {
       try {
         db.getLatestRecord(REQUESTS_COLLECTION, query).then((latestCommitComment: CommitComment) => {
+          console.log('fulfilled', latestCommitComment);
           fulfill(latestCommitComment);
         });
       }

@@ -142,7 +142,7 @@ export default class CommitCommentContoller {
             }
           } else {
             // Is a grade request that is not already being waited for.
-            let lastRequest: Date = await that.getLatestRequest(record.getUser(), record.getRepo(), record.getDeliverable());
+            let lastRequest: Date = await that.getLatestRequest(record.getUser(), record.getRepo(), record.getDeliverable(), record.getOrgName());
             let diff: number = +new Date() - +lastRequest;
             if (diff > record.getDeliverableRate() || isAdmin) {
               try {
@@ -318,12 +318,12 @@ export default class CommitCommentContoller {
    * @param user - GitHub username.
    * @param deliverable - Deliverable identifier (i.e. d1, d2, etc.).
    */
-  private async getLatestRequest(user: string, repo: string, deliverable: string): Promise<Date> {
+  private async getLatestRequest(user: string, repo: string, deliverable: string, orgName: string): Promise<Date> {
     let requestRepo: RequestRepo = new RequestRepo();
     let that = this;
     return new Promise<Date>(async (fulfill, reject) => {
       try {
-        let latestCommitComment: CommitComment = await requestRepo.getLatestGradeRequest(user, deliverable);
+        let latestCommitComment: CommitComment = await requestRepo.getLatestGradeRequest(user, deliverable, repo, orgName);
         let latestDate: Date = new Date(0);
         if (latestCommitComment) {
           latestDate = new Date(latestCommitComment.timestamp)

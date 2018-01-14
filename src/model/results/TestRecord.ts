@@ -330,6 +330,7 @@ public getTestRecord(): Result {
         'stdioRef': that.dockerInput.stdioRef,
         'attachments': [getStdio(), getDockerInput()],
       }
+      Log.info(`TestRecord::getTestRecord() INFO - Created TestRecord to save in case of Timeout on commit ${this.commit} and user ${this.username}`);
       // instead of returning, it should be entered into the Database.
     }
     catch(err) {
