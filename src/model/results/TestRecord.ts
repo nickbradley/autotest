@@ -319,7 +319,7 @@ public getTestRecord(): Result {
         'commit': this.commit,
         'committer': this.committer,
         'timestamp': this.timestamp,
-        'postbackOnComplete': this.postbackOnComplete,
+        'postbackOnComplete': true, // if a timeout occurs, this error will postback by default,
         'container': container,
         'requestor': this.requestor,
         'gradeRequested': false,
