@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM node:6.3.0
 MAINTAINER Andrew Stec <steca@cs.ubc.ca>
 
 ARG allowDNS
@@ -12,15 +12,6 @@ ENV WHITELISTED_SERVERS=$externalServers
 ENV TESTSUITE_VERSION=$testsuiteCommit
 ENV TS=$deliverable
 ENV IS_CONTAINER_LIVE=1
-
-RUN \
-  echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
-  add-apt-repository -y ppa:webupd8team/java && \
-  apt-get update && \
-  apt-get install -y oracle-java8-installer && \
-  rm -rf /var/lib/apt/lists/* && \
-  rm -rf /var/cache/oracle-jdk8-installer
-
 
 RUN echo "New Container"
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
@@ -38,7 +29,7 @@ RUN apt-get -y install software-properties-common
 RUN add-apt-repository "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main"
 RUN apt-get -y update
 RUN echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | debconf-set-selections
-RUN apt-get install oracle-java9-installer -y
+RUN apt-get -y install oracle-java8-installer
 RUN apt-get -y install nano
 
 # INSTALL PYTHON 3
