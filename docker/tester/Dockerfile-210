@@ -1,4 +1,4 @@
-FROM node:6.3.0
+FROM mlaccetti/docker-oracle-java8-ubuntu-16.04
 MAINTAINER Andrew Stec <steca@cs.ubc.ca>
 
 ARG allowDNS
