@@ -1,4 +1,4 @@
-FROM node:6.3.0
+FROM ubuntu:14.04
 MAINTAINER Andrew Stec <steca@cs.ubc.ca>
 
 ARG allowDNS
@@ -26,11 +26,8 @@ RUN apt-get -y install zip
 RUN apt-get -y install default-jre
 RUN apt-get -y install default-jdk
 RUN apt-get -y install software-properties-common
-RUN add-apt-repository "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main"
+#RUN add-apt-repository "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main"
 RUN add-apt-repository ppa:webupd8team/java
-RUN echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee /etc/apt/sources.list.d/webupd8team-java.list
-RUN echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee -a /etc/apt/sources.list.d/webupd8team-java.list
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886
 RUN apt-get -y update
 RUN echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | debconf-set-selections
 RUN apt-get -y install oracle-java8-installer
