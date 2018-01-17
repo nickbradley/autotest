@@ -1,4 +1,4 @@
-FROM node:6.3.0
+FROM dockerfile/ubuntu
 MAINTAINER Andrew Stec <steca@cs.ubc.ca>
 
 ARG allowDNS
@@ -12,6 +12,15 @@ ENV WHITELISTED_SERVERS=$externalServers
 ENV TESTSUITE_VERSION=$testsuiteCommit
 ENV TS=$deliverable
 ENV IS_CONTAINER_LIVE=1
+
+RUN \
+  echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
+  add-apt-repository -y ppa:webupd8team/java && \
+  apt-get update && \
+  apt-get install -y oracle-java8-installer && \
+  rm -rf /var/lib/apt/lists/* && \
+  rm -rf /var/cache/oracle-jdk8-installer
+
 
 RUN echo "New Container"
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
