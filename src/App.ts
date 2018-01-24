@@ -19,14 +19,13 @@ export class App {
         Log.info('App::initServer() - start');
         
         for (let i = 0; i < courseNums.length; i++) {
-          
           // 1 + because ports under 1000 need 'sudo' priviledges
           // which is a potential security risk
-          let portNum = parseInt(" " + 1 + courseNums[i]); 
+          let portNum = parseInt(" " + 1 + courseNums[i]);
 
           // start server
           let s = new Server();
-          s.setPort(portNum); 
+          s.setPort(portNum);
           s.start().then(function (val: boolean) {
             Log.info("App::initServer() - started: " + val);
           }).catch(function (err: Error) {

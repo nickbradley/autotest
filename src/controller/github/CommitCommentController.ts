@@ -86,7 +86,7 @@ export default class CommitCommentContoller {
             deliv = _deliv;
           });
 
-        let isAdmin: boolean = await that.isAdmin(record.getUser())
+        let isAdmin: boolean = await that.isAdminOrStaff(record.getUser())
           .catch((err) => {
             Log.error(`CommitCommentController:: isAdmin ERROR ` + err);
             return null;
@@ -112,14 +112,12 @@ export default class CommitCommentContoller {
             hook: record.getHook().toString()
           }
 
-          console.log('debuggin req', req);
 
           let hasPending: boolean = true;
           let pendingRequest: PendingRequest
           try {
             await redis.client.isReady
             await redis.client.connect();
-            console.log('made it to connect');
             pendingRequest = await redis.client.get(reqId);
             console.log('pendingRequest state', pendingRequest);
             // await redis.client.disconnect();
@@ -234,22 +232,13 @@ export default class CommitCommentContoller {
     });
   }
 
-
-  /**
-   * Extract the mention options which can be 'force' or the deliverable name.
-   *
-   * @param requestMsg: string
-   */
-  //  private async extractMentionOptions(requestMsg: string): string {
-  //
-  //  }
-
   /**
    * Checks to see if the user is in the admin list in the database.
    *
    *  @param user
+   *  @return true if admin or staff authenticated
    */
-  private async isAdmin(user: string): Promise<boolean> {
+  private async isAdminOrStaff(user: string): Promise<boolean> {
     
     let that = this;
     return new Promise<boolean>(async (fulfill, reject) => {
@@ -257,15 +246,16 @@ export default class CommitCommentContoller {
         // convert database result of strings[] to ObjectIDs[] to be queried with MongoDB        
         let adminRecordsIds: string[] = await db.getRecord('courses', { courseId: this.courseNum.toString() })
           .then((course: Course) => {
-            return course.admins;
+            // treat admin and staff alike in AutoTest, as the only priviledge is to make unlimited requests.
+            let adminPriviledged: string[] = [];
+            adminPriviledged = course.staffList.concat(course.admins);
+            return adminPriviledged;
           });
 
         let adminRecords = await db.getObjectIds('users', '_id', adminRecordsIds)
 
         adminRecords.map((adminObject: Admin) => {
-
           let adminRecord = new AdminRecord(adminObject);
-          
           if (adminRecord.getUsername().toLowerCase().indexOf(user) > -1) {
             fulfill(true);
           }

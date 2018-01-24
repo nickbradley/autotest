@@ -11,6 +11,7 @@ export class Course {
   solutionsKey: string;
   delivKey: string;
   classList: Object[];
+  staffList: [string];
   batchDeliverables: Object[];
   deliverables: Object[];
   labSections: Object[];
