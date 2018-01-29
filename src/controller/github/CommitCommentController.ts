@@ -150,6 +150,8 @@ export default class CommitCommentContoller {
                 if (githubGradeComment.getPostbackOnComplete()) {
                   // postback on complete is a freebie, such as if a build fails, and does not count as a request even if they make a request
                   record.setIsProcessed(false); 
+                } else {
+                  record.setIsProcessed(true);
                 }
                 let githubFeedback: string = await githubGradeComment.formatResult();
                 response = {
