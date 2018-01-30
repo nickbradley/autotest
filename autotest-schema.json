@@ -1,0 +1,286 @@
+{
+	"reports": [{
+		"description": "Student tests and coverage reports ",
+		"type": "object",
+		"required": [
+			"coverage",
+			"tests"
+		],
+		"properties": {
+			"studentInfo": {
+				"type": "object",
+				"description": "Information on student",
+				"properties": {
+					"snum": {
+						"type": "number",
+						"description": "from ENV `SNUM`"
+					},
+					"csid": {
+						"type": "number",
+						"description": "from ENV `CSID`"
+					},
+					"projectCommit": {
+						"type": "string",
+						"description": "from ENV 'PROJECT_COMMIT'"
+					},
+					"projectUrl": {
+						"type": "string",
+						"description": "from ENV 'PROJECT_URL' (parse out Github key)"
+					} 
+				},
+				"deliverableInfo": {
+				"type": "object",
+				"description": "Information on student",
+				"properties": {
+					"deliverable": {
+						"type": "string",
+						"description": "deliv num, ie. `d1`"
+					},
+					"deliverableUrl": {
+						"type": "string",
+						"description": "From ENV `DELIVERABLE_URL` (parse out Github key)"
+					},
+					"deliverableCommit": {
+						"type": "string",
+						"description": "From ENV `DELIVERABLE_COMMIT`"
+					}
+				}
+				}
+			},
+			"coverage": {
+				"type": "object",
+				"required": ["lines", "statements", "branches", "functions"],
+				"properties": {
+					"lines": {
+						"percentage": {
+							"type": "number",
+							"minimum": 0,
+							"max": 100
+						},
+						"total": {
+							"type": "number",
+							"minimum": 0
+						},
+						"covered": {
+							"type": "number",
+							"minimum": 0
+						},
+						"skipped": {
+							"type": "number",
+							"minimum": 0
+						}
+					},
+					"statements": {
+						"percentage": {
+							"type": "number",
+							"minimum": 0,
+							"max": 100
+						},
+						"total": {
+							"type": "number",
+							"minimum": 0
+						},
+						"covered": {
+							"type": "number",
+							"minimum": 0
+						},
+						"skipped": {
+							"type": "number",
+							"minimum": 0
+						}
+					},
+					"branches": {
+						"percentage": {
+							"type": "number",
+							"minimum": 0,
+							"max": 100
+						},
+						"total": {
+							"type": "number",
+							"minimum": 0
+						},
+						"covered": {
+							"type": "number",
+							"minimum": 0
+						},
+						"skipped": {
+							"type": "number",
+							"minimum": 0
+						}
+					},
+					"functions": {
+						"percentage": {
+							"type": "number",
+							"minimum": 0,
+							"max": 100
+						},
+						"total": {
+							"type": "number",
+							"minimum": 0
+						},
+						"covered": {
+							"type": "number",
+							"minimum": 0
+						},
+						"skipped": {
+							"type": "number",
+							"minimum": 0
+						}
+					}
+				}
+			},
+			"tests": {
+				"type": "object",
+				"required": [],
+				"properties": {
+					"testRunTitle": {
+						"type": ["string", null],
+						"description": "A title for the set of tests being run against the student project."
+					},
+					"testingSoftware": {
+						"type": ["string", null],
+						"description": "Junit, etc."
+					},
+					"testingSoftwareVersion": {
+						"type": ["string", null],
+						"description": "'5.1', etc"
+					},
+					"overviewResults": {
+						"type": "Object",
+						"required": ["suites", "tests", "passes", "pending", "failures", 
+							"startTime", "endTime", "duration", "registered", "passPercent",
+							"pendingPercent", "skipped", "hasSkipped", "passPercentageClass", 
+							"pendingPercentClass"],
+						"properties": {
+							"suites": {
+								"type": ["number"],
+								"description": "Number of test suites",
+								"minimum": 0
+							},
+							"tests": {
+								"type": ["number"],
+								"description": "Number of tests run",
+								"minimum": 0
+							},
+							"passes": {
+								"type": ["number"],
+								"description": "Number of tests that pass",
+								"minimum": 0
+							},
+							"pending": {
+								"type": ["number"],
+								"description": "Number of tests pending.",
+								"minimum": 0
+							},
+							"failures": {
+								"type": ["number"],
+								"description": "Number of tests that fail.",
+								"minimum": 0
+							},
+							"startTime": {
+								"type": ["string"],
+								"description": "ex. 2017-07-18T15:47:02.329Z (stored as String)."
+							},
+							"endTime": {
+								"type": ["string"],
+								"description": "2017-07-18T15:47:02.329Z (stored as String)."
+							},
+							"duration": {
+								"type": ["number"],
+								"description": "ex. 28896.",
+								"minimum": 0
+							},
+							"registered": {
+								"type": ["number"],
+								"description": "Number of tests registered.",
+								"minimum": 0
+							},
+							"passPercent": {
+								"type": ["number"],
+								"description": "Number of tests that pass in percent.",
+								"minimum": 0
+							},
+							"pendingPercent": {
+								"type": ["number"],
+								"description": "Percentage of tests that were pending.",
+								"minimum": 0
+							}, 
+							"skipped": {
+								"type": ["number"],
+								"description": "Number of tests that skipped.",
+								"minimum": 0
+							},
+							"hasSkipped": {
+								"type": ["boolean"],
+								"description": "If tests have skipped."
+							},
+							"passPercentClass": {
+								"type": ["number", null],
+								"description": "Percentage of classes that all tests pass.",
+								"minimum": 0
+							},
+							"pendingPercentClass": {
+								"type": ["number", null],
+								"description": "Percentage of classes that have pending tests." 
+							}
+						}
+					},
+					"detailedResults": {
+						"type": ["Object, ..."],
+						"description": "An numerically indexed array of objects with particular information about that test.",
+						"properties": {
+							"testName": {
+								"type": ["string", null],
+								"description": "ex. 'Aardvark'"
+							},
+							"fullDescription": {
+								"type": ["string", null],
+								"description": "ex. '~Aardvark~addDataset should return a promise that settles in a timely manner.'"
+							},
+							"timedOut": {
+								"type": ["boolean"],
+								"description": "If the test timed out."
+							},
+							"duration": {
+								"type": "number",
+								"description": "Time in seconds. ex. (0.16 seconds)"
+							},
+							"state": {
+								"type": "boolean",
+								"description": "ex. 'passed', 'failed', etc."
+							},
+							"speed": {
+								"type": "string",
+								"description": "Qualitative response of if test was 'fast', 'slow', etc."
+							},
+							"pass": {
+								"type": "boolean",
+								"description": "If the test has passed."
+							},
+							"fail": {
+								"type": "boolean",
+								"description": "If the test has failed."
+							},
+							"pending": {
+								"type": "boolean",
+								"description": "If the test was pending"
+							},
+							"code": {
+								"type": ["string", null],
+								"description": "Optional excerpt of HTML code, etc. that you want output for individual test"
+							},
+							"skipped": {
+								"type": "boolean",
+								"description": "If the test has been skipped."
+							}
+						}
+					},
+					"custom": {
+						"type": ["Object"],
+						"description": "Any additional information that you want output particular to your record keeping, stats, course. This data will be saved but no feature will be implemented just yet."
+					}
+				}
+			}
+		}
+	}]
+}

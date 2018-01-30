@@ -1,0 +1,182 @@
+{
+  "ref": "refs/heads/master",
+  "before": "29016090df7fc54e593676008c2a43248ec3801e",
+  "after": "758dfd9ecc412adff03181a519d9c422cf748719",
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/stecler/cpsc999project_team1/compare/29016090df7f...c83c5af4d546",
+  "commits": [
+    {
+      "id": "758dfd9ecc412adff03181a519d9c422cf748719",
+      "tree_id": "94d98e09ba793ebf36bffa8b6ecabc08679731fe",
+      "distinct": true,
+      "message": "Bla",
+      "timestamp": "2017-07-04T12:25:53-07:00",
+      "url": "https://github.com/stecler/cpsc999project_team1/commit/758dfd9ecc412adff03181a519d9c422cf748719",
+      "author": {
+        "name": "stecler",
+        "email": "andrewstec@gmail.com",
+        "username": "stecler"
+      },
+      "committer": {
+        "name": "stecler",
+        "email": "andrewstec@gmail.com",
+        "username": "stecler"
+      },
+      "added": [
+        "newfile.test"
+      ],
+      "removed": [
+
+      ],
+      "modified": [
+
+      ]
+    }
+  ],
+  "head_commit": {
+    "id": "758dfd9ecc412adff03181a519d9c422cf748719",
+    "tree_id": "94d98e09ba793ebf36bffa8b6ecabc08679731fe",
+    "distinct": true,
+    "message": "Bla",
+    "timestamp": "2017-07-04T12:25:53-07:00",
+    "url": "https://github.com/stecler/cpsc999project_team1/commit/758dfd9ecc412adff03181a519d9c422cf748719",
+    "author": {
+      "name": "stecler",
+      "email": "andrewstec@gmail.com",
+      "username": "stecler"
+    },
+    "committer": {
+      "name": "stecler",
+      "email": "andrewstec@gmail.com",
+      "username": "stecler"
+    },
+    "added": [
+      "newfile.test"
+    ],
+    "removed": [
+
+    ],
+    "modified": [
+
+    ]
+  },
+  "repository": {
+    "id": 95709188,
+    "name": "cpsc999project_team1",
+    "full_name": "stecler/cpsc999project_team1",
+    "owner": {
+      "name": "stecler",
+      "email": "astec@my.bcit.ca",
+      "login": "stecler",
+      "id": 7872295,
+      "avatar_url": "https://avatars2.githubusercontent.com/u/7872295?v=3",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/stecler",
+      "html_url": "https://github.com/stecler",
+      "followers_url": "https://api.github.com/users/stecler/followers",
+      "following_url": "https://api.github.com/users/stecler/following{/other_user}",
+      "gists_url": "https://api.github.com/users/stecler/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/stecler/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/stecler/subscriptions",
+      "organizations_url": "https://api.github.com/users/stecler/orgs",
+      "repos_url": "https://api.github.com/users/stecler/repos",
+      "events_url": "https://api.github.com/users/stecler/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/stecler/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "private": true,
+    "html_url": "https://github.com/stecler/cpsc999project_team1",
+    "description": "Testing Repo",
+    "fork": false,
+    "url": "https://github.com/stecler/cpsc999project_team1",
+    "forks_url": "https://api.github.com/repos/stecler/cpsc999project_team1/forks",
+    "keys_url": "https://api.github.com/repos/stecler/cpsc999project_team1/keys{/key_id}",
+    "collaborators_url": "https://api.github.com/repos/stecler/cpsc999project_team1/collaborators{/collaborator}",
+    "teams_url": "https://api.github.com/repos/stecler/cpsc999project_team1/teams",
+    "hooks_url": "https://api.github.com/repos/stecler/cpsc999project_team1/hooks",
+    "issue_events_url": "https://api.github.com/repos/stecler/cpsc999project_team1/issues/events{/number}",
+    "events_url": "https://api.github.com/repos/stecler/cpsc999project_team1/events",
+    "assignees_url": "https://api.github.com/repos/stecler/cpsc999project_team1/assignees{/user}",
+    "branches_url": "https://api.github.com/repos/stecler/cpsc999project_team1/branches{/branch}",
+    "tags_url": "https://api.github.com/repos/stecler/cpsc999project_team1/tags",
+    "blobs_url": "https://api.github.com/repos/stecler/cpsc999project_team1/git/blobs{/sha}",
+    "git_tags_url": "https://api.github.com/repos/stecler/cpsc999project_team1/git/tags{/sha}",
+    "git_refs_url": "https://api.github.com/repos/stecler/cpsc999project_team1/git/refs{/sha}",
+    "trees_url": "https://api.github.com/repos/stecler/cpsc999project_team1/git/trees{/sha}",
+    "statuses_url": "https://api.github.com/repos/stecler/cpsc999project_team1/statuses/{sha}",
+    "languages_url": "https://api.github.com/repos/stecler/cpsc999project_team1/languages",
+    "stargazers_url": "https://api.github.com/repos/stecler/cpsc999project_team1/stargazers",
+    "contributors_url": "https://api.github.com/repos/stecler/cpsc999project_team1/contributors",
+    "subscribers_url": "https://api.github.com/repos/stecler/cpsc999project_team1/subscribers",
+    "subscription_url": "https://api.github.com/repos/stecler/cpsc999project_team1/subscription",
+    "commits_url": "https://api.github.com/repos/stecler/cpsc999project_team1/commits{/sha}",
+    "git_commits_url": "https://api.github.com/repos/stecler/cpsc999project_team1/git/commits{/sha}",
+    "comments_url": "https://api.github.com/repos/stecler/cpsc999project_team1/comments{/number}",
+    "issue_comment_url": "https://api.github.com/repos/stecler/cpsc999project_team1/issues/comments{/number}",
+    "contents_url": "https://api.github.com/repos/stecler/cpsc999project_team1/contents/{+path}",
+    "compare_url": "https://api.github.com/repos/stecler/cpsc999project_team1/compare/{base}...{head}",
+    "merges_url": "https://api.github.com/repos/stecler/cpsc999project_team1/merges",
+    "archive_url": "https://api.github.com/repos/stecler/cpsc999project_team1/{archive_format}{/ref}",
+    "downloads_url": "https://api.github.com/repos/stecler/cpsc999project_team1/downloads",
+    "issues_url": "https://api.github.com/repos/stecler/cpsc999project_team1/issues{/number}",
+    "pulls_url": "https://api.github.com/repos/stecler/cpsc999project_team1/pulls{/number}",
+    "milestones_url": "https://api.github.com/repos/stecler/cpsc999project_team1/milestones{/number}",
+    "notifications_url": "https://api.github.com/repos/stecler/cpsc999project_team1/notifications{?since,all,participating}",
+    "labels_url": "https://api.github.com/repos/stecler/cpsc999project_team1/labels{/name}",
+    "releases_url": "https://api.github.com/repos/stecler/cpsc999project_team1/releases{/id}",
+    "deployments_url": "https://api.github.com/repos/stecler/cpsc999project_team1/deployments",
+    "created_at": 1498681962,
+    "updated_at": "2017-07-04T19:09:14Z",
+    "pushed_at": 1499196358,
+    "git_url": "git://github.com/stecler/cpsc999project_team1.git",
+    "ssh_url": "git@github.com:stecler/cpsc999project_team1.git",
+    "clone_url": "https://github.com/stecler/cpsc999project_team1.git",
+    "svn_url": "https://github.com/stecler/cpsc999project_team1",
+    "homepage": null,
+    "size": 0,
+    "stargazers_count": 0,
+    "watchers_count": 0,
+    "language": "TypeScript",
+    "has_issues": true,
+    "has_projects": true,
+    "has_downloads": true,
+    "has_wiki": true,
+    "has_pages": false,
+    "forks_count": 0,
+    "mirror_url": null,
+    "open_issues_count": 0,
+    "forks": 0,
+    "open_issues": 0,
+    "watchers": 0,
+    "default_branch": "master",
+    "stargazers": 0,
+    "master_branch": "master"
+  },
+  "pusher": {
+    "name": "stecler",
+    "email": "astec@my.bcit.ca"
+  },
+  "sender": {
+    "login": "stecler",
+    "id": 7872295,
+    "avatar_url": "https://avatars2.githubusercontent.com/u/7872295?v=3",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/stecler",
+    "html_url": "https://github.com/stecler",
+    "followers_url": "https://api.github.com/users/stecler/followers",
+    "following_url": "https://api.github.com/users/stecler/following{/other_user}",
+    "gists_url": "https://api.github.com/users/stecler/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/stecler/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/stecler/subscriptions",
+    "organizations_url": "https://api.github.com/users/stecler/orgs",
+    "repos_url": "https://api.github.com/users/stecler/repos",
+    "events_url": "https://api.github.com/users/stecler/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/stecler/received_events",
+    "type": "User",
+    "site_admin": false
+  }
+}

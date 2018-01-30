@@ -3,17 +3,21 @@ export interface GithubResponse {
   body: string;
 }
 
-
 export class GithubUtil {
 
-  public static getTeam(repositoryName: string): string {
+  public static getTeamOrProject(repositoryName: string): string {
     // NOTE assume repository name is of the form: CS310-2016Fall/cpsc310project_team10
     let idx = repositoryName.lastIndexOf('_')+1;
-
     return repositoryName.slice(idx);
   }
-}
 
+  public static parseDeliverable(fullRepoName: string): string {
+    let deliverable = fullRepoName.match(/^[^_]+(?=_)/);
+    if (deliverable) {
+      return deliverable.pop();
+    }
+  }
+}
 
 export class Commit {
   private commitString: string;
@@ -38,7 +42,6 @@ export class Commit {
   }
 }
 
-
 export type GithubUsername = string;
 
 export interface GithubAccount {
@@ -53,7 +56,4 @@ export class User {
   constructor(account: GithubAccount) {
     this.account = account;
   }
-
-
-
 }

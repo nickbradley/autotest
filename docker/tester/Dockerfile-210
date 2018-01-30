@@ -1,0 +1,68 @@
+FROM williamyeh/java8
+MAINTAINER Andrew Stec <steca@cs.ubc.ca>
+
+ARG allowDNS
+ARG testsuiteCommit
+ARG externalServers
+ARG githubKey
+
+ENV GITHUB_KEY=$githubKey
+ENV ALLOW_DNS=$allowDNS
+ENV WHITELISTED_SERVERS=$externalServers
+ENV TESTSUITE_VERSION=$testsuiteCommit
+ENV TS=$deliverable
+ENV IS_CONTAINER_LIVE=1
+
+RUN echo "New Container"
+RUN apt-get update
+RUN apt-get install curl -y
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+RUN echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
+RUN apt-get install -y nodejs
+RUN apt-get update
+RUN apt-get -y install yarn
+RUN apt-get -y install iptables
+RUN apt-get -y install zip
+RUN apt-get -y install git
+
+# INSTALL JAVA
+#RUN apt-get -y install default-jre
+#RUN apt-get -y install default-jdk
+RUN apt-get -y install software-properties-common
+#RUN add-apt-repository "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main"
+RUN apt-get -y update
+#RUN echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | debconf-set-selections
+#RUN apt-get -y install oracle-java8-installer
+RUN apt-get -y install nano
+
+# INSTALL PYTHON 3
+RUN apt-get -y install python-pip
+RUN pip install requests
+RUN pip install xmljson
+RUN pip install mako
+
+# INSTALL PYTHON 3
+RUN apt-get -y install python3-pip
+RUN pip3 install requests
+RUN pip3 install xmljson
+RUN pip3 install mako
+
+COPY pull-repo.sh /pull-repo.sh
+RUN chmod +x /pull-repo.sh
+COPY run-tests-210.sh /run-tests.sh
+RUN chmod +x /run-tests.sh
+
+RUN mkdir /output
+RUN /pull-repo.sh "https://${GITHUB_KEY}@github.ugrad.cs.ubc.ca/steca/cpsc210__bootstrap" "master" /cpsc210__bootstrap
+RUN cd /cpsc210__bootstrap/bootstrap/scripts && ./2_setup_gradle_for_tests.sh
+RUN cd /cpsc210__bootstrap/bootstrap/studentTests && ./gradlew clean build && rm -rf output/*
+RUN cd /cpsc210__bootstrap/helpers && yarn install && yarn run build
+
+# Disable Grade Daemon, as causes runtime issue with IPTables
+# Note: Maven repositories are still downloaded through allowed repo1.maven.org ipTable
+RUN mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+
+CMD timeout 2m /run-tests.sh >/output/stdio.txt 2>&1
+

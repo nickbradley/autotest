@@ -2,30 +2,55 @@ import Log from '../Util';
 import {JobQueue, ProcessJobCallback, ActiveJobCallback, CompletedJobCallback, FailedJobCallback, Job,JobOpts,JobPromise, CallbackOpts} from '../model/JobQueue';
 import {IConfig, AppConfig} from '../Config';
 import TestController from './TestController';
-import {TestStatus} from '../model/results/TestRecord';
+import {TestInfo} from '../model/results/TestRecord';
+import {JobIdData} from '../controller/github/CommitCommentController';
 import * as Url from 'url';
 import {GithubUsername, Commit} from '../model/GithubUtil';
+import {RedisUtil} from '../model/RedisUtil';
+import { DockerInputJSON } from '../model/docker/DockerInput';
 import {Visibility} from '../model/settings/DeliverableRecord';
+import {CommitComment} from '../model/requests/CommitComment';
 import PostbackController from './github/PostbackController';
-import CommitCommentController from './github/CommitCommentController'
-import ResultRecord from '../model/results/ResultRecord';
+import CommitCommentController, {PendingRequest} from './github/CommitCommentController'
+import RequestRepo from '../repos/RequestRepo';
+import StdioRecordRepo, {StdioRecord} from '../repos/StdioRecordRepo';
 import RedisManager from './RedisManager';
-
+import Server from '../../src/rest/Server'
+let redis = require("redis");
+import {Result} from '../model/results/ResultRecord';
+import RedisClient from '../model/RedisClient';
+import ResultRecordRepo from '../repos/ResultRecordRepo';
+import { UpdateWriteOpResult } from 'mongodb';
 
 // types are basic because queue strips out functions
 export interface TestJobDeliverable {
-  name: string;
-  image: string;
-  visibility: number;
+  dockerInput: DockerInputJSON;
   deliverable: string;
+  dockerImage: string;
+  dockerBuild: string;
+  stamp: string;
 }
+
 export interface TestJob {
-  user: string;
+  username: string;
   team: string;
+  repo: string;
+  pendingRequest: boolean;
+  requestor: string;
+  closeDate: number;
+  openDate: number;
+  projectUrl: string;
+  deliverable: string;
+  state: string;
+  commitUrl: string;
+  postbackOnComplete: boolean;
   commit: string;
   hook: Url.Url;
+  timestamp: number;
   ref: string;
   test: TestJobDeliverable;
+  courseNum: number;
+  orgName: string;
 }
 
 export interface TestQueueStats {
@@ -44,23 +69,36 @@ interface Manager {
   queue: JobQueue;
 }
 
-
 export default class TestJobController {
   private static instance: TestJobController;
+  private static instances: TestJobController[];
   private stdManager: Manager;
   private expManager: Manager;
-
-
-  private redisAddress: Url.Url;
+  private redisPort: number;
+  private _redisAddress: Url.Url;
+  private redisManager: RedisManager;
   private process: ProcessJobCallback;
   private completed: CompletedJobCallback;
+  private postbackOnComplete: any;
   private failed: FailedJobCallback;
   private active: ActiveJobCallback;
   private testQueue: JobQueue;
 
-  private constructor() {
+  get redisAddress(): Url.Url {
+    return this._redisAddress;
+  }
+
+  set redisAddress(redisAddress: Url.Url) {
+    this._redisAddress = redisAddress;
+  }
+
+  private constructor(redisPort: number) {
     let config: IConfig = new AppConfig();
-    this.redisAddress = config.getRedisAddress();
+    this._redisAddress = config.getRedisAddress();
+    this._redisAddress.port = redisPort.toString();
+    this.redisPort = redisPort;
+    this.redisManager = new RedisManager(this.redisPort);
+
 
     let stdQName: string = 'autotest-testqueue-std';
     let stdQPool: number = 2;
@@ -68,85 +106,101 @@ export default class TestJobController {
     let expQName: string = 'autotest-testqueue-exp';
     let expQPool: number = 2;
 
-
-
-
+    let that = this;
 
     this.process = function(job: Job, opts: CallbackOpts) {
       return new Promise((fulfill, reject) => {
         let testJob: TestJob = job.data as TestJob;
         let controller: TestController = new TestController(testJob);
         controller.exec().then((result) => {
-          let testStatus: TestStatus = result;
-          controller.store().then(() => {
-            fulfill(testStatus);
+          let testInfo: TestInfo = result;
+          controller.store(testInfo).then(() => {
+            fulfill(testInfo);
           }).catch(err => {
             reject(err);
           })
         }).catch(err => {
-          console.log('Error executing')
+          console.log('TestJobController:: Error executing Test Job ' + err);
           reject(err);
-        })
+        });
       });
     };
 
-    this.completed = async function(job: Job, result: TestStatus, opts: CallbackOpts) {
+    this.completed = async function(job: Job, result: any, opts: CallbackOpts) {
       Log.info('JobQueue::completed() - ['+opts.qname+']' + job.jobId + '.');
       let jobData: TestJob = job.data as TestJob;
-      let controller: PostbackController = new PostbackController(jobData.hook);
-      let msg: string;
-
-
-      let pendingRequest;
+      let jobSearchKey: string = '*' + jobData.courseNum + '*' + jobData.deliverable + '-' + jobData.team + '#' + jobData.commit;
+      let postbackController: PostbackController = new PostbackController(jobData.hook);
+      let pendingRequest: PendingRequest;
       let dl: string = jobData.test.deliverable;
 
       let reqId: string = jobData.team + '-' + jobData.commit + '-' + jobData.test.deliverable;
-
+      let redis: RedisManager = new RedisManager(that.redisPort);
       try {
-        let redis: RedisManager = new RedisManager();
         await redis.client.connect();
-        pendingRequest = await redis.client.get(reqId);
+        pendingRequest = await redis.client.get(reqId) as PendingRequest;
+        console.log('is pending request', pendingRequest);
+        console.log('request made by ', pendingRequest.requestor);
         await redis.client.del(reqId);
+        // replace pendingRequest with
       }
       catch(err) {
         Log.error('JobQueue::completed() - ERROR ' + err);
+        await redis.client.disconnect();
+      }
+      
+      // Fixj this error when a result record does not exist. It should throw an error but needs a major error message
+      let resultRecordRepo = new ResultRecordRepo();
+      let resultRecord = await resultRecordRepo.getLatestResultRecord(jobData.team, jobData.commit, jobData.deliverable, jobData.orgName);
+
+      if (pendingRequest || resultRecord.postbackOnComplete) {
+        that.postbackOnComplete(pendingRequest, jobData, resultRecord);
+      }
+      if (pendingRequest && !resultRecord.postbackOnComplete) {
+        // Save CommitComment record with updated isProcessed flag && Add GradeRequested info to the ResultRecord
+        let commitCommentRepo: RequestRepo = new RequestRepo();
+        let commitComment: CommitComment = JSON.parse(pendingRequest.commitComment) as CommitComment;
+        
+        commitComment.isProcessed = true;
+        commitCommentRepo.insertCommitComment(commitComment)
+          .then((fulfilledResponse) => {
+            if (fulfilledResponse.insertedCount > 0) {
+              Log.info('TestJobController:: Inserting isProcessed = true CommitComment Requests record');
+            }
+          })
+          .catch((err) => {
+            Log.error('TestJobController:: Could not insert isProcessed = true CommitComment Requests record ' + err);
+          });
+
+        resultRecordRepo.addGradeRequestedInfo(jobData.commitUrl, pendingRequest.requestor)
+          .catch((err) => {
+            Log.error(`TestJobController:: completed() ERROR updating gradeRequested details on ${jobData.commitUrl} for ${jobData.requestor}`);
+          });
       }
 
-      if (result.buildFailed) {
-        Log.info('JobQueue::completed() - ['+opts.qname+'] build failed for ' + job.jobId + '.');
-        msg = ':warning:**AutoTest Warning**: Unable to build project for **' +dl + '**.\n\n```' + result.buildMsg + '\n```';
-      } else if (result.containerExitCode > 0) {
-        Log.info('JobQueue::completed() - ['+opts.qname+'] container exited with code ' + result.containerExitCode + ' for ' + job.jobId + '.');
-        msg = ':warning:**AutoTest Warning**: Unable to run tests for **' +dl+ '**. Exit ' + result.containerExitCode +'.';
-        switch(result.containerExitCode) {
-          case 124:
-            msg = ':warning:**AutoTest Warning**: Test container forcefully terminated after executing for >5 minutes on **'+dl+'**. (Exit 124: Test cotnainer timeout exceeded).';
-          break;
-          case 29:
-            msg = ':warning:**AutoTest Warning**: You are logging too many messages to the console. Before you can receive a grade for **'+dl+'**, you must reduce your output. (Exit 29: Test container stdio.txt exceeds 5MB).'
-          break;
-          case 30:
-            msg = ':warning:**AutoTest Warning**: Test container failed to emit stdio for **'+dl+'**. Try making another commit and, if it fails, post a comment on Piazza including your team and commit SHA. (Exit 30: Test container failed to emit stdio.txt).';
-          break;
-          case 31:
-            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed **your** tests for **'+dl+'**. Please make sure your tests run without error on your computer before committing to GitHub. (Exit 31: Test container failed to emit coverage.json).';
-          break;
-          case 32:
-            msg = ':warning:**AutoTest Warning**: Unhandled exception occurred when AutoTest executed its test suite for **'+dl+'**. Please make sure you handle exceptions before committing to GitHub. (Exit 31: Test container failed to emit mocha.json).';
-          break;
-        }
-      } else if (pendingRequest) {
-        let team: string = pendingRequest.team;
-        let commit: string = pendingRequest.commit;
-        let deliverable: string = pendingRequest.deliverable;
-        let controller: CommitCommentController = new CommitCommentController();
-        let resultRecord: ResultRecord = new ResultRecord(team, commit, deliverable, '');
-        await resultRecord.fetch();
-        msg = resultRecord.formatResult();
-      }
-      await controller.submit(msg);
+      await redis.client.disconnect();
+      
+
+
+      // Check if GradeRequested flag hit on commit. If so, Postback the githubComment property right away.   
+      
     }
 
+    this.postbackOnComplete = async function(pendingRequest: any, jobData: TestJob, resultRecord: Result) {
+        let msg: string;
+        let postbackController: PostbackController = new PostbackController(jobData.hook);      
+        let controller: CommitCommentController = new CommitCommentController(this.courseNum);
+        
+        msg = resultRecord.githubFeedback;
+        await postbackController.submit(msg)
+          .then((status) => {
+            Log.info('TestJobController:: postbackOnComplete() INFO Response Status: ' + status + ' for ' + resultRecord.commit + 
+            ' and ' + resultRecord.user);
+          })
+          .catch((err) => {
+            Log.error('TestJobController:: postbackOnComplete() ERROR ' + err);
+          });
+    }
 
     this.failed = function(job: Job, error: Error, opts: CallbackOpts) {
       Log.error('JobQueue::failed() - [' + opts.qname + '] ' + job.jobId + '. ' + error);
@@ -154,8 +208,6 @@ export default class TestJobController {
     this.active = function(job: Job, jobPromise: JobPromise, opts: CallbackOpts) {
       Log.trace('JobQueue::active() - [' + opts.qname + '] ' + job.jobId + '.');
     }
-
-
 
     this.stdManager = {
       qname: stdQName,
@@ -170,11 +222,28 @@ export default class TestJobController {
     }
   }
 
-  public static getInstance(): TestJobController {
-    if (!TestJobController.instance) {
-      TestJobController.instance = new TestJobController();
+  public static getInstance(courseNum: number): TestJobController {
+
+    // Instantiates and reuses a Singleton for each port/class, and keeps it stored in an array.
+
+    let redisPort = RedisUtil.getRedisPort(courseNum);
+    if (!TestJobController.instances) {
+      console.log('TestJobController::getInstance() ' + redisPort);
+      let testJobController: TestJobController = new TestJobController(redisPort);
+      TestJobController.instances = new Array();
+      TestJobController.instance = testJobController;
+      TestJobController.instances.push(testJobController);
+    return testJobController;
+    } else {
+      for ( let testJobController of TestJobController.instances) {
+        if (testJobController.redisPort === redisPort) {
+          return testJobController;
+        } 
+      }
+      let testJobController = new TestJobController(redisPort);
+      TestJobController.instances.push(testJobController);
+      return testJobController;
     }
-    return TestJobController.instance;
   }
 
   /**
@@ -184,27 +253,37 @@ export default class TestJobController {
    */
   public async addJob(job: TestJob): Promise<Job> {
     let opts: JobOpts = {
-      jobId: job.test.image + '|'  + job.team + '#' + job.commit,
+      jobId: job.test.dockerImage + ':' + job.test.dockerBuild + '|' + job.test.deliverable + '-'  + job.team + '#' + job.commit,
       removeOnComplete: true
     }
-
     return <Promise<Job>>this.stdManager.queue.add(job, opts);
   }
 
   /**
    * Remove the job from the standard queue and move it to the express queue. If
-   * the job is active in the standard queue, do nothing.
+   * the job is active in the standard queue, do not add to express queue, as we do 
+   * not want duplicate ResultRecords produced.
+   * 
+   * ###############
+   * Promoted jobs need a REQUESTED state field, as the grade has been requested by the student
+   * through Github.
+   * ###############
    *
    * @param id: the id of the job to prioritize.
    */
-  public async promoteJob(id: string) {
+  public async promoteJob(id: string, jobIdData: JobIdData, redisClient: RedisClient) {
     try {
       let job: Job = await this.stdManager.queue.getJob(id);
       let jobState: string = await job.getState();
-      if (jobState !== 'completed' && jobState !== 'failed' && jobState !== 'active') {
+      let searchKey: string = `*${jobIdData.dockerImage}:${jobIdData.dockerBuild}*${jobIdData.team}#${jobIdData.commit}`;
+      if (jobState !== 'active' && jobState !== 'failed') {
+        Log.info('TestJobController::promoteJob() - The job ' + id + ' is' + jobState + '. Moving to the express queue. Updating job.state to REQUESTED.');
         await this.stdManager.queue.remove(job.jobId);
         await this.expManager.queue.add(job.data, job.opts);
-        Log.info('TestJobController::promoteJob() - The job ' + id + ' was successfully moved to the express queue.');
+        await redisClient.updateJobState(searchKey, 'REQUESTED');
+      } else if (jobState === 'active') {
+        Log.info('TestJobController::promoteJob() - The job ' + id + ' is already active. Updating job.state to REQUESTED.');
+        await redisClient.updateJobState(searchKey, 'REQUESTED');
       } else {
         Log.info('TestJobController::promoteJob() - The job ' + id + ' was not be promoted because it is ' + jobState);
       }

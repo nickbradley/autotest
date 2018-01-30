@@ -26,17 +26,12 @@ set -o errexit  # exit on command failure
 set -o pipefail # exit if any command in pipeline fails
 set -o nounset  # exit if undeclared variable is used
 
-githubApiKey=${1}
-team=${2}
-projectCommit=${3}
-projectBranch=${4}
-testImage=${5}
-tempDir=${6}
+testImage=${1}
+tempDir=${2}
+containerLive=${3}
 
 docker run --cap-add=NET_ADMIN \
-           --env PROJECT_URL=https://${githubApiKey}@github.com/CS310-2017Jan/cpsc310project_${team}.git \
-           --env PROJECT_COMMIT=$projectCommit \
-           --env PROJECT_BRANCH=$projectBranch \
-           --volume "${tempDir}":/output/ \
+           --volume "${tempDir}":/output \
+           ${containerLive} \
            --rm \
            ${testImage}

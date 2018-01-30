@@ -36,9 +36,9 @@ set -o nounset  # exit if undeclared variable is used
 
 dockerDir=$(dirname $BASH_SOURCE)
 
-githubApiKey=${1}
+githubKey=${1}
 repoName=${2}
-commit=${3}
+testsuiteCommit=${3}
 deliverable=${4}
 
 if [[ ! -z "${@:5}" ]]
@@ -50,21 +50,16 @@ else
   externalServers=""
 fi
 
-docker build --tag autotest/${deliverable}-${repoName}:${commit} \
- --build-arg testsuiteUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
- --build-arg testsuiteCommit=${commit} \
+docker build -f Dockerfile-210 --tag autotest/${repoName}:${testsuiteCommit} \
+ --build-arg testsuiteUrl=https://${githubKey}@github.ubc.ca/steca/${repoName}.git \
+ --build-arg testsuiteCommit=${testsuiteCommit} \
  --build-arg allowDNS=${allowDNS} \
  --build-arg externalServers="${externalServers}" \
+ --build-arg isContainerLive=1 \
  --build-arg deliverable="${deliverable}" \
+ --build-arg githubKey="${githubKey}" \
  --no-cache \
  "${dockerDir}"
 
+docker tag $(docker images -q autotest/cpsc210__bootstrap:master) autotest/cpsc210__bootstrap
 
- docker build --tag autotest/${deliverable}-${repoName}:latest \
- --build-arg testsuiteUrl=https://${githubApiKey}@github.com/CS310-2017Jan/${repoName}.git \
- --build-arg testsuiteCommit=${commit} \
- --build-arg allowDNS=${allowDNS:0} \
- --build-arg externalServers="${externalServers}" \
- --build-arg deliverable="${deliverable}" \
- --no-cache \
- "${dockerDir}"

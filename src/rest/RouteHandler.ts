@@ -3,9 +3,16 @@ import restify = require("restify");
 import PushController from '../controller/github/PushController';
 import {TestJob} from '../controller/TestJobController';
 import CommitCommentController from '../controller/github/CommitCommentController';
+import ResultRecordController from '../controller/ResultRecordController';
+import StaticHtmlController from '../controller/StaticHtmlController';
+import ResultRecord, {ResultPayload} from '../model/results/ResultRecord';
+
+
+// import ResultController from '../controller/ResultController';
 import Log from "../Util";
 import Server from "./Server";
 import TestJobController from '../controller/TestJobController';
+import RequestHelper from '../../src/rest/helpers/RequestHelper'
 
 export default class RouteHandler {
 
@@ -15,10 +22,12 @@ export default class RouteHandler {
   public static queueStats(req: restify.Request, res: restify.Response, next: restify.Next) {
     Log.info('RouteHandler::queueStats() - <RCV> Queue stats.');
     try {
-      let controller: TestJobController = TestJobController.getInstance();
+      let serverPort: number = RequestHelper.parseServerPort(req);
+      let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
+      let controller: TestJobController = TestJobController.getInstance(currentCourseNum);
       controller.getStats().then(stats => {
         let lenExpQueue: number = stats[1].waiting + stats[1].paused;
-        Log.info('RouteHandler::queueStats() - <200> Number of waiting or paused jobs: ' + lenExpQueue + '.');
+        Log.info('RouteHandler::queueStats() - <200> Number of waiting or paused express jobs: ' + lenExpQueue + '.');
         res.json(200, {body: stats});
       }).catch(err => {
         Log.error('RouteHandler::queueStats() - <400> ERROR getting stats: ' + err);
@@ -41,6 +50,10 @@ export default class RouteHandler {
     let githubEvent: string = req.header('X-GitHub-Event');
     let body = req.body;
     let team: string = '';
+    let serverPort = RequestHelper.parseServerPort(req);
+    let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
+
+
     try {
       let name: string = body.repository.name;
       team = name.substring(name.indexOf('_')+1);
@@ -56,9 +69,9 @@ export default class RouteHandler {
 
       case 'commit_comment':
         try {
-          let controller: CommitCommentController = new CommitCommentController();
+          let controller: CommitCommentController = new CommitCommentController(currentCourseNum);
           controller.process(body).then(result => {
-            Log.info('RouteHandler::commitComment() - <' + result.statusCode + '> ['+ team +'] ' + (result.body.substring(0, 40) || 'NO_BODY'));
+            Log.info('RouteHandler::commitComment() - <' + result.statusCode + '> ['+ team +'] ' + (result.body || 'NO_BODY'));
             res.json(result.statusCode, result.body);
           }).catch(err => {
             Log.error('RouteHandler::commitComment() - <404> ['+ team +'] ERROR processing commit comment. ' + err);
@@ -72,7 +85,7 @@ export default class RouteHandler {
 
       case 'push':
         try {
-          let controller: PushController = new PushController();
+          let controller: PushController = new PushController(currentCourseNum);
           controller.process(body).then(result => {
             let tests: string[] = result.map(job => {
               let testJob: TestJob = job.data as TestJob;
@@ -94,5 +107,52 @@ export default class RouteHandler {
         Log.warn('RouteHandler::postGithubHook() - ['+ team +'] Unhandled GitHub event: ' + githubEvent);
     }
     return next();
+  }
+
+    /**
+   * Handles ResultRecord objects sent from container
+   *  - req should container ResultRecord container with payload
+   */
+  public static resultSubmission(req: restify.Request, res: restify.Response, next: restify.Next) {
+    let body = req.body;
+    let serverPort = RequestHelper.parseServerPort(req);
+    let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
+    let controller: ResultRecordController = new ResultRecordController(currentCourseNum, req.body)
+    let resultPayload: ResultPayload = req.body as ResultPayload;
+    controller.store()
+      .then((result) => {
+        Log.info('RouteHandler::resultSubmission() SUCCESS Saved result ' + resultPayload.response.commit + ' for ' +
+          resultPayload.response.committer);
+        res.json(202, { response: result });  
+        //      
+        return next();        
+      })
+      .catch((err) => {
+        Log.error('RouteHandler::resultSubmission() ERROR saving ResultRecord' + resultPayload.response.commit + ' for ' + 
+          resultPayload.response.commitUrl);
+        res.json(500, { response: err });
+        return next();
+      });
+  }
+
+      /**
+   * Handles StaticHtml Zip files that are sent and included
+   * @return object response with success status and HTML static link or error message
+   */
+  public static staticHtml(req: restify.Request, res: restify.Response, next: restify.Next) {
+    let body = req.body;
+    let serverPort = RequestHelper.parseServerPort(req);
+    let currentCourseNum = RequestHelper.parseCourseNum(serverPort);
+    let controller: StaticHtmlController = new StaticHtmlController(req.body);
+    controller.extractZipToDir()
+      .then((confirmation) => {
+        res.json(202, { response: { htmlStaticPath: confirmation } });  
+        //      
+        return next();        
+      })
+      .catch((err) => {
+        res.json(500, { response: { error: err } });       
+        return next();
+      });
   }
 }

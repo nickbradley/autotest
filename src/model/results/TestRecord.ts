@@ -2,21 +2,28 @@ import cp = require('child_process');
 import tmp = require('tmp-promise');
 import fs = require('fs');
 import {IConfig, AppConfig} from '../../Config';
-
 import {Commit} from '../GithubUtil';
 import {CouchDatabase,Database, DatabaseRecord, InsertResponse} from '../Database';
+import {Result} from '../results/ResultRecord';
 import {TestJob, TestJobDeliverable} from '../../controller/TestJobController';
+import DockerInput, { DockerInputJSON } from '../../model/docker/DockerInput';
+import {Report} from '../../model/results/ReportRecord';
 import Log from '../../Util';
 
+const GITHUB_TIMEOUT_MSG = 'Your assignment has timed out while being tested. Please check for infinite loops' + 
+  ' and slow runtime methods.';
 
+export interface Attachment {
+  name: string;
+  data: any;
+  content_type: string;
+}
 
 interface TestOutput {
-  mocha: JSON;
   testStats: TestStats;
 }
 
 interface CoverageOutput {
-  report: JSON;
   coverageStats: CoverageStats;
 }
 
@@ -45,79 +52,128 @@ export interface CoverageStats {
 
 export interface ProcessedTag {
   content: any;
-  exitcode: number;
+  exitCode: number;
 }
 
-export interface TestStatus {
-  buildFailed: boolean,
-  buildMsg: string,
+export interface TestInfo {
+  testRecord: Result,
   containerExitCode: number,
   processErrors: string[]
 }
 
-export default class TestRecord implements DatabaseRecord {
-  // private config: IConfig;
-  private maxStdioSize: number = 5 * 1000000;  // 5 MB
-
-
+export default class TestRecord {
+  private maxStdioSize: number = 1 * 500000;  // 500 KB
+  private maxStdioLength: number = 1000000; // characters
+  private shaSize: number;
   private stdio: string;
+  private report: string;
+  private requestor: string;
+  private state: string;
+  private repo: string;
+  private postbackOnComplete: boolean;
+  private reportSize: number;
+  private stdioSize: number;
   private coverageZip: Buffer;
-
   private githubToken: string;
   private _id: string;
-  private _rev: string;
   private team: string;
   private deliverable: TestJobDeliverable;
-  private testStats: TestStats;
-  private coverageReport: any;
-  private coverageStats: CoverageStats;
-  private buildFailed: boolean;
-  private buildMsg: string;
+  private courseNum: number;
   private testReport: any;
   private commit: string;
+  private openDate: number;
+  private closeDate: number;
+  private resultRecord: Result;
+  private commitUrl: string;
+  private projectUrl: string;
   private committer: string;
   private containerExitCode: number = 0;
   private timestamp: number;
   private scriptVersion: string;
   private suiteVersion: string;
   private failedCoverage: string;
-  private stdioSize: number;
   private ref: string;
+  private orgName: string;
+  private username: string;
+  private dockerInput: DockerInputJSON;
+  private idStamp: string;
 
   constructor(githubToken: string, testJob: TestJob) {
+    this.courseNum = testJob.courseNum;
     this.githubToken = githubToken;
     this.team = testJob.team;
+    this.requestor = testJob.requestor,
+    this.repo = testJob.repo;
+    this.state = testJob.state;
+    this.postbackOnComplete = testJob.postbackOnComplete;
+    this.projectUrl = testJob.projectUrl;
+    this.commitUrl = testJob.commitUrl;
     this.deliverable = testJob.test;
     this.commit = testJob.commit;
-    this.committer = testJob.user;
+    this.committer = testJob.username;
     this.ref = testJob.ref;
-    this.timestamp = +new Date();
+    this.openDate = testJob.openDate,
+    this.closeDate = testJob.closeDate,
+    this.timestamp = testJob.timestamp;
     this._id = this.timestamp + '_' + this.team + ':' + this.deliverable.deliverable + '-';
+    this.orgName = testJob.orgName;
+    this.username = testJob.username;
+    this.dockerInput = testJob.test.dockerInput;
   }
 
-  public async generate(): Promise<TestStatus> {
+  public getTeam(): string {
+    return this.team;
+  }
+
+  public getCommit(): string {
+    return this.commit;
+  }
+
+  public getexitCode(): number {
+    return this.containerExitCode;
+  }
+
+  public getScriptVersion(): string {
+    return this.scriptVersion;
+  }
+
+  public getSuiteVersion(): string {
+    return this.suiteVersion;
+  }
+
+  public getDeliverable(): TestJobDeliverable {
+    return this.deliverable;
+  }
+
+  public getTestReport(): any {
+    return this.testReport;
+  }
+
+  public async generate(): Promise<TestInfo> {
+    // this.dockerInput input will be accessible in mounted volume of Docker container as /output/docker_SHA.json
     let tempDir = await tmp.dir({ dir: '/tmp', unsafeCleanup: true });
+    await this.writeContainerInput(tempDir, this.dockerInput);    
+    
+    console.log(JSON.stringify(this.dockerInput));
+    let that = this;
     let file: string = './docker/tester/run-test-container.sh';
     let args: string[] = [
-      this.githubToken,
-      this.team,
-      this.commit,
-      this.ref,
-      this.deliverable.image,
-      tempDir.path
+      this.deliverable.dockerImage + ':' + this.deliverable.dockerBuild,
+      tempDir.path,
+      process.env.NODE_ENV === 'development' ? '--env IS_CONTAINER_LIVE="0"' : '--env IS_CONTAINER_LIVE="1"'
     ];
+    Log.info('TestRecord:: generate() Test Arguments' + JSON.stringify(args));
+
     let options = {
       encoding: 'utf8'
     }
 
-    return new Promise<TestStatus>((fulfill, reject) => {
+    return new Promise<TestInfo>((fulfill, reject) => {
       cp.execFile(file, args, options, (error: any, stdout, stderr) => {
         if (error) {
-          console.log('Error', error);
+          Log.error('TestRecord::execFile() ERROR ' + error);
           this.containerExitCode = error.code;
         }
-
-
 
         let promises: Promise<string>[] = [];
         let getTranscriptSize: Promise<string> = new Promise((fulfill, reject) => {
@@ -136,13 +192,15 @@ export default class TestRecord implements DatabaseRecord {
         });
         promises.push(getTranscriptSize);
 
-
         let readTranscript: Promise<string> = new Promise((fulfill, reject) => {
           fs.readFile(tempDir.path + '/stdio.txt', 'utf8', (err, data) => {
             if (err) {
               Log.error('TestRecord::generate() - ERROR reading stdio.txt. ' + err);
-              if (this.containerExitCode == 0) this.containerExitCode = 30;
+              if (this.containerExitCode == 0) this.containerExitCode = 31;
               return fulfill(err);
+            }
+            else {
+              Log.info('TestRecord::generate() - SUCCESS reading stdio.txt. ' + tempDir.path + '/output/stdio.txt');
             }
             try {
               this.stdio = data;
@@ -152,15 +210,6 @@ export default class TestRecord implements DatabaseRecord {
               this.scriptVersion = infoTag.scriptVersion;
               this.suiteVersion = infoTag.suiteVersion;
 
-              // Process the project build tag
-              let buildTag: ProcessedTag = this.processProjectBuildTag(data);
-              this.buildFailed = (buildTag.exitcode > 0 ? true : false);
-              this.buildMsg = buildTag.content;
-
-              // Process the coverage tag
-              let coverageTag: ProcessedTag = this.processCoverageTag(data);
-              this.failedCoverage = coverageTag.content;
-
               fulfill();
             } catch(err) {
               fulfill(err);
@@ -169,68 +218,15 @@ export default class TestRecord implements DatabaseRecord {
         });
         promises.push(readTranscript);
 
-
-        let readCoverage: Promise<string> = new Promise((fulfill, reject) => {
-          fs.readFile(tempDir.path + '/coverage.json', 'utf8', (err, data) => {
-            if (err) {
-              Log.error('TestRecord::generate() - ERROR reading coverage.json. ' + err);
-              if (this.containerExitCode == 0) this.containerExitCode = 31;
-              fulfill(err);
-            }
-            try {
-              let coverage: CoverageOutput = this.processCoverageJson(data);
-              this.coverageStats = coverage.coverageStats;
-              this.coverageReport = coverage.report;
-              fulfill();
-            } catch(err) {
-              fulfill(err);
-            }
-          });
-        });
-        promises.push(readCoverage);
-
-        let readTests: Promise<string> = new Promise((fulfill, reject) => {
-          fs.readFile(tempDir.path + '/mocha.json', 'utf8', (err, data) => {
-            if (err) {
-              Log.error('TestRecord::generate() - ERROR reading mocha.json. ' + err);
-              if (this.containerExitCode == 0) this.containerExitCode = 32;
-              fulfill(err);
-            }
-            try {
-              let tests: TestOutput = this.processMochaJson(data);
-              this.testStats = tests.testStats;
-              this.testReport = tests.mocha;
-              fulfill();
-            } catch(err) {
-              fulfill(err);
-            }
-          });
-        });
-        promises.push(readTests);
-
-
-        // let readCoverage: Promise<string> = new Promise((fulfill, reject) => {
-        //   fs.readFile(tempDir.name + '/coverage.zip', (err, data) => {
-        //     if (err) {
-        //       Log.error('TestRecord::generate() - ERROR reading coverage.zip. ' + err);
-        //       if (this.containerExitCode == 0) this.containerExitCode = 32;
-        //       fulfill(err);
-        //     }
-        //     this.coverageZip = data;
-        //     fulfill();
-        //   });
-        // });
-        // promises.push(readCoverage);
-
         Promise.all(promises).then((err) => {
-          let testStatus: TestStatus = {
-            buildFailed: this.buildFailed,
-            buildMsg: this.buildMsg,
+          let testInfo: TestInfo = {
+            testRecord: that.getTestRecord(),
             containerExitCode: this.containerExitCode,
             processErrors: err
           }
+
           tempDir.cleanup();
-          fulfill(testStatus);
+          fulfill(testInfo);
         }).catch(err => {
           Log.error('TestRecord::generate() - ERROR processing container output. ' + err);
           if (this.containerExitCode == 0) this.containerExitCode = 39;
@@ -242,7 +238,7 @@ export default class TestRecord implements DatabaseRecord {
 
   public processInfoTag(stdout: string): any {
     try {
-      let infoTagRegex: RegExp = /^<INFO>\nproject url: (.+)\nbranch: (.+)\ncommit: (.+)\nscript version: (.+)\ntest suite version: (.+)\n<\/INFO exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
+      let infoTagRegex: RegExp = /^<INFO>\nproject url: (.+)\nbranch: (.+)\ncommit: (.+)\nscript version: (.+)\ntest suite version: (.+)\n<\/INFO exitCode=(\d+), completed=(.+), duration=(\d+)s>$/gm
       //let infoMsgRegex: RegExp = /^(npm.*)$/gm;
       let matches: string[] = infoTagRegex.exec(stdout);
       let processed: any = {
@@ -255,171 +251,91 @@ export default class TestRecord implements DatabaseRecord {
     }
   }
 
-  public processProjectBuildTag(stdout: string): ProcessedTag {
-    try {
-      let buildTagRegex: RegExp = /^<PROJECT_BUILD>\n([\s\S]*)<\/PROJECT_BUILD exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm
-      let buildMsgRegex: RegExp = /^(npm.*)$/gm;
-      let matches: string[] = buildTagRegex.exec(stdout);
-      let processed: ProcessedTag = {
-        content: matches[1].replace(buildMsgRegex, '').trim(),
-        exitcode: +matches[2]
-      };
-      return processed;
-    } catch (err) {
-      throw 'Failed to process <PROJECT_BUILD> tag. ' + err;
-    }
-  }
-
-
-  public processCoverageTag(stdout: string): ProcessedTag {
-    try {
-      let coverageTagRegex: RegExp = /^<PROJECT_COVERAGE>([\s\S]*)<\/PROJECT_COVERAGE exitcode=(\d+), completed=(.+), duration=(\d+)s>$/gm;
-      let matches: string[] = coverageTagRegex.exec(stdout);
-      let exitcode: number = +matches[2];
-      if (exitcode == 0)
-        return {content:'', exitcode:0};
-
-
-      let content: string = matches[1];
-      let failedTestsRegex: RegExp = /^  (\d+\)|  throw) [\s\S]*$/gm;
-      let failedTests: string[] = failedTestsRegex.exec(content);
-
-      return {content: failedTests[0], exitcode: exitcode};
-    } catch(err) {
-      throw 'Failed to process <PROJECT_COVERAGE> tag. ' + err;
-    }
-  }
-
-
-  public processCoverageJson(text: string): CoverageOutput {
-    try {
-      let report: any = JSON.parse(text);
-      let statements = report.total.statements;
-      let branches = report.total.branches;
-      let functions = report.total.functions;
-      let lines = report.total.lines;
-
-      let processed: CoverageOutput = {
-        report: report,
-        coverageStats: {
-          lines: {percentage: lines.pct, total: lines.total, covered: lines.covered, skipped: lines.skipped},
-          statements: {percentage: statements.pct, total: statements.total, covered: lines.covered, skipped: lines.skipped},
-          branches: {percentage: branches.pct, total: branches.total, covered: branches.covered, skipped: branches.skipped},
-          functions: {percentage: functions.pct, total: functions.total, covered: functions.covered, skipped: functions.skipped}
-        }
+  public writeContainerInput(tmpDir: any, dockerInput: object) {
+    new Promise((fulfill, reject) => {
+      try {
+        Log.info(`TestRecord::writeContainerInput Writing 'docker_SHA.json' file in container volume`);
+        fs.writeFile(tmpDir.path + '/docker_SHA.json', JSON.stringify(dockerInput), (err) => {
+          if (err) {
+            throw err;
+          } else {
+            return fulfill();
+          }
+        });   
+      } catch (err) {
+        Log.error(`TestRecord::writeDockerJSON() ERROR ${err}`);
       }
-
-      return processed;
-    } catch(err) {
-      throw 'Failed to process coverage report (JSON). ' + err;
-    }
+    });
   }
 
-
-  public processMochaJson(text: string): TestOutput {
-    try {
-      let report: any = JSON.parse(text);
-      let passPercent: number = report.stats.passPercent;
-      let passCount: number = report.stats.passes;
-      let failCount: number = report.stats.failures;
-      let skipCount: number = report.stats.skipped;
-
-      let passNames: string[] = report.allTests.filter(test => {
-        return test.pass;
-      }).map(name => {
-        let fullName: string = name.fullTitle;
-        return fullName.substring(fullName.indexOf('~')+1, fullName.lastIndexOf('~'));
-      });
-      let failNames: string[] = report.allTests.filter(test => {
-        return test.fail;
-      }).map(name => {
-        let fullName: string = name.fullTitle;
-        return fullName.substring(fullName.indexOf('~')+1, fullName.lastIndexOf('~'));
-      });
-      let skipNames: string[] = [].concat.apply([], report.suites.suites.filter(suite => {
-        return suite.hasSkipped;
-      }).map(suite => {
-        return suite.skipped.map(skippedTest => {
-          let fullName: string = skippedTest.fullTitle;
-          return fullName.substring(fullName.indexOf('~')+1, fullName.lastIndexOf('~'));
-        });
-      }));
-
-      let processed: TestOutput = {
-        mocha: report,
-        testStats: {
-          passPercent: passPercent,
-          passCount: passCount,
-          failCount: failCount,
-          skipCount: skipCount,
-          passNames: passNames,
-          failNames: failNames,
-          skipNames: skipNames
-        }
-      }
-
-      return processed;
-    } catch(err) {
-      throw 'Failed to process mocha test report (JSON). ' + err;
-    }
-  }
-
-
-  public async create(db: CouchDatabase): Promise<InsertResponse> {
-    return this.insert(db);
-  }
-
-  public async update(db: CouchDatabase): Promise<InsertResponse> {
-    return new Promise<InsertResponse>((fulfill, reject) => {
-      reject('Not allowed.');
-    })
-  }
-
-  private async insert(db: CouchDatabase): Promise<InsertResponse> {
+public getTestRecord(): Result {
+  Log.info(`TestRecord::getTestRecord() INFO - start`);
+  
+  let that = this;
     this._id += this.suiteVersion;
     let container = {
       scriptVersion: this.scriptVersion,
       suiteVersion: this.suiteVersion,
-      image: this.deliverable.image,
-      exitcode: this.containerExitCode
+      image: this.deliverable.dockerImage,
+      exitCode: this.containerExitCode
     }
 
-    let doc = {
-      'team': this.team,
-      'deliverable': this.deliverable.deliverable,
-      'testStats': this.testStats,
-      'coverStats': this.coverageStats,
-      'coverReport': this.coverageReport,
-      'coverStderr': this.failedCoverage,
-      'buildFailed': this.buildFailed,
-      'buildMsg': this.buildMsg,
-      'testReport': this.testReport,
-      'commit': this.commit,
-      'committer': this.committer,
-      'timestamp': this.timestamp,
-      'container': container,
-      'ref': this.ref
-
+    function getStdio() {
+      if (that.stdio && that.stdio.length > that.maxStdioLength) {
+        let trimmedStdio = String(that.stdio).substring(0, that.maxStdioLength);
+        trimmedStdio += "\n\n\n STDIO FILE TRUNCATED AS OVER " + that.maxStdioLength + " CHARACTER SIZE LIMIT";
+        let attachment = {name: 'stdio.txt', data: trimmedStdio, content_type: 'application/plain'};
+        return attachment;
+      } else {
+        let attachment = {name: 'stdio.txt', data: that.stdio, content_type: 'application/plain'};
+        return attachment;
+      }
     }
 
-    let attachments = [];
-    if (this.stdio && this.stdioSize <= this.maxStdioSize) {
-      attachments.push({name: 'stdio.txt', data: this.stdio, content_type: 'application/plain'});
+    function getDockerInput() {
+      if (that.dockerInput) {
+        let attachment = {name: 'docker_SHA.json', data: that.dockerInput, content_type: 'application/json'};
+        return attachment;
+      } 
+      return null;
     }
-    // if (this.coverageZip) {
-    //   attachments.push({name: 'coverage.zip', data: this.coverageZip, content_type: 'application/zip'});
-    // }
+    
+    let doc: Result;
 
-
-    let that = this;
-    return new Promise<InsertResponse>((fulfill, reject) => {
-      db.multipart.insert(doc, attachments, this._id, (err, body) => {
-        if (err) {
-          console.log('Failed to insert record!.', err)
-          reject(err);
-        }
-        fulfill(body);
-      });
-    });
+    try {
+       doc = {
+        'team': this.team,
+        'repo': this.repo,
+        'state': this.state,
+        'projectUrl': this.projectUrl,
+        'commitUrl': this.commitUrl,
+        'courseNum': this.courseNum,
+        'orgName': this.orgName,
+        'openDate': this.openDate,
+        'closeDate': this.closeDate,
+        'deliverable': this.deliverable.deliverable,
+        'user': this.username,
+        'report': null,
+        'commit': this.commit,
+        'committer': this.committer,
+        'timestamp': this.timestamp,
+        'postbackOnComplete': true, // if a timeout occurs, this error will postback by default,
+        'container': container,
+        'requestor': this.requestor,
+        'gradeRequested': false,
+        'githubFeedback': GITHUB_TIMEOUT_MSG,
+        'gradeRequestedTimestamp': -1,
+        'ref': this.ref,
+        'idStamp': new Date().toUTCString() + '|' + this.ref + '|' + this.deliverable.deliverable + '|' + this.username + '|' + this.repo,
+        'stdioRef': that.dockerInput.stdioRef,
+        'attachments': [getStdio(), getDockerInput()],
+      }
+      Log.info(`TestRecord::getTestRecord() INFO - Created TestRecord to save in case of Timeout on commit ${this.commit} and user ${this.username}`);
+      // instead of returning, it should be entered into the Database.
+    }
+    catch(err) {
+      Log.error(`TestRecord::getTestRecord() - ERROR ${err}`)
+    }
+    return doc;
   }
 }

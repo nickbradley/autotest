@@ -62,7 +62,7 @@ export default class RedisClient {
           reject(err);
         });
         this.client.on('ready', () => {
-          Log.info('RedisClient::connect() - ready');
+          Log.info('RedisClient::connect() - ready on port ' + this.options.port);
           this._isReady = true;
         });
         this.client.on('connect', () => {
@@ -102,6 +102,89 @@ export default class RedisClient {
     });
   }
 
+  /**
+   * Assigns the value to the key. If the key exists, its value is overwritten.
+   *
+   * @param {string} key The new key of the STATE field. ie. INIT, REQUESTED, BUILD_FAILED
+   * @param {Object} value The value to associate with the key.
+   * @returns {Promise<boolean>}
+   */
+  public async updateJobState(key: string, newState: string): Promise<boolean> {
+    Log.info('RedisClient:: updateJobState() UPDATING ' + key + ' to ' + newState + ' state.');
+    let that = this;
+    if (!this._isConnected) {
+      Log.error('RedisClient::updateJobState() - ERROR Client not connected.');
+      throw new Error('Client not connected');
+    }
+    return new Promise<boolean>((fulfill, reject) => {
+      this.client.keys(key, (err: Error, results: any[]) => {
+        console.log('redis key results', results);
+        if (err) {
+          Log.error('RedisClient::updateJobState() - ERROR ' + key + ' not found: ' + err);
+          reject(err);
+        }
+        else {
+          for (let result of results) {
+                that.client.hget(result, 'data', function(err, jobData) {
+                    
+                    if (err) reject(err)
+
+                    // PARSE as JSON & Store back in Redis Key
+                    let jsonData = JSON.parse(jobData);
+                    jsonData.state = 'REQUESTED';
+                    jsonData = JSON.stringify(jsonData);
+
+                    that.client.hset(result, 'data', jsonData, function(err, result) {
+                      if (err) {
+                        Log.error('RedisClient::updateJobState() - ERROR Could not update hSet ' + result + ':' + err);
+                        reject(err);
+                      } else {
+                        fulfill(result);
+                      }
+                    });
+                });
+              }
+        }
+      });
+    });
+  }
+
+
+  /**
+   * Assigns the value to the key. If the key exists, its value is overwritten.
+   *
+   * @param {string} key The new key of the STATE field. ie. INIT, REQUESTED, BUILD_FAILED
+   * @param {Object} value The value to associate with the key.
+   * @returns {Promise<boolean>}
+   */
+  public async getJobState(key: string): Promise<string> {
+    let that = this;
+    if (!this._isConnected) {
+      Log.error('RedisClient::getJobState() - ERROR Client not connected.');
+      throw new Error('Client not connected');
+    }
+    return new Promise<string>((fulfill, reject) => {
+      this.client.keys(key, (err: Error, results: any[]) => {
+        console.log('redis key results', results);
+        if (err) {
+          Log.error('RedisClient::updateJobState() - ERROR ' + key + ' not found: ' + err);
+          reject(err);
+        }
+        else {
+          for (let result of results) {
+                that.client.hget(result, 'data', function(err, jobData) {
+                    
+                    if (err) reject(err)
+
+                    // PARSE as JSON & Store back in Redis Key
+                    let jsonData = JSON.parse(jobData);
+                    fulfill(jsonData.state);
+                });
+              }
+        }
+      });
+    });
+  }
 
   /**
    * Assigns the value to the key. If the key exists, its value is overwritten.

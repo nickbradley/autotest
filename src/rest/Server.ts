@@ -1,20 +1,23 @@
 import restify = require('restify');
-
 import Log from "../Util";
+import * as fs from 'fs';
 import RouteHandler from "../rest/RouteHandler";
 import {IConfig, AppConfig} from '../Config';
 import TestJobController from '../controller/TestJobController';
+import {RedisUtil} from '../model/RedisUtil';
+import RequestHelper from '../../src/rest/helpers/RequestHelper'
+
+
 /**
  * This configures the REST endpoints for the server.
  */
 export default class Server {
   private rest: restify.Server;
   private port: number;
+  private config: IConfig;
 
   constructor() {
-    let config: IConfig = new AppConfig();
-    this.port = config.getAppPort();
-    Log.info("Server::<init>( " + this.port + " )");
+    this.config = new AppConfig();
   }
 
   /**
@@ -26,7 +29,8 @@ export default class Server {
   public async stop(): Promise<boolean> {
     Log.info('Server::close()');
     let that = this;
-    await TestJobController.getInstance().close();
+    await TestJobController.getInstance(7310).close();
+    await TestJobController.getInstance(7210).close();    
     return new Promise<boolean>(function (fulfill) {
       that.rest.close(function () {
           fulfill(true);
@@ -34,6 +38,22 @@ export default class Server {
     });
   }
 
+  /**
+   * Sets the port on this instance of a server
+   * @returns {void}
+   */
+  public setPort(portNum: number) {
+      Log.info('Server::setPort()');
+      this.port = portNum;
+  }
+
+  /**
+   * Gets the port that was set on this instance of a server
+   * @returns {number}
+   */
+  public getPort() {
+      return this.port;
+  }
   /**
    * Starts the server. Returns a promise with a boolean value. Promises are used
    * here because starting the server takes some time and we want to know when it
@@ -45,10 +65,14 @@ export default class Server {
       let that = this;
       return new Promise(function (fulfill, reject) {
           try {
+
               Log.info('Server::start() - start');
 
               that.rest = restify.createServer({
-                  name: 'AutoTest'
+                  name: 'AutoTest',
+                  key: fs.readFileSync(that.config.getSSLKeyPath()).toString(),
+                  certificate: fs.readFileSync(that.config.getSSLCertPath()).toString(),
+                  ca: fs.readFileSync(that.config.getSSLIntCertPath()).toString(),
               });
 
               // support CORS
@@ -66,28 +90,11 @@ export default class Server {
               // GitHub Webhook endpoints
               that.rest.post('/submit', restify.bodyParser(), RouteHandler.postGithubHook);
 
+              // Docker container ResultRecord submission
+              that.rest.post('/result', restify.bodyParser(), RouteHandler.resultSubmission);
 
-/*
-              // Serves static files for the UI.
-              that.rest.get("/public/.*", restify.serveStatic({
-                  directory: __dirname
-              }));
-
-              // Loads the homepage.
-              // curl -is  http://localhost:4321/
-              that.rest.get('/', RouteHandler.getHomepage);
-
-              // clear; curl -is  http://localhost:4321/echo/foo
-              that.rest.get('/echo/:message', RouteHandler.getEcho);
-
-              // Sends a dataset. Is idempotent and can create or update a dataset id.
-              // curl localhost:4321/dataset/test --upload-file FNAME.zip
-              that.rest.put('/dataset/:id', RouteHandler.putDataset);
-*/
-              // Receives queries. Although these queries never change the server (and thus could be GETs)
-              // they are formed by sending JSON bodies, which is not standard for normal GET requests.
-              // curl -is -X POST -d '{ "key": "value" }' http://localhost:4321/query
-              //that.rest.post('/submit', restify.bodyParser(), RouteHandler.postSubmit);
+              // Host Static HTML content send in ZipFile on Express ClassPortal application
+              that.rest.post('/staticHtml', restify.bodyParser(), RouteHandler.staticHtml);
 
               that.rest.listen(that.port, function () {
                   Log.info('Server::start() - restify listening: ' + that.rest.url);
@@ -99,6 +106,7 @@ export default class Server {
                   Log.info('Server::start() - restify ERROR: ' + err);
                   reject(err);
               });
+
           } catch (err) {
               Log.error('Server::start() - ERROR: ' + err);
               reject(err);

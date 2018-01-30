@@ -28,7 +28,6 @@ export interface Job extends bull.Job {
   opts: Object;
 }
 
-
 export interface CallbackOpts {
   qname: string;
 }
@@ -51,7 +50,7 @@ export class JobQueue {
   constructor(name: string, concurrency: number, redisAddress: Url, process: ProcessJobCallback, completed: CompletedJobCallback, failed: FailedJobCallback, active: ActiveJobCallback) {
     this.name = name;
     this.redis = redisAddress;
-    this.concurrency = (concurrency <= 0 ? 0 : concurrency);
+    this.concurrency = (concurrency <= 0 ? 0 : concurrency);    
     this.processCallback = process;
     this.completedCallback = completed;
     this.failedCallback = failed;
@@ -110,7 +109,10 @@ export class JobQueue {
   }
 
   public async remove(id: string) {
-
+    return this.getJob(id)
+      .then((job) => {
+        return job.remove();
+      });
   }
 
   public async getJob(id: string): Promise<Job> {
